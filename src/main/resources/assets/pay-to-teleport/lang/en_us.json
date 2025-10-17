@@ -1,0 +1,8 @@
+{
+  "paytp.teleport": "%s!",
+  "paytp.consume": "It costs %s %s in total.",
+  "paytp.not-enough": "You don't have enough %s! The teleportation fee is %s %s but you only have %s.",
+
+  "paytp.success": "Teleporting",
+  "paytp.failed": "Failed to Teleport"
+}

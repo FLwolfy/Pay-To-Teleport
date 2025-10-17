@@ -1,0 +1,8 @@
+{
+  "paytp.teleport": "传送%s！",
+  "paytp.consume": "本次传送消费%s块%s，谢谢惠顾。",
+  "paytp.not-enough": "%s的数量不够，需要%s块%s而你只有%s块。",
+
+  "paytp.success": "成功",
+  "paytp.failed": "失败"
+}
