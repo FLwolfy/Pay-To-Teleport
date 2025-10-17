@@ -8,6 +8,8 @@ import com.flwolfy.paytp.util.PayTpItemHandler;
 import com.flwolfy.paytp.util.PayTpTextFormatter;
 import com.mojang.brigadier.CommandDispatcher;
 
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.ControlFlowAware.Command;
 import net.minecraft.command.argument.Vec3ArgumentType;
 import net.minecraft.entity.player.PlayerEntity;
@@ -15,7 +17,6 @@ import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.math.Vec3d;
 
 public class PayTpCommand {
@@ -25,23 +26,21 @@ public class PayTpCommand {
   public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
     configData = PayTpConfig.getInstance().data();
     dispatcher.register(CommandManager.literal(configData.commandName())
-        // Coordinate Tp
-        .then(CommandManager.argument("pos", Vec3ArgumentType.vec3())
-            .executes(ctx -> {
-              PlayerEntity player = ctx.getSource().getPlayer();
-
-              if (player != null) {
-                Vec3d targetPos = Vec3ArgumentType.getVec3(ctx, "pos");
-                return payTpCoords(player, targetPos);
-              }
-
-              return 0;
-            })
-        )
+        // ===== /paytp <pos> =====
+        .then(CommandManager.argument("pos", Vec3ArgumentType.vec3()).executes(PayTpCommand::payTpCoords))
     );
   }
 
-  private static int payTpCoords(PlayerEntity player, Vec3d to) {
+  private static int payTpCoords(CommandContext<ServerCommandSource> ctx) {
+    PlayerEntity player = ctx.getSource().getPlayer();
+    if (player != null) {
+      Vec3d targetPos = Vec3ArgumentType.getVec3(ctx, "pos");
+      return teleport(player, targetPos);
+    }
+    return 0;
+  }
+
+  private static int teleport(PlayerEntity player, Vec3d to) {
     int price = PayTpCalculator.calculatePrice(configData.baseRadius(), configData.rate(), configData.minPrice(), configData.maxPrice(), player.getPos(), to);
     int balance = PayTpCalculator.checkBalance(configData.currencyItem(), player, configData.flags());
 
