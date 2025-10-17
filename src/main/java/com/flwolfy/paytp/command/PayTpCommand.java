@@ -9,7 +9,6 @@ import com.flwolfy.paytp.util.PayTpTextFormatter;
 import com.mojang.brigadier.CommandDispatcher;
 
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.ControlFlowAware.Command;
 import net.minecraft.command.argument.Vec3ArgumentType;
 import net.minecraft.entity.player.PlayerEntity;
@@ -26,7 +25,7 @@ public class PayTpCommand {
   public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
     configData = PayTpConfig.getInstance().data();
     dispatcher.register(CommandManager.literal(configData.commandName())
-        // ===== /paytp <pos> =====
+        // ===== /ptp <pos> =====
         .then(CommandManager.argument("pos", Vec3ArgumentType.vec3()).executes(PayTpCommand::payTpCoords))
     );
   }

@@ -1,6 +1,7 @@
 package com.flwolfy.paytp.util;
 
 import java.util.stream.StreamSupport;
+
 import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ContainerComponent;

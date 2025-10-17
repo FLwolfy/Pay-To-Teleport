@@ -1,10 +1,10 @@
 package com.flwolfy.paytp;
 
 import com.flwolfy.paytp.command.PayTpCommand;
-import com.flwolfy.paytp.config.PayTpConfig;
-import net.fabricmc.api.ModInitializer;
 
+import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
