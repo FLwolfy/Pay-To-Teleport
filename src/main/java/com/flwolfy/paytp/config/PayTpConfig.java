@@ -22,12 +22,11 @@ public class PayTpConfig {
   private static final String CONFIG_FILE_NAME = "paytp.json";
 
   private static PayTpConfig instance;
-
-  private final PayTpConfigData data;
-
   private PayTpConfig(PayTpConfigData data) {
     this.data = data;
   }
+
+  private final PayTpConfigData data;
 
   /**
    * Returns the current config data.

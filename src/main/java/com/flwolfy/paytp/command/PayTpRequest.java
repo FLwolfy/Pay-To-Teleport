@@ -17,11 +17,16 @@ public class PayTpRequest {
   private static PayTpRequest instance;
 
   private final Map<UUID, Deque<RequestData>> pendingRequests = new ConcurrentHashMap<>();
-  private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+  private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+    Thread t = new Thread(r);
+    t.setDaemon(true);
+    t.setName("PayTp-Scheduler");
+    return t;
+  });
 
   private record RequestData(UUID senderId, Runnable onAccept, Runnable onCancel) { }
-  private PayTpRequest() {}
 
+  private PayTpRequest() {}
   public static PayTpRequest getInstance() {
     if (instance == null) instance = new PayTpRequest();
     return instance;

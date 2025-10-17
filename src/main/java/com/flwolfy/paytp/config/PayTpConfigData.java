@@ -9,7 +9,8 @@ public record PayTpConfigData(
     // Items
     String currencyItem,
 
-    // Expires
+    // Settings
+    String language,
     int expireTime,
 
     // Prices
@@ -18,7 +19,7 @@ public record PayTpConfigData(
     double baseRadius,
     double rate,
 
-    // Settings
+    // Flags
     boolean allowEnderChest,
     boolean prioritizeEnderChest,
     boolean allowShulkerBox,
@@ -33,6 +34,7 @@ public record PayTpConfigData(
       "ptpa",
       "ptpc",
       "minecraft:diamond",
+      "en_us",
       10,
       1,
       64,
