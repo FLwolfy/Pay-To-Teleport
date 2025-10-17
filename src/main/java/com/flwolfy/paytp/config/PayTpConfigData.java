@@ -9,7 +9,8 @@ public record PayTpConfigData(
     // Items
     String currencyItem,
 
-    // TODO: 这里添加配置过期时间
+    // Expires
+    int expireTime,
 
     // Prices
     int minPrice,
@@ -32,6 +33,7 @@ public record PayTpConfigData(
       "ptpa",
       "ptpc",
       "minecraft:diamond",
+      10,
       1,
       64,
       10.0,

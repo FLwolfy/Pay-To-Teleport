@@ -79,13 +79,16 @@ public class PayTpCommand {
       }, () -> {
         sender.sendMessage(PayTpTextFormatter.format("paytp.cancel"), false);
         target.sendMessage(PayTpTextFormatter.format("paytp.cancel"), false);
-      });
+      }, configData.expireTime());
 
       sender.sendMessage(PayTpTextFormatter.format("paytp.request",
           target.getName().getString()
       ), false);
 
-      MutableText requestMessage = (MutableText) PayTpTextFormatter.format("paytp.receive", sender.getName().getString());
+      MutableText requestMessage = (MutableText) PayTpTextFormatter.format("paytp.receive",
+          sender.getName().getString(),
+          configData.expireTime()
+      );
       requestMessage.append(Text.translatable("paytp.accept").setStyle(
           Style.EMPTY.withColor(PayTpTextFormatter.DEFAULT_HIGHLIGHT_COLOR)
               .withClickEvent(new ClickEvent(
