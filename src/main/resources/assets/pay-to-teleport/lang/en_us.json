@@ -2,7 +2,20 @@
   "paytp.teleport": "%s!",
   "paytp.consume": "It costs %s %s in total.",
   "paytp.not-enough": "You don't have enough %s! The teleportation fee is %s %s but you only have %s.",
+  "paytp.target-not-enough": "The other player does not have enough money to teleport.",
+
+  "paytp.request": "Sending teleporting request to player %s...",
+  "paytp.receive": "Player %s wants to teleport to you...\nPlease select: ",
+  "paytp.cancel": "Request canceled.",
+
+  "paytp.no-target": "Improper target player!",
+  "paytp.no-accept": "No teleporting request to accept!",
+  "paytp.no-cancel": "No teleporting request to cancel!",
+
+  "paytp.hover": "click to %s teleport request",
 
   "paytp.success": "Teleporting",
-  "paytp.failed": "Failed to Teleport"
+  "paytp.failed": "Failed to Teleport",
+  "paytp.accept": "[Accept]",
+  "paytp.deny": "[Deny]"
 }

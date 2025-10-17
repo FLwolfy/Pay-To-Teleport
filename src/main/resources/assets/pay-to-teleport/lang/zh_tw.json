@@ -1,0 +1,20 @@
+{
+  "paytp.teleport": "傳送%s！",
+  "paytp.consume": "本次傳送消費%s塊%s，謝謝惠顧。",
+  "paytp.not-enough": "%s的數量不夠，需要%s塊%s而你只有%s塊。",
+  "paytp.target-not-enough": "對方沒有足夠的金錢來傳送。",
+
+  "paytp.request": "正在提交傳送請求至玩家%s...",
+  "paytp.receive": "玩家%s請求傳送至你身旁...\n請選擇：",
+  "paytp.cancel": "傳送請求已取消。",
+  "paytp.no-target": "傳送目標不正確！",
+  "paytp.no-accept": "沒有待接受的傳送請求！",
+  "paytp.no-cancel": "沒有可以取消的傳送請求！",
+
+  "paytp.hover": "點擊%s傳送",
+
+  "paytp.success": "成功",
+  "paytp.failed": "失敗",
+  "paytp.accept": "【同意】",
+  "paytp.deny": "【拒絕】"
+}

@@ -1,9 +1,15 @@
 package com.flwolfy.paytp.config;
 
 public record PayTpConfigData(
-    // Attributes
+    // Commands
     String commandName,
+    String acceptName,
+    String cancelName,
+
+    // Items
     String currencyItem,
+
+    // TODO: 这里添加配置过期时间
 
     // Prices
     int minPrice,
@@ -23,6 +29,8 @@ public record PayTpConfigData(
    */
   public static final PayTpConfigData DEFAULT = new PayTpConfigData(
       "ptp",
+      "ptpa",
+      "ptpc",
       "minecraft:diamond",
       1,
       64,
