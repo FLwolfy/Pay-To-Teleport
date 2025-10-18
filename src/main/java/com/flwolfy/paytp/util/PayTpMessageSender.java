@@ -37,7 +37,7 @@ public class PayTpMessageSender {
 
   public static void msgTpSucceeded(
       ServerPlayerEntity player,
-      String currencyName,
+      Text currencyItemText,
       int price
   ) {
     Text msg = Text.empty()
@@ -47,7 +47,7 @@ public class PayTpMessageSender {
         .append(Text.literal("\n"))
         .append(PayTpTextFormatter.format(LANG_LOADER.getText("paytp.consume"),
             price,
-            currencyName
+            currencyItemText
         ));
 
     player.sendMessage(msg, false);
@@ -55,7 +55,7 @@ public class PayTpMessageSender {
 
   public static void msgTpFailed(
       ServerPlayerEntity player,
-      String currencyName,
+      Text currencyItemText,
       int price,
       int balance
   ) {
@@ -69,9 +69,9 @@ public class PayTpMessageSender {
         .append(PayTpTextFormatter.format(LANG_LOADER.getText("paytp.not-enough"),
             PayTpTextFormatter.DEFAULT_TEXT_COLOR,
             PayTpTextFormatter.DEFAULT_WARN_COLOR,
-            currencyName,
+            currencyItemText,
             price,
-            currencyName,
+            currencyItemText,
             balance
         ));
 
@@ -84,20 +84,20 @@ public class PayTpMessageSender {
 
   public static void msgTpRequestSent(
       ServerPlayerEntity player,
-      String targetName
+      Text targetText
   ) {
-    player.sendMessage(PayTpTextFormatter.format(LANG_LOADER.getText("paytp.request"), targetName), false);
+    player.sendMessage(PayTpTextFormatter.format(LANG_LOADER.getText("paytp.request"), targetText), false);
   }
 
   public static void msgTpRequestReceived(
       ServerPlayerEntity player,
-      String senderName,
+      Text senderText,
       String acceptCommandName,
       String denyCommandName,
       int expireTime
   ) {
     MutableText msg = (MutableText) PayTpTextFormatter.format(LANG_LOADER.getText("paytp.receive"),
-        senderName,
+        senderText,
         expireTime
     );
 

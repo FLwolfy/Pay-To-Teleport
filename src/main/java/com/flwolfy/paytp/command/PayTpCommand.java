@@ -10,8 +10,8 @@ import com.flwolfy.paytp.util.PayTpMessageSender;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
-
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+
 import net.minecraft.command.ControlFlowAware.Command;
 import net.minecraft.command.argument.DimensionArgumentType;
 import net.minecraft.command.argument.EntityArgumentType;
@@ -44,6 +44,9 @@ public class PayTpCommand {
     dispatcher.register(CommandManager.literal(configData.commandName())
         // ===== /ptp (help) =====
         .executes(PayTpCommand::payTpHelp)
+        // ===== /ptp <player> =====
+        .then(CommandManager.argument("target", net.minecraft.command.argument.EntityArgumentType.player())
+            .executes(PayTpCommand::payTpPlayer))
         // ===== /ptp <pos> =====
         .then(CommandManager.argument("pos", Vec3ArgumentType.vec3())
             .executes(PayTpCommand::payTpCoords))
@@ -53,9 +56,6 @@ public class PayTpCommand {
                 .executes(PayTpCommand::payTpDimCoords)
             )
         )
-        // ===== /ptp <player> =====
-        .then(CommandManager.argument("target", net.minecraft.command.argument.EntityArgumentType.player())
-            .executes(PayTpCommand::payTpPlayer))
     );
 
     dispatcher.register(CommandManager.literal(configData.acceptName())
@@ -100,7 +100,7 @@ public class PayTpCommand {
     if (player == null) return 0;
 
     Vec3d targetPos = Vec3ArgumentType.getVec3(ctx, "pos");
-    return teleport(player, targetPos, player.getServerWorld());
+    return teleport(player, targetPos, player.getServerWorld(), false);
   }
 
   private static int payTpDimCoords(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
@@ -109,20 +109,20 @@ public class PayTpCommand {
 
     ServerWorld targetDim = DimensionArgumentType.getDimensionArgument(ctx, "dimension");
     Vec3d targetPos = Vec3ArgumentType.getVec3(ctx, "pos");
-    return teleport(player, targetPos, targetDim);
+    return teleport(player, targetPos, targetDim, false);
   }
 
   private static int payTpPlayer(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
     ServerPlayerEntity sender = ctx.getSource().getPlayer();
     ServerPlayerEntity target = EntityArgumentType.getPlayer(ctx, "target");
     if (sender == null) return 0;
-    if (target == null || sender == target) {
+    if (target == null) {
       PayTpMessageSender.msgNoTargetFound(sender);
       return 0;
     }
 
     requestManager.sendRequest(sender, target, () -> {
-      if (teleport(sender, target.getPos(), target.getServerWorld()) == 0) {
+      if (teleport(sender, target.getPos(), target.getServerWorld(), false) == 0) {
         PayTpMessageSender.msgRequesterNotEnough(target);
       }
     }, () -> {
@@ -130,10 +130,10 @@ public class PayTpCommand {
       PayTpMessageSender.msgTpCanceled(target);
     }, configData.expireTime());
 
-    PayTpMessageSender.msgTpRequestSent(sender, target.getName().getString());
+    PayTpMessageSender.msgTpRequestSent(sender, target.getName());
     PayTpMessageSender.msgTpRequestReceived(
         target,
-        sender.getName().getString(),
+        sender.getName(),
         configData.acceptName(),
         configData.cancelName(),
         configData.expireTime()
@@ -181,7 +181,7 @@ public class PayTpCommand {
     ServerWorld targetWorld = player.getServer().getWorld(home.dimension());
     if (targetWorld == null) return 0;
 
-    int result = teleport(player, home.pos(), targetWorld);
+    int result = teleport(player, home.pos(), targetWorld, true);
     PayTpMessageSender.msgTpHome(player);
 
     return result;
@@ -197,12 +197,12 @@ public class PayTpCommand {
     return Command.SINGLE_SUCCESS;
   }
 
-  private static int teleport(ServerPlayerEntity player, Vec3d targetPos, ServerWorld targetWorld) {
+  private static int teleport(ServerPlayerEntity player, Vec3d targetPos, ServerWorld targetWorld, boolean home) {
     int price = PayTpCalculator.calculatePrice(
         configData.baseRadius(),
         configData.rate(),
         configData.crossDimMultiplier(),
-        configData.homeMultiplier(),
+        home ? configData.homeMultiplier() : 1,
         configData.minPrice(),
         configData.maxPrice(),
         player.getPos(),
@@ -216,7 +216,7 @@ public class PayTpCommand {
     if (balance < price) {
       PayTpMessageSender.msgTpFailed(
           player,
-          PayTpItemHandler.getItemByStringId(configData.currencyItem()).getName().getString(),
+          PayTpItemHandler.getItemByStringId(configData.currencyItem()).getName(),
           price,
           balance
       );
@@ -238,7 +238,7 @@ public class PayTpCommand {
           targetWorld.sendEntityStatus(player, (byte)46);
           PayTpMessageSender.msgTpSucceeded(
               player,
-              PayTpItemHandler.getItemByStringId(configData.currencyItem()).getName().getString(),
+              PayTpItemHandler.getItemByStringId(configData.currencyItem()).getName(),
               price
           );
         }
