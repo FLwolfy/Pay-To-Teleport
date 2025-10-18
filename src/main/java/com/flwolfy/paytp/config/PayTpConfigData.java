@@ -18,6 +18,7 @@ public record PayTpConfigData(
     int maxPrice,
     double baseRadius,
     double rate,
+    double crossDimMultiplier,
 
     // Flags
     boolean allowEnderChest,
@@ -41,6 +42,7 @@ public record PayTpConfigData(
       64,
       10.0,
       0.5,
+      1.5,
 
       true,
       true,

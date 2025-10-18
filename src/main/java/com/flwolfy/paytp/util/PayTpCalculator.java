@@ -6,15 +6,31 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.EnderChestInventory;
 import net.minecraft.item.Item;
+import net.minecraft.registry.RegistryKey;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
 
 public class PayTpCalculator {
 
-  public static int calculatePrice(double baseRadius, double increaseRate, int minPrice, int maxPrice, Vec3d from, Vec3d to) {
-    double distance = from.distanceTo(to);
+  public static int calculatePrice(double baseRadius, double increaseRate, double crossDimMultiplier, int minPrice, int maxPrice, Vec3d from, Vec3d to, RegistryKey<World> fromWorld, RegistryKey<World> toWorld) {
+    double distance;
+    if (fromWorld == toWorld) {
+      distance = from.distanceTo(to);
+    } else if (fromWorld == World.END || toWorld == World.END) {
+      distance = Vec3d.ZERO.distanceTo(to);
+    } else if (fromWorld == World.NETHER) {
+      distance = (from.multiply(8)).distanceTo(to);
+    } else if (toWorld == World.NETHER) {
+      distance = from.distanceTo(to.multiply(0.125));
+    } else {
+      // Note: If you have other worlds, customize your price calculation here.
+      //       Default -> price * crossDimMultiplier
+      distance = from.distanceTo(to);
+    }
 
     double distanceBeyondBase = Math.max(0, distance - baseRadius);
     int calculatedPrice = (int) Math.round(minPrice + distanceBeyondBase * increaseRate);
+    calculatedPrice = fromWorld == toWorld ? calculatedPrice : (int) (calculatedPrice * crossDimMultiplier);
 
     return Math.min(calculatedPrice, maxPrice);
   }

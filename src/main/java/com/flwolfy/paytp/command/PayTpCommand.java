@@ -13,12 +13,16 @@ import com.mojang.brigadier.context.CommandContext;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.ControlFlowAware.Command;
+import net.minecraft.command.argument.DimensionArgumentType;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.command.argument.Vec3ArgumentType;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.TeleportTarget;
+
 import org.slf4j.Logger;
 
 public class PayTpCommand {
@@ -38,6 +42,12 @@ public class PayTpCommand {
         // ===== /ptp <pos> =====
         .then(CommandManager.argument("pos", Vec3ArgumentType.vec3())
             .executes(PayTpCommand::payTpCoords))
+        // ===== /ptp <dimension> <pos> =====
+        .then(CommandManager.argument("dimension", DimensionArgumentType.dimension())
+            .then(CommandManager.argument("pos", Vec3ArgumentType.vec3())
+                .executes(PayTpCommand::payTpDimCoords)
+            )
+        )
         // ===== /ptp <player> =====
         .then(CommandManager.argument("target", net.minecraft.command.argument.EntityArgumentType.player())
             .executes(PayTpCommand::payTpPlayer))
@@ -58,7 +68,17 @@ public class PayTpCommand {
     ServerPlayerEntity player = ctx.getSource().getPlayer();
     if (player != null) {
       Vec3d targetPos = Vec3ArgumentType.getVec3(ctx, "pos");
-      return teleport(player, targetPos);
+      return teleport(player, targetPos, player.getServerWorld());
+    }
+    return 0;
+  }
+
+  private static int payTpDimCoords(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+    ServerPlayerEntity player = ctx.getSource().getPlayer();
+    if (player != null) {
+      ServerWorld targetDim = DimensionArgumentType.getDimensionArgument(ctx, "dimension");
+      Vec3d targetPos = Vec3ArgumentType.getVec3(ctx, "pos");
+      return teleport(player, targetPos, targetDim);
     }
     return 0;
   }
@@ -69,7 +89,7 @@ public class PayTpCommand {
 
     if (sender != null && target != null && sender != target) {
       requestManager.sendRequest(sender, target, () -> {
-        if (teleport(sender, target.getPos()) == 0) {
+        if (teleport(sender, target.getPos(), target.getServerWorld()) == 0) {
           PayTpMessageHandler.msgRequesterNotEnough(target);
         }
       }, () -> {
@@ -117,29 +137,54 @@ public class PayTpCommand {
     return 0;
   }
 
-  private static int teleport(ServerPlayerEntity player, Vec3d to) {
-    int price = PayTpCalculator.calculatePrice(configData.baseRadius(), configData.rate(), configData.minPrice(), configData.maxPrice(), player.getPos(), to);
+  private static int teleport(ServerPlayerEntity player, Vec3d targetPos, ServerWorld targetWorld) {
+    int price = PayTpCalculator.calculatePrice(
+        configData.baseRadius(),
+        configData.rate(),
+        configData.crossDimMultiplier(),
+        configData.minPrice(),
+        configData.maxPrice(),
+        player.getPos(),
+        targetPos,
+        player.getServerWorld().getRegistryKey(),
+        targetWorld.getRegistryKey()
+    );
+
     int balance = PayTpCalculator.checkBalance(configData.currencyItem(), player, configData.flags());
 
-    if (balance >= price) {
-      if (!PayTpCalculator.proceedPayment(configData.currencyItem(), player, price, configData.flags())) {
-        LOGGER.error("Payment proceed failed");
-      }
-      player.requestTeleport(to.x, to.y, to.z);
-      PayTpMessageHandler.msgTpSucceeded(
-          player,
-          PayTpItemHandler.getItemByStringId(configData.currencyItem()).getName().getString(),
-          price
-      );
-    } else {
+    if (balance < price) {
       PayTpMessageHandler.msgTpFailed(
           player,
           PayTpItemHandler.getItemByStringId(configData.currencyItem()).getName().getString(),
           price,
           balance
       );
+      return 0;
     }
 
-    return balance >= price ? Command.SINGLE_SUCCESS : 0;
+    if (!PayTpCalculator.proceedPayment(configData.currencyItem(), player, price, configData.flags())) {
+      LOGGER.error("Payment proceed failed");
+      return 0;
+    }
+
+    TeleportTarget teleportTarget = new TeleportTarget(
+        targetWorld,
+        targetPos,
+        player.getVelocity(),
+        player.getYaw(),
+        player.getPitch(),
+        entity -> {
+          targetWorld.sendEntityStatus(player, (byte)46);
+          PayTpMessageHandler.msgTpSucceeded(
+              player,
+              PayTpItemHandler.getItemByStringId(configData.currencyItem()).getName().getString(),
+              price
+          );
+        }
+    );
+
+    player.teleportTo(teleportTarget);
+    return Command.SINGLE_SUCCESS;
   }
+
 }
