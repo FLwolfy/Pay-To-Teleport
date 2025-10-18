@@ -5,6 +5,7 @@ public record PayTpConfigData(
     String commandName,
     String acceptName,
     String cancelName,
+    String homeName,
 
     // Items
     String currencyItem,
@@ -19,6 +20,7 @@ public record PayTpConfigData(
     double baseRadius,
     double rate,
     double crossDimMultiplier,
+    double homeMultiplier,
 
     // Flags
     boolean allowEnderChest,
@@ -34,6 +36,8 @@ public record PayTpConfigData(
       "ptp",
       "ptpa",
       "ptpc",
+      "ptphome",
+
       "minecraft:diamond",
       "en_us",
 
@@ -43,6 +47,7 @@ public record PayTpConfigData(
       10.0,
       0.5,
       1.5,
+      0.5,
 
       true,
       true,

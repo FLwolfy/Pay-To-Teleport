@@ -15,14 +15,14 @@ import org.slf4j.Logger;
 /**
  * PayTpConfig handles loading and saving configuration for the Pay-to-Teleport mod.
  */
-public class PayTpConfig {
+public class PayTpConfigManager {
 
   private static final Logger LOGGER = PayTpMod.LOGGER;
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
   private static final String CONFIG_FILE_NAME = "paytp.json";
 
-  private static PayTpConfig instance;
-  private PayTpConfig(PayTpConfigData data) {
+  private static PayTpConfigManager instance;
+  private PayTpConfigManager(PayTpConfigData data) {
     this.data = data;
   }
 
@@ -38,7 +38,7 @@ public class PayTpConfig {
   /**
    * Singleton accessor.
    */
-  public static PayTpConfig getInstance() {
+  public static PayTpConfigManager getInstance() {
     if (instance == null) instance = loadConfig();
     return instance;
   }
@@ -47,20 +47,20 @@ public class PayTpConfig {
   // ============= File Operations =========== //
   // ========================================= //
 
-  private static PayTpConfig loadConfig() {
+  private static PayTpConfigManager loadConfig() {
     File file = new File("config/" + CONFIG_FILE_NAME);
     if (!file.exists()) {
       PayTpConfigData defaults = PayTpConfigData.DEFAULT;
       saveStatic(defaults, file);
-      return new PayTpConfig(defaults);
+      return new PayTpConfigManager(defaults);
     }
 
     try (FileReader reader = new FileReader(file)) {
       PayTpConfigData data = GSON.fromJson(reader, PayTpConfigData.class);
-      return new PayTpConfig(data);
+      return new PayTpConfigManager(data);
     } catch (IOException e) {
       LOGGER.error("Failed to load PayTp config", e);
-      return new PayTpConfig(PayTpConfigData.DEFAULT);
+      return new PayTpConfigManager(PayTpConfigData.DEFAULT);
     }
   }
 

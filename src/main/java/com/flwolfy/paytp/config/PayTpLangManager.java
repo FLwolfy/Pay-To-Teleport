@@ -17,15 +17,15 @@ import java.util.Objects;
 
 import org.slf4j.Logger;
 
-public class PayTpLang {
+public class PayTpLangManager {
 
   private static final Gson GSON = new Gson();
   private static final Logger LOGGER = PayTpMod.LOGGER;
   private static final String[] LANGUAGES = {"en_us", "zh_cn", "zh_tw"};
   private static final String DEFAULT_LANGUAGE = "en_us";
 
-  private static PayTpLang instance;
-  private PayTpLang() {}
+  private static PayTpLangManager instance;
+  private PayTpLangManager() {}
 
   private Map<String, Map<String, String>> languageMap = new HashMap<>();
   private String language;
@@ -33,9 +33,9 @@ public class PayTpLang {
   /**
    * Singleton method to get the loader instance.
    */
-  public static PayTpLang getInstance() {
+  public static PayTpLangManager getInstance() {
     if (instance == null) {
-      instance = new PayTpLang();
+      instance = new PayTpLangManager();
     }
     instance.languageMap = loadAllLanguages();
     instance.language = DEFAULT_LANGUAGE;
@@ -52,7 +52,7 @@ public class PayTpLang {
     for (String lang : LANGUAGES) {
       String path = "/assets/" + PayTpMod.MOD_ID + "/lang/" + lang + ".json";
       try (InputStreamReader reader = new InputStreamReader(
-          Objects.requireNonNull(PayTpLang.class.getResourceAsStream(path)))) {
+          Objects.requireNonNull(PayTpLangManager.class.getResourceAsStream(path)))) {
 
         Type type = new TypeToken<Map<String, String>>() {}.getType();
         Map<String, String> map = GSON.fromJson(reader, type);

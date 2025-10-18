@@ -1,7 +1,7 @@
 package com.flwolfy.paytp.config;
 
 public enum PayTpConfigFlag {
-  ALLOW_ENDER_CHEST(1 << 0),
+  ALLOW_ENDER_CHEST(1),
   PRIORITIZE_ENDER_CHEST(1 << 1),
   ALLOW_SHULKER_BOX(1 << 2),
   PRIORITIZE_SHULKER_BOX(1 << 3);

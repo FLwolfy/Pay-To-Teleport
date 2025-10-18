@@ -1,8 +1,13 @@
 {
   "paytp.teleport": "%s!",
   "paytp.consume": "It costs %s %s in total.",
+
   "paytp.not-enough": "You don't have enough %s! The teleportation fee is %s %s but you only have %s.",
   "paytp.requester-not-enough": "The other player does not have enough money to teleport.",
+
+  "paytp.tp-home": "Welcome home~",
+  "paytp.no-home": "You have not set a home yet.",
+  "paytp.set-home": "Successfully set your current location as your %s!",
 
   "paytp.request": "Sending teleporting request to player %s...",
   "paytp.receive": "Player %s wants to teleport to you... The request will expire in %s seconds.\nPlease select: ",
@@ -17,5 +22,8 @@
   "paytp.success": "Teleporting",
   "paytp.failed": "Failed to Teleport",
   "paytp.accept": "[Accept]",
-  "paytp.deny": "[Deny]"
+  "paytp.deny": "[Deny]",
+  "paytp.home": "[Home]",
+
+  "paytp.help": "==============================================\n============== PayTp Command Help ==============\nBelow are all commands provided by this plugin:\n\n[Teleportation]\n    %s <x> <y> <z>\n        - Teleport to the specified coordinates\n\n    %s <dimension> <x> <y> <z>\n        - Teleport to the specified dimension and coordinates\n\n    %s <player>\n        - Request to teleport to a target player\n\n[Request Control]\n    %s\n        - Accept the most recent teleport request\n\n    %s\n        - Cancel or deny the teleport request\n\n[Home System]\n    %s\n        - Return to your set home\n\n    %s\n        - Set your current position as home\n\n==============================================\nNote: All teleportations cost currency based on distance and cross-dimension travel."
 }

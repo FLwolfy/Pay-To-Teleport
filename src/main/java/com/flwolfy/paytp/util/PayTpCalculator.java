@@ -12,7 +12,18 @@ import net.minecraft.world.World;
 
 public class PayTpCalculator {
 
-  public static int calculatePrice(double baseRadius, double increaseRate, double crossDimMultiplier, int minPrice, int maxPrice, Vec3d from, Vec3d to, RegistryKey<World> fromWorld, RegistryKey<World> toWorld) {
+  public static int calculatePrice(
+      double baseRadius,
+      double increaseRate,
+      double crossDimMultiplier,
+      double homeMultiplier,
+      int minPrice,
+      int maxPrice,
+      Vec3d from,
+      Vec3d to,
+      RegistryKey<World> fromWorld,
+      RegistryKey<World> toWorld
+  ) {
     double distance;
     if (fromWorld == toWorld) {
       distance = from.distanceTo(to);
@@ -30,7 +41,12 @@ public class PayTpCalculator {
 
     double distanceBeyondBase = Math.max(0, distance - baseRadius);
     int calculatedPrice = (int) Math.round(minPrice + distanceBeyondBase * increaseRate);
+
+    // Cross-dimenstion multiplier
     calculatedPrice = fromWorld == toWorld ? calculatedPrice : (int) (calculatedPrice * crossDimMultiplier);
+
+    // Home multiplier
+    calculatedPrice = (int) (calculatedPrice * homeMultiplier);
 
     return Math.min(calculatedPrice, maxPrice);
   }

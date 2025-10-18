@@ -11,10 +11,10 @@ import java.util.concurrent.*;
  * Singleton class that manages teleport requests between players.
  * Supports multiple requests per target (FILO stack) with precise expire time.
  */
-public class PayTpRequest {
+public class PayTpRequestManager {
 
   private static final Logger LOGGER = PayTpMod.LOGGER;
-  private static PayTpRequest instance;
+  private static PayTpRequestManager instance;
 
   private final Map<UUID, Deque<RequestData>> pendingRequests = new ConcurrentHashMap<>();
   private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
@@ -26,9 +26,9 @@ public class PayTpRequest {
 
   private record RequestData(UUID senderId, Runnable onAccept, Runnable onCancel) { }
 
-  private PayTpRequest() {}
-  public static PayTpRequest getInstance() {
-    if (instance == null) instance = new PayTpRequest();
+  private PayTpRequestManager() {}
+  public static PayTpRequestManager getInstance() {
+    if (instance == null) instance = new PayTpRequestManager();
     return instance;
   }
 

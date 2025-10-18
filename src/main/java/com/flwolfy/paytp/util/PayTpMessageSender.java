@@ -1,6 +1,6 @@
 package com.flwolfy.paytp.util;
 
-import com.flwolfy.paytp.config.PayTpLang;
+import com.flwolfy.paytp.config.PayTpLangManager;
 
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.ClickEvent;
@@ -9,9 +9,9 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 
-public class PayTpMessageHandler {
+public class PayTpMessageSender {
 
-  private static final PayTpLang LANG_LOADER = PayTpLang.getInstance();
+  private static final PayTpLangManager LANG_LOADER = PayTpLangManager.getInstance();
 
   /**
    * Change the message language to the specified language if supported.
@@ -60,11 +60,15 @@ public class PayTpMessageHandler {
       int balance
   ) {
     Text msg = Text.empty()
-        .append(PayTpTextFormatter.format(LANG_LOADER.getText("paytp.teleport"), PayTpTextFormatter.DEFAULT_TEXT_COLOR, PayTpTextFormatter.DEFAULT_WARN_COLOR,
+        .append(PayTpTextFormatter.format(LANG_LOADER.getText("paytp.teleport"),
+            PayTpTextFormatter.DEFAULT_TEXT_COLOR,
+            PayTpTextFormatter.DEFAULT_WARN_COLOR,
             LANG_LOADER.getText("paytp.failed")
         ))
         .append(Text.literal("\n"))
-        .append(PayTpTextFormatter.format(LANG_LOADER.getText("paytp.not-enough"), PayTpTextFormatter.DEFAULT_TEXT_COLOR, PayTpTextFormatter.DEFAULT_WARN_COLOR,
+        .append(PayTpTextFormatter.format(LANG_LOADER.getText("paytp.not-enough"),
+            PayTpTextFormatter.DEFAULT_TEXT_COLOR,
+            PayTpTextFormatter.DEFAULT_WARN_COLOR,
             currencyName,
             price,
             currencyName,
@@ -140,4 +144,44 @@ public class PayTpMessageHandler {
   public static void msgNoCancelRequest(ServerPlayerEntity player) {
     player.sendMessage(PayTpTextFormatter.format(LANG_LOADER.getText("paytp.no-cancel")), false);
   }
+
+  public static void msgTpHome(ServerPlayerEntity player) {
+    player.sendMessage(PayTpTextFormatter.format(LANG_LOADER.getText("paytp.tp-home")), false);
+  }
+
+  public static void msgHomeSet(ServerPlayerEntity player) {
+    Text msg = Text.empty()
+        .append(PayTpTextFormatter.format(LANG_LOADER.getText("paytp.set-home"),
+            LANG_LOADER.getText("paytp.home")
+        ));
+    player.sendMessage(msg, false);
+  }
+
+  public static void msgHomeNotSet(ServerPlayerEntity player) {
+    player.sendMessage(PayTpTextFormatter.format(LANG_LOADER.getText("paytp.no-home")), false);
+  }
+
+  public static void msgHelp(
+      ServerPlayerEntity player,
+      String tpCommandName,
+      String tpDimCommandName,
+      String tpPlayerCommandName,
+      String acceptCommandName,
+      String denyCommandName,
+      String homeCommandName,
+      String setHomeCommandName
+  ) {
+    Text msg = Text.empty()
+        .append(PayTpTextFormatter.format(LANG_LOADER.getText("paytp.help"),
+            Text.literal("/"+tpCommandName).styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + tpCommandName + " ~ ~ ~"))),
+            Text.literal("/"+tpDimCommandName).styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + tpDimCommandName + " " + player.getServerWorld().getRegistryKey().getValue().toString() + " ~ ~ ~"))),
+            Text.literal("/"+tpPlayerCommandName).styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + tpPlayerCommandName + " " + player.getName().getString()))),
+            Text.literal("/"+acceptCommandName).styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + acceptCommandName))),
+            Text.literal("/"+denyCommandName).styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + denyCommandName))),
+            Text.literal("/"+homeCommandName).styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + homeCommandName))),
+            Text.literal("/"+setHomeCommandName).styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + setHomeCommandName)))
+        ));
+    player.sendMessage(msg, false);
+  }
+
 }

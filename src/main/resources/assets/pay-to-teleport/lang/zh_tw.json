@@ -1,8 +1,13 @@
 {
   "paytp.teleport": "傳送%s！",
   "paytp.consume": "本次傳送消費%s塊%s，謝謝惠顧。",
+
   "paytp.not-enough": "%s的數量不夠，需要%s塊%s而你只有%s塊。",
   "paytp.requester-not-enough": "對方沒有足夠的金錢來傳送。",
+
+  "paytp.tp-home": "歡迎回家～",
+  "paytp.no-home": "您尚未設定家。",
+  "paytp.set-home": "成功設定目前位置為您的%s！",
 
   "paytp.request": "正在提交傳送請求至玩家%s...",
   "paytp.receive": "玩家%s請求傳送至你身旁...請求將於%s秒後過期。\n請選擇：",
@@ -17,5 +22,8 @@
   "paytp.success": "成功",
   "paytp.failed": "失敗",
   "paytp.accept": "【同意】",
-  "paytp.deny": "【拒絕】"
+  "paytp.deny": "【拒絕】",
+  "paytp.home": "【家】",
+
+  "paytp.help": "=============================================\n================ PayTp 指令說明 ================\n以下是本插件提供的所有指令：\n\n[傳送]\n    %s <x> <y> <z>\n        - 傳送到指定座標\n\n    %s <dimension> <x> <y> <z>\n        - 傳送到指定維度及座標\n\n    %s <player>\n        - 請求傳送到目標玩家\n\n[請求控制]\n    %s\n        - 接受最近的傳送請求\n\n    %s\n        - 取消或拒絕傳送請求\n\n[家系統]\n    %s\n        - 回到你設定的家\n\n    %s\n        - 將當前位置設為家\n\n=============================================\n注意：所有傳送將根據距離及跨維度消耗貨幣。"
 }
