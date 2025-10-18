@@ -14,6 +14,14 @@ import net.minecraft.util.Identifier;
 
 public class PayTpItemHandler {
 
+  /**
+   * Get an item object from the full item string ID.
+   * <p>
+   * Example:
+   * <pre>
+   *   minecraft:diamond -> Items.DIAMOND
+   * </pre>
+   */
   public static Item getItemByStringId(String fullId) {
     String namespace = fullId.contains(":") ? fullId.substring(0, fullId.lastIndexOf(':')) : "minecraft";
     String id        = fullId.contains(":") ? fullId.substring(fullId.lastIndexOf(':') + 1) : fullId;
@@ -21,6 +29,10 @@ public class PayTpItemHandler {
     return Registries.ITEM.get(currencyID);
   }
 
+  /**
+   * Get item count in an inventory.
+   * @param allowShulkerBox whether to allow counting items in shulker boxes in this inventory or not.
+   */
   public static int getInventoryCount(Inventory inventory, Item target, boolean allowShulkerBox) {
     int count = 0;
 
@@ -48,6 +60,9 @@ public class PayTpItemHandler {
     return count;
   }
 
+  /**
+   * Remove target item in the given inventory with maximum amount.
+   */
   public static int removeInventoryItems(Inventory inventory, Item target, int amount) {
     int remaining = amount;
 
@@ -64,6 +79,9 @@ public class PayTpItemHandler {
     return remaining;
   }
 
+  /**
+   * Remove target item in the shulker boxes in the given inventory with maximum amount.
+   */
   public static int removeShulkerItems(Inventory inventory, Item targetItem, int amount) {
     final int[] remaining = {amount};
 

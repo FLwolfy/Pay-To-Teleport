@@ -32,6 +32,10 @@ public class PayTpRequest {
     return instance;
   }
 
+  // ========================================= //
+  // ============= Request Methods =========== //
+  // ========================================= //
+
   public void sendRequest(
       ServerPlayerEntity sender,
       ServerPlayerEntity target,

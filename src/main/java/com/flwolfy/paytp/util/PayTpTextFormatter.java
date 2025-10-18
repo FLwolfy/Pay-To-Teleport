@@ -6,11 +6,35 @@ import net.minecraft.util.Formatting;
 
 public class PayTpTextFormatter {
 
-
   public static final Formatting DEFAULT_TEXT_COLOR = Formatting.YELLOW;
   public static final Formatting DEFAULT_HIGHLIGHT_COLOR = Formatting.GREEN;
   public static final Formatting DEFAULT_WARN_COLOR = Formatting.RED;
 
+  // ========================================= //
+  // ============= Text Formatting =========== //
+  // ========================================= //
+
+  /**
+   * Formats a {@link Text} template with color highlighting for inserted arguments.
+   * <p>
+   * This method works similarly to {@link String#format(String, Object...)}, but supports
+   * Minecraft's {@link Text} components and color formatting. Each occurrence of <code>%s</code>
+   * in the input text will be replaced with the corresponding argument from {@code args}, and
+   * highlighted with a specified color.
+   * </p>
+   *
+   * Example:
+   * <pre>
+   *   format(Text.literal("Hello, %s!"), Formatting.WHITE, Formatting.GOLD, "Steve");
+   *   // => "Hello, " (white) + "Steve" (gold) + "!" (white)
+   * </pre>
+   *
+   * @param template        The base {@link Text} template containing "%s" placeholders.
+   * @param textColor       The {@link Formatting} color applied to normal text segments.
+   * @param highlightColor  The {@link Formatting} color applied to substituted argument segments.
+   * @param args            The objects or {@link Text} instances to insert into the placeholders.
+   * @return                A fully formatted {@link Text} object with colors applied.
+   */
   public static Text format(Text template, Formatting textColor, Formatting highlightColor, Object... args) {
     String raw = template.getString();
     String[] parts = raw.split("%s", -1);
@@ -31,6 +55,14 @@ public class PayTpTextFormatter {
     return result;
   }
 
+  /**
+   * A shorthand version of {@link #format(Text, Formatting, Formatting, Object...)} that uses
+   * default colors for normal text and highlights.
+   *
+   * @param template  The {@link Text} template containing "%s" placeholders.
+   * @param args      The objects or {@link Text} instances to insert into placeholders.
+   * @return          A formatted {@link Text} using default colors.
+   */
   public static Text format(Text template, Object... args) {
     return format(template, DEFAULT_TEXT_COLOR, DEFAULT_HIGHLIGHT_COLOR, args);
   }

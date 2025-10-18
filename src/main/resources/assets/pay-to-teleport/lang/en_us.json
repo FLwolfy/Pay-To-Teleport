@@ -2,7 +2,7 @@
   "paytp.teleport": "%s!",
   "paytp.consume": "It costs %s %s in total.",
   "paytp.not-enough": "You don't have enough %s! The teleportation fee is %s %s but you only have %s.",
-  "paytp.target-not-enough": "The other player does not have enough money to teleport.",
+  "paytp.requester-not-enough": "The other player does not have enough money to teleport.",
 
   "paytp.request": "Sending teleporting request to player %s...",
   "paytp.receive": "Player %s wants to teleport to you... The request will expire in %s seconds.\nPlease select: ",

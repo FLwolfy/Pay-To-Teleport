@@ -35,11 +35,13 @@ public record PayTpConfigData(
       "ptpc",
       "minecraft:diamond",
       "en_us",
+
       10,
       1,
       64,
       10.0,
       0.5,
+
       true,
       true,
       true,

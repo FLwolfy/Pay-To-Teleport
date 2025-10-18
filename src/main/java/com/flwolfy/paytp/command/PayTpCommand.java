@@ -1,13 +1,13 @@
 package com.flwolfy.paytp.command;
 
+import com.flwolfy.paytp.PayTpMod;
 import com.flwolfy.paytp.config.PayTpConfig;
 import com.flwolfy.paytp.config.PayTpConfigData;
 import com.flwolfy.paytp.util.PayTpCalculator;
 
 import com.flwolfy.paytp.util.PayTpItemHandler;
-import com.flwolfy.paytp.util.PayTpTextFormatter;
+import com.flwolfy.paytp.util.PayTpMessageHandler;
 
-import com.flwolfy.paytp.util.PayTpTextLoader;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 
@@ -18,23 +18,21 @@ import net.minecraft.command.argument.Vec3ArgumentType;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
+import org.slf4j.Logger;
 
 public class PayTpCommand {
 
+  private static final Logger LOGGER = PayTpMod.LOGGER;
+
   private static PayTpConfigData configData;
   private static PayTpRequest requestManager;
-  private static PayTpTextLoader textLoader;
 
   public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
     configData = PayTpConfig.getInstance().data();
     requestManager = PayTpRequest.getInstance();
-    textLoader = PayTpTextLoader.getInstance(configData.language());
+
+    PayTpMessageHandler.changeLanguage(configData.language());
 
     dispatcher.register(CommandManager.literal(configData.commandName())
         // ===== /ptp <pos> =====
@@ -72,57 +70,23 @@ public class PayTpCommand {
     if (sender != null && target != null && sender != target) {
       requestManager.sendRequest(sender, target, () -> {
         if (teleport(sender, target.getPos()) == 0) {
-          MutableText failedMessage = Text.empty()
-              .append(PayTpTextFormatter.format(textLoader.getText("paytp.teleport"), PayTpTextFormatter.DEFAULT_TEXT_COLOR, PayTpTextFormatter.DEFAULT_WARN_COLOR,
-                  textLoader.getText("paytp.failed")
-              )).append(PayTpTextFormatter.format(textLoader.getText("paytp.target-not-enough")));
-          target.sendMessage(failedMessage, false);
+          PayTpMessageHandler.msgRequesterNotEnough(target);
         }
       }, () -> {
-        sender.sendMessage(PayTpTextFormatter.format(textLoader.getText("paytp.cancel")), false);
-        target.sendMessage(PayTpTextFormatter.format(textLoader.getText("paytp.cancel")), false);
+        PayTpMessageHandler.msgTpCanceled(sender);
+        PayTpMessageHandler.msgTpCanceled(target);
       }, configData.expireTime());
 
-      sender.sendMessage(PayTpTextFormatter.format(textLoader.getText("paytp.request"),
-          target.getName()
-      ), false);
-
-      MutableText requestMessage = (MutableText) PayTpTextFormatter.format(textLoader.getText("paytp.receive"),
-          sender.getName(),
+      PayTpMessageHandler.msgTpRequestSent(sender, target.getName().getString());
+      PayTpMessageHandler.msgTpRequestReceived(
+          target,
+          sender.getName().getString(),
+          configData.acceptName(),
+          configData.cancelName(),
           configData.expireTime()
       );
-      requestMessage.append(textLoader.getText("paytp.accept").setStyle(
-          Style.EMPTY.withColor(PayTpTextFormatter.DEFAULT_HIGHLIGHT_COLOR)
-              .withClickEvent(new ClickEvent(
-                  ClickEvent.Action.RUN_COMMAND,
-                  "/" + configData.acceptName()
-              ))
-              .withHoverEvent(new HoverEvent(
-                  HoverEvent.Action.SHOW_TEXT,
-                  PayTpTextFormatter.format(textLoader.getText("paytp.hover"),
-                      textLoader.getText("paytp.accept")
-                  )
-              ))
-      ));
-      requestMessage.append(textLoader.getText("paytp.deny").setStyle(
-          Style.EMPTY.withColor(PayTpTextFormatter.DEFAULT_WARN_COLOR)
-              .withClickEvent(new ClickEvent(
-                  ClickEvent.Action.RUN_COMMAND,
-                  "/" + configData.cancelName()
-              ))
-              .withHoverEvent(new HoverEvent(
-                  HoverEvent.Action.SHOW_TEXT,
-                  PayTpTextFormatter.format(textLoader.getText("paytp.hover"),
-                      PayTpTextFormatter.DEFAULT_TEXT_COLOR,
-                      PayTpTextFormatter.DEFAULT_WARN_COLOR,
-                      textLoader.getText("paytp.deny")
-                  )
-              ))
-      ));
-
-      target.sendMessage(requestMessage, false);
     } else if (sender != null) {
-      sender.sendMessage(PayTpTextFormatter.format(textLoader.getText("paytp.no-target")), false);
+      PayTpMessageHandler.msgNoTargetFound(sender);
     }
 
     return 0;
@@ -132,7 +96,7 @@ public class PayTpCommand {
     ServerPlayerEntity receiver = ctx.getSource().getPlayer();
     if (receiver != null) {
       if (!requestManager.accept(receiver)) {
-        receiver.sendMessage(PayTpTextFormatter.format(textLoader.getText("paytp.no-accept")), false);
+        PayTpMessageHandler.msgNoAcceptRequest(receiver);
         return 0;
       }
       return Command.SINGLE_SUCCESS;
@@ -146,7 +110,7 @@ public class PayTpCommand {
       if (requestManager.cancel(receiver)) {
         return Command.SINGLE_SUCCESS;
       } else {
-        receiver.sendMessage(PayTpTextFormatter.format(textLoader.getText("paytp.no-cancel")), false);
+        PayTpMessageHandler.msgNoCancelRequest(receiver);
         return 0;
       }
     }
@@ -157,35 +121,25 @@ public class PayTpCommand {
     int price = PayTpCalculator.calculatePrice(configData.baseRadius(), configData.rate(), configData.minPrice(), configData.maxPrice(), player.getPos(), to);
     int balance = PayTpCalculator.checkBalance(configData.currencyItem(), player, configData.flags());
 
-    MutableText message = Text.empty();
     if (balance >= price) {
-      PayTpCalculator.proceedPayment(configData.currencyItem(), player, price, configData.flags());
+      if (!PayTpCalculator.proceedPayment(configData.currencyItem(), player, price, configData.flags())) {
+        LOGGER.error("Payment proceed failed");
+      }
       player.requestTeleport(to.x, to.y, to.z);
-
-      message = message
-          .append(PayTpTextFormatter.format(textLoader.getText("paytp.teleport"),
-              textLoader.getText("paytp.success")
-          ))
-          .append(Text.literal("\n"))
-          .append(PayTpTextFormatter.format(textLoader.getText("paytp.consume"),
-              price,
-              PayTpItemHandler.getItemByStringId(configData.currencyItem()).getName()
-          ));
+      PayTpMessageHandler.msgTpSucceeded(
+          player,
+          PayTpItemHandler.getItemByStringId(configData.currencyItem()).getName().getString(),
+          price
+      );
     } else {
-      message = message
-          .append(PayTpTextFormatter.format(textLoader.getText("paytp.teleport"), PayTpTextFormatter.DEFAULT_TEXT_COLOR, PayTpTextFormatter.DEFAULT_WARN_COLOR,
-              textLoader.getText("paytp.failed")
-          ))
-          .append(Text.literal("\n"))
-          .append(PayTpTextFormatter.format(textLoader.getText("paytp.not-enough"), PayTpTextFormatter.DEFAULT_TEXT_COLOR, PayTpTextFormatter.DEFAULT_WARN_COLOR,
-              PayTpItemHandler.getItemByStringId(configData.currencyItem()).getName(),
-              price,
-              PayTpItemHandler.getItemByStringId(configData.currencyItem()).getName(),
-              balance
-          ));
+      PayTpMessageHandler.msgTpFailed(
+          player,
+          PayTpItemHandler.getItemByStringId(configData.currencyItem()).getName().getString(),
+          price,
+          balance
+      );
     }
 
-    player.sendMessage(message, false);
     return balance >= price ? Command.SINGLE_SUCCESS : 0;
   }
 }

@@ -2,7 +2,7 @@
   "paytp.teleport": "傳送%s！",
   "paytp.consume": "本次傳送消費%s塊%s，謝謝惠顧。",
   "paytp.not-enough": "%s的數量不夠，需要%s塊%s而你只有%s塊。",
-  "paytp.target-not-enough": "對方沒有足夠的金錢來傳送。",
+  "paytp.requester-not-enough": "對方沒有足夠的金錢來傳送。",
 
   "paytp.request": "正在提交傳送請求至玩家%s...",
   "paytp.receive": "玩家%s請求傳送至你身旁...請求將於%s秒後過期。\n請選擇：",

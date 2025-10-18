@@ -64,11 +64,6 @@ public class PayTpConfig {
     }
   }
 
-  public void save() {
-    File file = new File("config/" + CONFIG_FILE_NAME);
-    saveStatic(data, file);
-  }
-
   private static void saveStatic(PayTpConfigData data, File file) {
     if (file.getParentFile().mkdirs()) {
       LOGGER.info("Successfully saved config file: " + file.getAbsolutePath());
@@ -78,5 +73,10 @@ public class PayTpConfig {
     } catch (IOException e) {
       LOGGER.error("Failed to save PayTp config", e);
     }
+  }
+
+  public void save() {
+    File file = new File("config/" + CONFIG_FILE_NAME);
+    saveStatic(data, file);
   }
 }
