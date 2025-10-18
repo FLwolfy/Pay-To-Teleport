@@ -46,8 +46,8 @@ public record PayTpConfigData(
 
       true,
       true,
-      true,
-      true
+      false,
+      false
   );
 
   /**
