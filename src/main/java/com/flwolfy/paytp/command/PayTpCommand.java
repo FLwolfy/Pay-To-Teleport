@@ -325,7 +325,6 @@ public class PayTpCommand {
     ServerWorld targetWorld = targetData.world();
     PayTpData fromData = new PayTpData(fromWorld, player.getPos());
     PayTpData toData = new PayTpData(targetWorld, targetData.pos());
-    if (recordToBackStack) backManager.pushPair(player, fromData, toData);
 
     // ---------------------------------
     // Check payment
@@ -349,6 +348,13 @@ public class PayTpCommand {
           balance
       );
       return 0;
+    }
+
+    // ---------------------------------
+    // Record to back stack
+    // ---------------------------------
+    if (recordToBackStack) {
+      backManager.pushPair(player, fromData, toData);
     }
 
     // ---------------------------------

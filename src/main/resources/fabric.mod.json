@@ -19,9 +19,6 @@
 			"com.flwolfy.paytp.PayTpMod"
 		]
 	},
-	"mixins": [
-		"pay-to-teleport.mixins.json"
-	],
 	"depends": {
 		"fabricloader": ">=0.16.10",
 		"minecraft": "~1.21.4",
