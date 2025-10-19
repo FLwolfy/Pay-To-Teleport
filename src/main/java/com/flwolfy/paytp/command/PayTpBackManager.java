@@ -36,9 +36,9 @@ public class PayTpBackManager {
       maxBackStack = DEFAULT_MAX_BACK_STACK;
 
       // Register disconnect event
-      ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
-        PayTpBackManager.getInstance().clearHistory(handler.player);
-      });
+      ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
+          PayTpBackManager.getInstance().clearHistory(handler.player)
+      );
 
       // Register death event
       ServerLivingEntityEvents.AFTER_DEATH.register((entity, livingEntity) -> {

@@ -3,7 +3,7 @@
 	"id": "pay-to-teleport",
 	"version": "${version}",
 	"name": "Pay-To-Teleport",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "This is a minecraft fabric mod that allows you to teleport with configurable item costs.",
 	"authors": [
 		"FLwolfy"
 	],
@@ -24,7 +24,7 @@
 	],
 	"depends": {
 		"fabricloader": ">=0.16.10",
-		"minecraft": "~1.21.4",
+		"minecraft": "~1.21.5",
 		"java": ">=21",
 		"fabric-api": "*"
 	},

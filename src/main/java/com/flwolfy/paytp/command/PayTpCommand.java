@@ -4,6 +4,7 @@ import com.flwolfy.paytp.PayTpMod;
 import com.flwolfy.paytp.data.PayTpConfigManager;
 import com.flwolfy.paytp.data.PayTpConfigData;
 import com.flwolfy.paytp.data.PayTpData;
+import com.flwolfy.paytp.data.PayTpHomeData;
 import com.flwolfy.paytp.flag.Flags;
 import com.flwolfy.paytp.flag.PayTpMultiplierFlags;
 import com.flwolfy.paytp.util.PayTpCalculator;
@@ -278,7 +279,7 @@ public class PayTpCommand {
       return 0;
     }
 
-    PayTpHomeManager.PayTpHomeData home = homeManager.getHome(player);
+    PayTpHomeData home = homeManager.getHome(player);
     ServerWorld targetWorld = player.getServer().getWorld(home.dimension());
     if (targetWorld == null) return 0;
 

@@ -1,14 +1,13 @@
 package com.flwolfy.paytp.command;
 
 import com.flwolfy.paytp.PayTpMod;
+import com.flwolfy.paytp.data.PayTpHomeData;
+import com.flwolfy.paytp.data.PayTpHomeState;
 
-import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.PersistentStateManager;
-import net.minecraft.world.World;
 
 import org.slf4j.Logger;
 
@@ -16,7 +15,6 @@ import org.slf4j.Logger;
 public class PayTpHomeManager {
 
   private static final Logger LOGGER = PayTpMod.LOGGER;
-  private static final String PERSISTENT_STATE_ID = "paytp_home_state";
 
   private static PayTpHomeManager instance;
   private PayTpHomeManager() {}
@@ -28,11 +26,9 @@ public class PayTpHomeManager {
     return instance;
   }
 
-  public record PayTpHomeData(Vec3d pos, RegistryKey<World> dimension) {}
-
   private PayTpHomeState getState(ServerWorld world) {
     PersistentStateManager manager = world.getPersistentStateManager();
-    return manager.getOrCreate(PayTpHomeState.TYPE, PERSISTENT_STATE_ID);
+    return manager.getOrCreate(PayTpHomeState.TYPE);
   }
 
   public void setHome(ServerPlayerEntity player) {

@@ -1,7 +1,7 @@
 package com.flwolfy.paytp.util;
 
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
+import net.minecraft.text.ClickEvent.RunCommand;
+import net.minecraft.text.HoverEvent.ShowText;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -90,8 +90,8 @@ public class PayTpTextBuilder {
   public static Text commandText(Text text, Text hoverText, String clickCommand) {
     return text.copy().setStyle(
         text.getStyle()
-            .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, clickCommand))
-            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText))
+            .withClickEvent(new RunCommand(clickCommand))
+            .withHoverEvent(new ShowText(hoverText))
     );
   }
 
