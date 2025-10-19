@@ -62,6 +62,7 @@ public record PayTpConfigData(
       64,
       10.0,
       0.01,
+
       1.5,
       0.5,
       0.8,
