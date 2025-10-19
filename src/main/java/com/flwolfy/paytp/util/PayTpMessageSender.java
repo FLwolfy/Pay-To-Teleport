@@ -3,7 +3,6 @@ package com.flwolfy.paytp.util;
 import com.flwolfy.paytp.config.PayTpLangManager;
 
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.ClickEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 
