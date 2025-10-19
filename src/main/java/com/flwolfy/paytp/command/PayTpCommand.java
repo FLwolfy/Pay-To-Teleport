@@ -122,7 +122,7 @@ public class PayTpCommand {
 
     if (player == null) return 0;
 
-    PayTpData payTpData = new PayTpData(player.getServerWorld(), targetPos);
+    PayTpData payTpData = new PayTpData(player.getWorld(), targetPos);
     return teleport(
         player,
         payTpData,
@@ -140,7 +140,7 @@ public class PayTpCommand {
 
     PayTpData payTpData = new PayTpData(targetDim, targetPos);
 
-    int multiplierFlags = player.getServerWorld() == targetDim ?
+    int multiplierFlags = player.getWorld() == targetDim ?
         Flags.NO_FLAG :
         Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION);
 
@@ -166,9 +166,9 @@ public class PayTpCommand {
     }
 
     requestManager.sendRequest(sender, target, () -> {
-      PayTpData targetTp = new PayTpData(target.getServerWorld(), target.getPos());
+      PayTpData targetTp = new PayTpData(target.getWorld(), target.getPos());
 
-      int multiplierFlags = sender.getServerWorld() == target.getServerWorld() ?
+      int multiplierFlags = sender.getWorld() == target.getWorld() ?
           Flags.NO_FLAG :
           Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION);
 
@@ -249,7 +249,7 @@ public class PayTpCommand {
     }
 
     @SuppressWarnings("resource")
-    int multiplierFlags = player.getServerWorld() == targetTp.world() ?
+    int multiplierFlags = player.getWorld() == targetTp.world() ?
         Flags.combine(PayTpMultiplierFlags.BACK) :
         Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION, PayTpMultiplierFlags.BACK);
 
@@ -285,7 +285,7 @@ public class PayTpCommand {
 
     PayTpData targetTp = new PayTpData(targetWorld, home.pos());
 
-    int multiplierFlags = player.getServerWorld() == targetWorld ?
+    int multiplierFlags = player.getWorld() == targetWorld ?
         Flags.combine(PayTpMultiplierFlags.HOME) :
         Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION, PayTpMultiplierFlags.HOME);
 
@@ -322,7 +322,7 @@ public class PayTpCommand {
     // ---------------------------------
     // Fetch teleport info
     // ---------------------------------
-    ServerWorld fromWorld = player.getServerWorld();
+    ServerWorld fromWorld = player.getWorld();
     ServerWorld targetWorld = targetData.world();
     PayTpData fromData = new PayTpData(fromWorld, player.getPos());
     PayTpData toData = new PayTpData(targetWorld, targetData.pos());

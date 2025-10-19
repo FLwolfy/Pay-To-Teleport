@@ -43,7 +43,7 @@ public class PayTpBackManager {
       // Register death event
       ServerLivingEntityEvents.AFTER_DEATH.register((entity, livingEntity) -> {
         if (entity instanceof ServerPlayerEntity player) {
-          PayTpBackManager.getInstance().pushSingle(player, new PayTpData(player.getServerWorld(), player.getPos()));
+          PayTpBackManager.getInstance().pushSingle(player, new PayTpData(player.getWorld(), player.getPos()));
         }
       });
     }

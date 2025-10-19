@@ -35,7 +35,7 @@ public class PayTpHomeManager {
     MinecraftServer server = player.getServer();
     if (server != null) {
       ServerWorld overworld = player.getServer().getOverworld();
-      getState(overworld).setHome(player.getUuid(), player.getPos(), player.getServerWorld().getRegistryKey());
+      getState(overworld).setHome(player.getUuid(), player.getPos(), player.getWorld().getRegistryKey());
     } else {
       LOGGER.warn("Failed to set home state, server is null");
     }
