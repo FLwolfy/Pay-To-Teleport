@@ -7,6 +7,7 @@ public record PayTpConfigData(
     String denyName,
     String cancelName,
     String homeName,
+    String backName,
 
     // Items
     String currencyItem,
@@ -14,6 +15,7 @@ public record PayTpConfigData(
     // Settings
     String language,
     int expireTime,
+    int maxBackStack,
 
     // Prices
     int minPrice,
@@ -22,6 +24,7 @@ public record PayTpConfigData(
     double rate,
     double crossDimMultiplier,
     double homeMultiplier,
+    double backMultiplier,
 
     // Flags
     boolean allowEnderChest,
@@ -35,21 +38,25 @@ public record PayTpConfigData(
    */
   public static final PayTpConfigData DEFAULT = new PayTpConfigData(
       "ptp",
-      "ptpa",
-      "ptpd",
-      "ptpc",
+      "ptpaccept",
+      "ptpdeny",
+      "ptpcancel",
       "ptphome",
+      "ptpback",
 
       "minecraft:diamond",
-      "en_us",
 
+      "en_us",
       10,
+      10,
+
       1,
       64,
       10.0,
       0.01,
       1.5,
       0.5,
+      0.8,
 
       true,
       true,

@@ -21,6 +21,9 @@
   "paytp.no-deny": "No teleporting request to deny!",
   "paytp.no-cancel": "No teleporting request to cancel!",
 
+  "paytp.tp-back": "Returned to the previous teleport point.",
+  "paytp.no-back": "No teleport point to return to!",
+
   "paytp.hover.reply": "click to %s teleport request",
   "paytp.hover.command": "click to execute this %s command",
 
@@ -40,6 +43,8 @@
   "paytp.help.tp.dim.desc": "Teleport to a dimension and coordinates",
   "paytp.help.tp.player": "%s <player>",
   "paytp.help.tp.player.desc": "Request teleport to a target player",
+  "paytp.help.tp.back": "%s",
+  "paytp.help.tp.back.desc": "Return to your previous teleport point",
   "paytp.help.section.req": "[Request Control]",
   "paytp.help.req.accept": "%s",
   "paytp.help.req.accept.desc": "Accept the most recent teleport request",

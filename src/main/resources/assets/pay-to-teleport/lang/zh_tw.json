@@ -21,6 +21,9 @@
   "paytp.no-deny": "沒有待拒絕的傳送請求！",
   "paytp.no-cancel": "沒有可以取消的傳送請求！",
 
+  "paytp.tp-back": "已返回上一個傳送點。",
+  "paytp.no-back": "沒有可返回的傳送點！",
+
   "paytp.hover.reply": "點擊%s傳送",
   "paytp.hover.command": "點擊執行該%s指令",
 
@@ -40,6 +43,8 @@
   "paytp.help.tp.dim.desc": "傳送到指定維度及座標",
   "paytp.help.tp.player": "%s <玩家>",
   "paytp.help.tp.player.desc": "請求傳送到目標玩家",
+  "paytp.help.tp.back": "%s",
+  "paytp.help.tp.back.desc": "回到您上一個傳送點",
   "paytp.help.section.req": "[請求控制]",
   "paytp.help.req.accept": "%s",
   "paytp.help.req.accept.desc": "接受最近的傳送請求",

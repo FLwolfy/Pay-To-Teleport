@@ -14,6 +14,8 @@ import net.minecraft.util.Identifier;
 
 public class PayTpItemHandler {
 
+  private PayTpItemHandler() {}
+
   /**
    * Get an item object from the full item string ID.
    * <p>

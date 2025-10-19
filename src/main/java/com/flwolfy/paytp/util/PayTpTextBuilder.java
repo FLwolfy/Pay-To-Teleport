@@ -12,6 +12,8 @@ public class PayTpTextBuilder {
   public static final Formatting DEFAULT_HIGHLIGHT_COLOR = Formatting.GREEN;
   public static final Formatting DEFAULT_WARN_COLOR = Formatting.RED;
 
+  private PayTpTextBuilder() {}
+
   // ========================================= //
   // ============= Text Formatting =========== //
   // ========================================= //

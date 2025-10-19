@@ -5,12 +5,12 @@ import com.flwolfy.paytp.PayTpMod;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import java.util.Arrays;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;

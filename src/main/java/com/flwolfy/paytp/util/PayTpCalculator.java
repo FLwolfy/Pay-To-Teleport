@@ -1,6 +1,7 @@
 package com.flwolfy.paytp.util;
 
 import com.flwolfy.paytp.config.PayTpConfigFlag;
+import com.flwolfy.paytp.config.PayTpData;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -12,48 +13,51 @@ import net.minecraft.world.World;
 
 public class PayTpCalculator {
 
+  private PayTpCalculator() {}
+
+  @SuppressWarnings("resource")
   public static int calculatePrice(
       double baseRadius,
       double increaseRate,
-      double crossDimMultiplier,
-      double homeMultiplier,
+      double externalMultiplier,
       int minPrice,
       int maxPrice,
-      Vec3d from,
-      Vec3d to,
-      RegistryKey<World> fromWorld,
-      RegistryKey<World> toWorld
+      PayTpData from,
+      PayTpData to
   ) {
+    Vec3d fromPos = from.pos();
+    Vec3d toPos = to.pos();
+    RegistryKey<World> fromWorld = from.world().getRegistryKey();
+    RegistryKey<World> toWorld = to.world().getRegistryKey();
+
     double distance;
     if (fromWorld == toWorld) {
-      distance = from.distanceTo(to);
+      distance = fromPos.distanceTo(toPos);
     } else if (fromWorld == World.END) {
-      distance = from.distanceTo(Vec3d.ZERO);
+      distance = fromPos.distanceTo(Vec3d.ZERO);
     } else if (toWorld == World.END) {
-      distance = Vec3d.ZERO.distanceTo(to);
+      distance = Vec3d.ZERO.distanceTo(toPos);
     } else if (fromWorld == World.NETHER) {
-      distance = (from.multiply(8)).distanceTo(to);
+      distance = (fromPos.multiply(8)).distanceTo(toPos);
     } else if (toWorld == World.NETHER) {
-      distance = from.distanceTo(to.multiply(0.125));
+      distance = fromPos.distanceTo(toPos.multiply(0.125));
     } else {
       // Note: If you have other worlds, customize your price calculation here.
       //       Default -> price * crossDimMultiplier
-      distance = from.distanceTo(to);
+      distance = fromPos.distanceTo(toPos);
     }
 
     double distanceBeyondBase = Math.max(0, distance - baseRadius);
-    int calculatedPrice = (int) Math.round(minPrice + distanceBeyondBase * increaseRate);
-
-    // Cross-dimenstion multiplier
-    calculatedPrice = fromWorld == toWorld ? calculatedPrice : (int) (calculatedPrice * crossDimMultiplier);
-
-    // Home multiplier
-    calculatedPrice = (int) (calculatedPrice * homeMultiplier);
+    int calculatedPrice = (int) Math.round((minPrice + distanceBeyondBase * increaseRate) * externalMultiplier);
 
     return Math.min(calculatedPrice, maxPrice);
   }
 
-  public static int checkBalance(String currencyItemFullId, PlayerEntity player, int configFlags) {
+  public static int checkBalance(
+      String currencyItemFullId,
+      PlayerEntity player,
+      int configFlags
+  ) {
     Item currencyItem = PayTpItemHandler.getItemByStringId(currencyItemFullId);
 
     int totalCount = PayTpItemHandler.getInventoryCount(player.getInventory(), currencyItem, PayTpConfigFlag.check(configFlags, PayTpConfigFlag.ALLOW_SHULKER_BOX));
@@ -64,7 +68,12 @@ public class PayTpCalculator {
     return totalCount;
   }
 
-  public static boolean proceedPayment(String currencyItemFullId, PlayerEntity player, int price, int configFlags) {
+  public static boolean proceedPayment(
+      String currencyItemFullId,
+      PlayerEntity player,
+      int price,
+      int configFlags
+  ) {
     Item currencyItem = PayTpItemHandler.getItemByStringId(currencyItemFullId);
 
     // Proceed payment based on priority level

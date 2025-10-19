@@ -10,6 +10,8 @@ public class PayTpMessageSender {
 
   private static final PayTpLangManager LANG_LOADER = PayTpLangManager.getInstance();
 
+  private PayTpMessageSender() {}
+
   /**
    * Change the message language to the specified language if supported.
    */
@@ -161,6 +163,14 @@ public class PayTpMessageSender {
     player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-cancel")), false);
   }
 
+  public static void msgNoBack(ServerPlayerEntity player) {
+    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-back")), false);
+  }
+
+  public static void msgTpBack(ServerPlayerEntity player) {
+    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.tp-back")), false);
+  }
+
   public static void msgTpHome(ServerPlayerEntity player) {
     player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.tp-home")), false);
   }
@@ -182,6 +192,7 @@ public class PayTpMessageSender {
       String tpCommandName,
       String tpDimCommandName,
       String tpPlayerCommandName,
+      String backCommandName,
       String acceptCommandName,
       String denyCommandName,
       String cancelCommandName,
@@ -224,6 +235,8 @@ public class PayTpMessageSender {
             .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.tp.dim.desc")).append(newline)))
         .append(Text.literal(indentCmd).append(LANG_LOADER.getText("paytp.help.tp.player")).append(newline)
             .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.tp.player.desc")).append(newline)))
+        .append(Text.literal(indentCmd).append(LANG_LOADER.getText("paytp.help.tp.back")).append(newline)
+            .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.tp.back.desc")).append(newline)))
 
         // [Request]
         .append(newline).append(LANG_LOADER.getText("paytp.help.section.req")).append(newline)
@@ -264,6 +277,11 @@ public class PayTpMessageSender {
                 Text.literal("/" + tpPlayerCommandName),
                 PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + tpPlayerCommandName),
                 "/" + tpPlayerCommandName + " " + player.getName().getString()
+            ),
+            PayTpTextBuilder.commandText(
+                Text.literal("/" + backCommandName),
+                PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + backCommandName),
+                "/" + backCommandName + " " + player.getName().getString()
             ),
             PayTpTextBuilder.commandText(
                 Text.literal("/" + acceptCommandName),

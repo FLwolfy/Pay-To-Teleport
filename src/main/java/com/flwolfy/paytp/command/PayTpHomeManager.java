@@ -51,7 +51,7 @@ public class PayTpHomeManager {
       ServerWorld overworld = player.getServer().getOverworld();
       return getState(overworld).getHome(player.getUuid());
     } else {
-      LOGGER.warn("Failed to set home state, server is null");
+      LOGGER.warn("Failed to get home state, server is null");
       return null;
     }
   }
@@ -62,7 +62,7 @@ public class PayTpHomeManager {
       ServerWorld overworld = player.getServer().getOverworld();
       return getState(overworld).hasHome(player.getUuid());
     } else {
-      LOGGER.warn("Failed to set home state, server is null");
+      LOGGER.warn("Failed to check home state, server is null");
       return false;
     }
   }

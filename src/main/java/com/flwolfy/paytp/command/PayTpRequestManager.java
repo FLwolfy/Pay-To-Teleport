@@ -1,20 +1,22 @@
 package com.flwolfy.paytp.command;
 
 import com.flwolfy.paytp.PayTpMod;
+
+import net.minecraft.server.network.ServerPlayerEntity;
+
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import net.minecraft.server.network.ServerPlayerEntity;
+
 import org.slf4j.Logger;
 
-
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Singleton class that manages teleport requests between players.
