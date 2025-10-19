@@ -1,6 +1,8 @@
-package com.flwolfy.paytp.config;
+package com.flwolfy.paytp.data;
 
-import com.flwolfy.paytp.flag.PayTpSettingFlag;
+import com.flwolfy.paytp.flag.Flags;
+import com.flwolfy.paytp.flag.PayTpMultiplierFlags;
+import com.flwolfy.paytp.flag.PayTpSettingFlags;
 
 public record PayTpConfigData(
     // Commands
@@ -18,6 +20,7 @@ public record PayTpConfigData(
     String language,
     int expireTime,
     int maxBackStack,
+    boolean particleEffect,
 
     // Prices
     int minPrice,
@@ -53,6 +56,7 @@ public record PayTpConfigData(
       "en_us",
       10,
       10,
+      true,
 
       1,
       64,
@@ -71,12 +75,23 @@ public record PayTpConfigData(
   /**
    * Get the setting flags of the config data.
    */
-  public int flags() {
-    int f = 0;
-    if (allowEnderChest)      f |= PayTpSettingFlag.ALLOW_ENDER_CHEST.getBit();
-    if (prioritizeEnderChest) f |= PayTpSettingFlag.PRIORITIZE_ENDER_CHEST.getBit();
-    if (allowShulkerBox)      f |= PayTpSettingFlag.ALLOW_SHULKER_BOX.getBit();
-    if (prioritizeShulkerBox) f |= PayTpSettingFlag.PRIORITIZE_SHULKER_BOX.getBit();
-    return f;
+  public int combineSettingFlags() {
+    return Flags.combine(
+        allowEnderChest      ? PayTpSettingFlags.ALLOW_ENDER_CHEST      : null,
+        prioritizeEnderChest ? PayTpSettingFlags.PRIORITIZE_ENDER_CHEST : null,
+        allowShulkerBox      ? PayTpSettingFlags.ALLOW_SHULKER_BOX      : null,
+        prioritizeShulkerBox ? PayTpSettingFlags.PRIORITIZE_SHULKER_BOX : null
+    );
+  }
+
+  /**
+   * Get calculated multiplier with given multiplier flags.
+   */
+  public double calculateMultiplier(int multiplierFlags) {
+    double multiplier = 1.0;
+    if (Flags.check(multiplierFlags, PayTpMultiplierFlags.CROSS_DIMENSION)) multiplier *= crossDimMultiplier;
+    if (Flags.check(multiplierFlags, PayTpMultiplierFlags.HOME)) multiplier *= homeMultiplier;
+    if (Flags.check(multiplierFlags, PayTpMultiplierFlags.BACK)) multiplier *= backMultiplier;
+    return multiplier;
   }
 }

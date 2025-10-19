@@ -1,4 +1,4 @@
-package com.flwolfy.paytp.config;
+package com.flwolfy.paytp.data;
 
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.Vec3d;

@@ -1,4 +1,4 @@
-package com.flwolfy.paytp.config;
+package com.flwolfy.paytp.data;
 
 import com.flwolfy.paytp.PayTpMod;
 
@@ -36,9 +36,9 @@ public class PayTpLangManager {
   public static PayTpLangManager getInstance() {
     if (instance == null) {
       instance = new PayTpLangManager();
+      instance.languageMap = loadAllLanguages();
+      instance.language = DEFAULT_LANGUAGE;
     }
-    instance.languageMap = loadAllLanguages();
-    instance.language = DEFAULT_LANGUAGE;
     return instance;
   }
 

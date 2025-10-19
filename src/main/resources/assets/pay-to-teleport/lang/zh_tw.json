@@ -21,7 +21,7 @@
   "paytp.no-deny": "沒有待拒絕的傳送請求！",
   "paytp.no-cancel": "沒有可以取消的傳送請求！",
 
-  "paytp.tp-back": "已返回上一個傳送點。",
+  "paytp.tp-back": "已%s返回上一個傳送點！",
   "paytp.no-back": "沒有可返回的傳送點！",
 
   "paytp.hover.reply": "點擊%s傳送",

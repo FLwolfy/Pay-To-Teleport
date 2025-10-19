@@ -5,16 +5,11 @@ import com.flwolfy.paytp.command.PayTpCommand;
 
 import com.flwolfy.paytp.command.PayTpHomeManager;
 import com.flwolfy.paytp.command.PayTpRequestManager;
-import com.flwolfy.paytp.config.PayTpConfigManager;
-import com.flwolfy.paytp.config.PayTpData;
-import com.flwolfy.paytp.config.PayTpLangManager;
+import com.flwolfy.paytp.data.PayTpConfigManager;
+import com.flwolfy.paytp.data.PayTpLangManager;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-
-import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.minecraft.server.network.ServerPlayerEntity;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,16 +32,6 @@ public class PayTpMod implements ModInitializer {
 		PayTpBackManager.getInstance();
 		PayTpHomeManager.getInstance();
 		PayTpRequestManager.getInstance();
-
-		// Server events
-		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
-			PayTpBackManager.getInstance().clearHistory(handler.player);
-		});
-		ServerLivingEntityEvents.AFTER_DEATH.register((entity, livingEntity) -> {
-			if (entity instanceof ServerPlayerEntity player) {
-				PayTpBackManager.getInstance().pushSingle(player, new PayTpData(player.getServerWorld(), player.getPos()));
-			}
-		});
 
 		// Register command
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {

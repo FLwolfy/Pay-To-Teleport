@@ -1,5 +1,5 @@
 {
-  "paytp.teleport": "%s!",
+  "paytp.teleport": "Teleport %s!",
   "paytp.consume": "It costs %s %s in total.",
 
   "paytp.not-enough": "You don't have enough %s! The teleportation fee is %s %s but you only have %s.",
@@ -21,17 +21,17 @@
   "paytp.no-deny": "No teleporting request to deny!",
   "paytp.no-cancel": "No teleporting request to cancel!",
 
-  "paytp.tp-back": "Returned to the previous teleport point.",
+  "paytp.tp-back": "%s returned to the previous teleport point!",
   "paytp.no-back": "No teleport point to return to!",
 
   "paytp.hover.reply": "click to %s teleport request",
   "paytp.hover.command": "click to execute this %s command",
 
   "paytp.you": "You",
-  "paytp.success": "Teleporting",
-  "paytp.failed": "Failed to Teleport",
-  "paytp.accept": "[Accept]",
-  "paytp.deny": "[Deny]",
+  "paytp.success": "Successfully",
+  "paytp.failed": "Failed",
+  "paytp.accept": " [Accept] ",
+  "paytp.deny": " [Deny] ",
   "paytp.home": "[Home]",
 
   "paytp.help.header.title": "PayTp Command Help",

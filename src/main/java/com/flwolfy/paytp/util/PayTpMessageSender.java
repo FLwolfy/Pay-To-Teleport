@@ -1,6 +1,6 @@
 package com.flwolfy.paytp.util;
 
-import com.flwolfy.paytp.config.PayTpLangManager;
+import com.flwolfy.paytp.data.PayTpLangManager;
 
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.MutableText;
@@ -41,6 +41,24 @@ public class PayTpMessageSender {
   ) {
     Text msg = Text.empty()
         .append(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.teleport"),
+            LANG_LOADER.getText("paytp.success")
+        ))
+        .append(Text.literal("\n"))
+        .append(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.consume"),
+            price,
+            currencyItemText
+        ));
+
+    player.sendMessage(msg, false);
+  }
+
+  public static void msgTpBackSucceeded(
+      ServerPlayerEntity player,
+      Text currencyItemText,
+      int price
+  ) {
+    Text msg = Text.empty()
+        .append(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.tp-back"),
             LANG_LOADER.getText("paytp.success")
         ))
         .append(Text.literal("\n"))
@@ -167,10 +185,6 @@ public class PayTpMessageSender {
     player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-back")), false);
   }
 
-  public static void msgTpBack(ServerPlayerEntity player) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.tp-back")), false);
-  }
-
   public static void msgTpHome(ServerPlayerEntity player) {
     player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.tp-home")), false);
   }
@@ -281,7 +295,7 @@ public class PayTpMessageSender {
             PayTpTextBuilder.commandText(
                 Text.literal("/" + backCommandName),
                 PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + backCommandName),
-                "/" + backCommandName + " " + player.getName().getString()
+                "/" + backCommandName
             ),
             PayTpTextBuilder.commandText(
                 Text.literal("/" + acceptCommandName),

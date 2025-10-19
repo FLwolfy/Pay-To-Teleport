@@ -110,7 +110,9 @@ public class PayTpRequestManager {
   private PayTpRequestManager() {}
 
   public static PayTpRequestManager getInstance() {
-    if (instance == null) instance = new PayTpRequestManager();
+    if (instance == null) {
+      instance = new PayTpRequestManager();
+    }
     return instance;
   }
 

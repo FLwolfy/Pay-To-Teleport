@@ -1,4 +1,4 @@
-package com.flwolfy.paytp.config;
+package com.flwolfy.paytp.data;
 
 import com.flwolfy.paytp.PayTpMod;
 
@@ -28,19 +28,18 @@ public class PayTpConfigManager {
 
   private final PayTpConfigData data;
 
+  public static PayTpConfigManager getInstance() {
+    if (instance == null) {
+      instance = loadConfig();
+    }
+    return instance;
+  }
+
   /**
    * Returns the current config data.
    */
   public PayTpConfigData data() {
     return data;
-  }
-
-  /**
-   * Singleton accessor.
-   */
-  public static PayTpConfigManager getInstance() {
-    if (instance == null) instance = loadConfig();
-    return instance;
   }
 
   // ========================================= //
