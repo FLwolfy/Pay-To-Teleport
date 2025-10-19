@@ -115,13 +115,14 @@ public class PayTpCommand {
 
   private static int payTpCoords(CommandContext<ServerCommandSource> ctx) {
     ServerPlayerEntity player = ctx.getSource().getPlayer();
+    Vec3d targetPos = Vec3ArgumentType.getVec3(ctx, "pos");
+
     if (player == null) return 0;
 
-    Vec3d targetPos = Vec3ArgumentType.getVec3(ctx, "pos");
+    PayTpData payTpData = new PayTpData(player.getServerWorld(), targetPos);
     return teleport(
         player,
-        targetPos,
-        player.getServerWorld(),
+        payTpData,
         true,
         false,
         false
@@ -130,14 +131,15 @@ public class PayTpCommand {
 
   private static int payTpDimCoords(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
     ServerPlayerEntity player = ctx.getSource().getPlayer();
-    if (player == null) return 0;
-
     ServerWorld targetDim = DimensionArgumentType.getDimensionArgument(ctx, "dimension");
     Vec3d targetPos = Vec3ArgumentType.getVec3(ctx, "pos");
+
+    if (player == null) return 0;
+
+    PayTpData payTpData = new PayTpData(targetDim, targetPos);
     return teleport(
         player,
-        targetPos,
-        targetDim,
+        payTpData,
         true,
         false,
         false
@@ -158,10 +160,10 @@ public class PayTpCommand {
     }
 
     requestManager.sendRequest(sender, target, () -> {
+      PayTpData targetTp = new PayTpData(target.getServerWorld(), target.getPos());
       int result = teleport(
           sender,
-          target.getPos(),
-          target.getServerWorld(),
+          targetTp,
           true,
           false,
           false
@@ -238,8 +240,7 @@ public class PayTpCommand {
 
     int result = teleport(
         player,
-        targetTp.pos(),
-        targetTp.world(),
+        targetTp,
         false,
         false,
         true
@@ -270,10 +271,10 @@ public class PayTpCommand {
     ServerWorld targetWorld = player.getServer().getWorld(home.dimension());
     if (targetWorld == null) return 0;
 
+    PayTpData targetTp = new PayTpData(targetWorld, home.pos());
     int result = teleport(
         player,
-        home.pos(),
-        targetWorld,
+        targetTp,
         true,
         true,
         false
@@ -298,8 +299,7 @@ public class PayTpCommand {
 
   private static int teleport(
       ServerPlayerEntity player,
-      Vec3d targetPos,
-      ServerWorld targetWorld,
+      PayTpData targetData,
       boolean recordToBackStack,
       boolean home,
       boolean back
@@ -308,8 +308,9 @@ public class PayTpCommand {
     // Fetch teleport info
     // ---------------------------------
     ServerWorld fromWorld = player.getServerWorld();
+    ServerWorld targetWorld = targetData.world();
     PayTpData fromData = new PayTpData(fromWorld, player.getPos());
-    PayTpData toData = new PayTpData(targetWorld, targetPos);
+    PayTpData toData = new PayTpData(targetWorld, targetData.pos());
     if (recordToBackStack) backManager.pushPair(player, fromData, toData);
 
     // ---------------------------------
@@ -354,7 +355,7 @@ public class PayTpCommand {
     // ---------------------------------
     TeleportTarget teleportTarget = new TeleportTarget(
         targetWorld,
-        targetPos,
+        targetData.pos(),
         player.getVelocity(),
         player.getYaw(),
         player.getPitch(),

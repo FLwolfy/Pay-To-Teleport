@@ -1,5 +1,7 @@
 package com.flwolfy.paytp.config;
 
+import com.flwolfy.paytp.flag.PayTpSettingFlag;
+
 public record PayTpConfigData(
     // Commands
     String commandName,
@@ -12,7 +14,7 @@ public record PayTpConfigData(
     // Items
     String currencyItem,
 
-    // Settings
+    // Attributes
     String language,
     int expireTime,
     int maxBackStack,
@@ -22,11 +24,13 @@ public record PayTpConfigData(
     int maxPrice,
     double baseRadius,
     double rate,
+
+    // Multipliers
     double crossDimMultiplier,
     double homeMultiplier,
     double backMultiplier,
 
-    // Flags
+    // Settings
     boolean allowEnderChest,
     boolean prioritizeEnderChest,
     boolean allowShulkerBox,
@@ -69,10 +73,10 @@ public record PayTpConfigData(
    */
   public int flags() {
     int f = 0;
-    if (allowEnderChest)      f |= PayTpConfigFlag.ALLOW_ENDER_CHEST.getBit();
-    if (prioritizeEnderChest) f |= PayTpConfigFlag.PRIORITIZE_ENDER_CHEST.getBit();
-    if (allowShulkerBox)      f |= PayTpConfigFlag.ALLOW_SHULKER_BOX.getBit();
-    if (prioritizeShulkerBox) f |= PayTpConfigFlag.PRIORITIZE_SHULKER_BOX.getBit();
+    if (allowEnderChest)      f |= PayTpSettingFlag.ALLOW_ENDER_CHEST.getBit();
+    if (prioritizeEnderChest) f |= PayTpSettingFlag.PRIORITIZE_ENDER_CHEST.getBit();
+    if (allowShulkerBox)      f |= PayTpSettingFlag.ALLOW_SHULKER_BOX.getBit();
+    if (prioritizeShulkerBox) f |= PayTpSettingFlag.PRIORITIZE_SHULKER_BOX.getBit();
     return f;
   }
 }

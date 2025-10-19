@@ -1,6 +1,6 @@
 package com.flwolfy.paytp.util;
 
-import com.flwolfy.paytp.config.PayTpConfigFlag;
+import com.flwolfy.paytp.flag.PayTpSettingFlag;
 import com.flwolfy.paytp.config.PayTpData;
 
 import net.minecraft.entity.player.PlayerEntity;
@@ -60,9 +60,9 @@ public class PayTpCalculator {
   ) {
     Item currencyItem = PayTpItemHandler.getItemByStringId(currencyItemFullId);
 
-    int totalCount = PayTpItemHandler.getInventoryCount(player.getInventory(), currencyItem, PayTpConfigFlag.check(configFlags, PayTpConfigFlag.ALLOW_SHULKER_BOX));
-    if (PayTpConfigFlag.check(configFlags, PayTpConfigFlag.ALLOW_ENDER_CHEST)) {
-      totalCount += PayTpItemHandler.getInventoryCount(player.getEnderChestInventory(), currencyItem, PayTpConfigFlag.check(configFlags, PayTpConfigFlag.ALLOW_SHULKER_BOX));
+    int totalCount = PayTpItemHandler.getInventoryCount(player.getInventory(), currencyItem, PayTpSettingFlag.check(configFlags, PayTpSettingFlag.ALLOW_SHULKER_BOX));
+    if (PayTpSettingFlag.check(configFlags, PayTpSettingFlag.ALLOW_ENDER_CHEST)) {
+      totalCount += PayTpItemHandler.getInventoryCount(player.getEnderChestInventory(), currencyItem, PayTpSettingFlag.check(configFlags, PayTpSettingFlag.ALLOW_SHULKER_BOX));
     }
 
     return totalCount;
@@ -84,11 +84,11 @@ public class PayTpCalculator {
     // ------------------------------------------------------------------------------------------------------------------------
     // Priority 1: Ender Chest Shulker -> Ender Chest -> Inventory Shulker -> Inventory
     // ------------------------------------------------------------------------------------------------------------------------
-    if (PayTpConfigFlag.equivalent(configFlags,
-        PayTpConfigFlag.ALLOW_ENDER_CHEST,
-        PayTpConfigFlag.PRIORITIZE_ENDER_CHEST,
-        PayTpConfigFlag.ALLOW_SHULKER_BOX,
-        PayTpConfigFlag.PRIORITIZE_SHULKER_BOX)) {
+    if (PayTpSettingFlag.equivalent(configFlags,
+        PayTpSettingFlag.ALLOW_ENDER_CHEST,
+        PayTpSettingFlag.PRIORITIZE_ENDER_CHEST,
+        PayTpSettingFlag.ALLOW_SHULKER_BOX,
+        PayTpSettingFlag.PRIORITIZE_SHULKER_BOX)) {
 
       remaining = PayTpItemHandler.removeShulkerItems(ei, currencyItem, remaining);
       remaining = PayTpItemHandler.removeInventoryItems(ei, currencyItem, remaining);
@@ -99,10 +99,10 @@ public class PayTpCalculator {
     // ------------------------------------------------------------------------------------------------------------------------
     // Priority 2: Ender Chest -> Ender Chest Shulker -> Inventory -> Inventory Shulker
     // ------------------------------------------------------------------------------------------------------------------------
-    else if (PayTpConfigFlag.equivalent(configFlags,
-        PayTpConfigFlag.ALLOW_ENDER_CHEST,
-        PayTpConfigFlag.PRIORITIZE_ENDER_CHEST,
-        PayTpConfigFlag.ALLOW_SHULKER_BOX)) {
+    else if (PayTpSettingFlag.equivalent(configFlags,
+        PayTpSettingFlag.ALLOW_ENDER_CHEST,
+        PayTpSettingFlag.PRIORITIZE_ENDER_CHEST,
+        PayTpSettingFlag.ALLOW_SHULKER_BOX)) {
 
       remaining = PayTpItemHandler.removeInventoryItems(ei, currencyItem, remaining);
       remaining = PayTpItemHandler.removeShulkerItems(ei, currencyItem, remaining);
@@ -114,10 +114,10 @@ public class PayTpCalculator {
     // ------------------------------------------------------------------------------------------------------------------------
     // Priority 3: Inventory Shulker -> Inventory -> Ender Chest Shulker -> Ender Chest
     // ------------------------------------------------------------------------------------------------------------------------
-    else if (PayTpConfigFlag.equivalent(configFlags,
-        PayTpConfigFlag.ALLOW_ENDER_CHEST,
-        PayTpConfigFlag.ALLOW_SHULKER_BOX,
-        PayTpConfigFlag.PRIORITIZE_SHULKER_BOX)) {
+    else if (PayTpSettingFlag.equivalent(configFlags,
+        PayTpSettingFlag.ALLOW_ENDER_CHEST,
+        PayTpSettingFlag.ALLOW_SHULKER_BOX,
+        PayTpSettingFlag.PRIORITIZE_SHULKER_BOX)) {
 
       remaining = PayTpItemHandler.removeShulkerItems(pi, currencyItem, remaining);
       remaining = PayTpItemHandler.removeInventoryItems(pi, currencyItem, remaining);
@@ -128,9 +128,9 @@ public class PayTpCalculator {
     // ------------------------------------------------------------------------------------------------------------------------
     // Priority 4: Inventory -> Inventory Shulker -> Ender Chest -> Ender Chest Shulker
     // ------------------------------------------------------------------------------------------------------------------------
-    else if (PayTpConfigFlag.equivalent(configFlags,
-        PayTpConfigFlag.ALLOW_ENDER_CHEST,
-        PayTpConfigFlag.ALLOW_SHULKER_BOX)) {
+    else if (PayTpSettingFlag.equivalent(configFlags,
+        PayTpSettingFlag.ALLOW_ENDER_CHEST,
+        PayTpSettingFlag.ALLOW_SHULKER_BOX)) {
 
       remaining = PayTpItemHandler.removeInventoryItems(pi, currencyItem, remaining);
       remaining = PayTpItemHandler.removeShulkerItems(pi, currencyItem, remaining);
@@ -141,9 +141,9 @@ public class PayTpCalculator {
     // ------------------------------------------------------------------------------------------------------------------------
     // Priority 5: Ender Chest -> Inventory
     // ------------------------------------------------------------------------------------------------------------------------
-    else if (PayTpConfigFlag.check(configFlags,
-        PayTpConfigFlag.ALLOW_ENDER_CHEST,
-        PayTpConfigFlag.PRIORITIZE_ENDER_CHEST)) {
+    else if (PayTpSettingFlag.check(configFlags,
+        PayTpSettingFlag.ALLOW_ENDER_CHEST,
+        PayTpSettingFlag.PRIORITIZE_ENDER_CHEST)) {
 
       remaining = PayTpItemHandler.removeInventoryItems(ei, currencyItem, remaining);
       remaining = PayTpItemHandler.removeInventoryItems(pi, currencyItem, remaining);
@@ -152,8 +152,8 @@ public class PayTpCalculator {
     // ------------------------------------------------------------------------------------------------------------------------
     // Priority 6: Inventory -> Ender Chest
     // ------------------------------------------------------------------------------------------------------------------------
-    else if (PayTpConfigFlag.check(configFlags,
-        PayTpConfigFlag.ALLOW_ENDER_CHEST)) {
+    else if (PayTpSettingFlag.check(configFlags,
+        PayTpSettingFlag.ALLOW_ENDER_CHEST)) {
 
       remaining = PayTpItemHandler.removeInventoryItems(pi, currencyItem, remaining);
       remaining = PayTpItemHandler.removeInventoryItems(ei, currencyItem, remaining);
@@ -162,8 +162,8 @@ public class PayTpCalculator {
     // ------------------------------------------------------------------------------------------------------------------------
     // Priority 7: Inventory -> Inventory Shulker
     // ------------------------------------------------------------------------------------------------------------------------
-    else if (PayTpConfigFlag.check(configFlags,
-        PayTpConfigFlag.ALLOW_SHULKER_BOX)) {
+    else if (PayTpSettingFlag.check(configFlags,
+        PayTpSettingFlag.ALLOW_SHULKER_BOX)) {
 
       remaining = PayTpItemHandler.removeInventoryItems(pi, currencyItem, remaining);
       remaining = PayTpItemHandler.removeShulkerItems(pi, currencyItem, remaining);
@@ -172,9 +172,9 @@ public class PayTpCalculator {
     // ------------------------------------------------------------------------------------------------------------------------
     // Priority 7: Inventory Shulker -> Inventory
     // ------------------------------------------------------------------------------------------------------------------------
-    else if (PayTpConfigFlag.check(configFlags,
-        PayTpConfigFlag.ALLOW_SHULKER_BOX,
-        PayTpConfigFlag.PRIORITIZE_SHULKER_BOX)) {
+    else if (PayTpSettingFlag.check(configFlags,
+        PayTpSettingFlag.ALLOW_SHULKER_BOX,
+        PayTpSettingFlag.PRIORITIZE_SHULKER_BOX)) {
 
       remaining = PayTpItemHandler.removeShulkerItems(pi, currencyItem, remaining);
       remaining = PayTpItemHandler.removeInventoryItems(pi, currencyItem, remaining);
