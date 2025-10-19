@@ -92,7 +92,7 @@ public class PayTpConfigManager {
 
   private static void saveStatic(PayTpConfigData data, File file) {
     if (file.getParentFile().mkdirs()) {
-      LOGGER.info("Successfully saved config file: " + file.getAbsolutePath());
+      LOGGER.info("Successfully saved config file: {}", file.getAbsolutePath());
     }
     try (FileWriter writer = new FileWriter(file)) {
       GSON.toJson(data, writer);
