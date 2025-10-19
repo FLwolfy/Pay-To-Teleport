@@ -11,7 +11,8 @@
 
   "paytp.request": "Sending teleporting request to player %s...",
   "paytp.receive": "Player %s wants to teleport to you... The request will expire in %s seconds.\nPlease select: ",
-  "paytp.cancel": "Request canceled.",
+  "paytp.request.cancel": "%s's teleport request has been cancelled.",
+  "paytp.request.accept": "You have accepted %s's teleport request.",
 
   "paytp.no-target": "Improper target player!",
   "paytp.no-accept": "No teleporting request to accept!",
@@ -19,6 +20,7 @@
 
   "paytp.hover": "click to %s teleport request",
 
+  "paytp.you": "You",
   "paytp.success": "Teleporting",
   "paytp.failed": "Failed to Teleport",
   "paytp.accept": "[Accept]",

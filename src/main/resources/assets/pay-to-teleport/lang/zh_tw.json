@@ -11,7 +11,8 @@
 
   "paytp.request": "正在提交傳送請求至玩家%s...",
   "paytp.receive": "玩家%s請求傳送至你身旁...請求將於%s秒後過期。\n請選擇：",
-  "paytp.cancel": "傳送請求已取消。",
+  "paytp.request.cancel": "%s 的傳送請求已取消。",
+  "paytp.request.accept": "已同意 %s 的傳送請求。",
 
   "paytp.no-target": "傳送目標不正確！",
   "paytp.no-accept": "沒有待接受的傳送請求！",
@@ -19,6 +20,7 @@
 
   "paytp.hover": "點擊%s傳送",
 
+  "paytp.you": "您",
   "paytp.success": "成功",
   "paytp.failed": "失敗",
   "paytp.accept": "【同意】",

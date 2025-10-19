@@ -122,12 +122,14 @@ public class PayTpCommand {
     }
 
     requestManager.sendRequest(sender, target, () -> {
-      if (teleport(sender, target.getPos(), target.getServerWorld(), false) == 0) {
+      if (teleport(sender, target.getPos(), target.getServerWorld(), false) == 1) {
+        PayTpMessageSender.msgTpAccepted(target, sender.getName());
+      } else {
         PayTpMessageSender.msgRequesterNotEnough(target);
       }
     }, () -> {
-      PayTpMessageSender.msgTpCanceled(sender);
-      PayTpMessageSender.msgTpCanceled(target);
+      PayTpMessageSender.msgTpCanceled(sender, sender.getName());
+      PayTpMessageSender.msgTpCanceled(target, sender.getName());
     }, configData.expireTime());
 
     PayTpMessageSender.msgTpRequestSent(sender, target.getName());

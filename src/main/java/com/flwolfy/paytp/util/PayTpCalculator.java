@@ -27,7 +27,9 @@ public class PayTpCalculator {
     double distance;
     if (fromWorld == toWorld) {
       distance = from.distanceTo(to);
-    } else if (fromWorld == World.END || toWorld == World.END) {
+    } else if (fromWorld == World.END) {
+      distance = from.distanceTo(Vec3d.ZERO);
+    } else if (toWorld == World.END) {
       distance = Vec3d.ZERO.distanceTo(to);
     } else if (fromWorld == World.NETHER) {
       distance = (from.multiply(8)).distanceTo(to);

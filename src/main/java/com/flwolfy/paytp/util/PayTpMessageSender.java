@@ -78,8 +78,25 @@ public class PayTpMessageSender {
     player.sendMessage(msg, false);
   }
 
-  public static void msgTpCanceled(ServerPlayerEntity player) {
-    player.sendMessage(PayTpTextFormatter.format(LANG_LOADER.getText("paytp.cancel")), false);
+  public static void msgTpAccepted(ServerPlayerEntity player, Text senderText) {
+    player.sendMessage(PayTpTextFormatter.format(
+        LANG_LOADER.getText("paytp.request.accept"),
+        senderText
+    ), false);
+  }
+
+  public static void msgTpCanceled(ServerPlayerEntity player, Text senderText) {
+    if (player.getName().equals(senderText)) {
+      player.sendMessage(PayTpTextFormatter.format(
+          LANG_LOADER.getText("paytp.request.cancel"),
+          LANG_LOADER.getText("paytp.you")
+      ), false);
+    } else {
+      player.sendMessage(PayTpTextFormatter.format(
+          LANG_LOADER.getText("paytp.request.cancel"),
+          senderText
+      ), false);
+    }
   }
 
   public static void msgTpRequestSent(
