@@ -4,6 +4,7 @@ public record PayTpConfigData(
     // Commands
     String commandName,
     String acceptName,
+    String denyName,
     String cancelName,
     String homeName,
 
@@ -35,6 +36,7 @@ public record PayTpConfigData(
   public static final PayTpConfigData DEFAULT = new PayTpConfigData(
       "ptp",
       "ptpa",
+      "ptpd",
       "ptpc",
       "ptphome",
 

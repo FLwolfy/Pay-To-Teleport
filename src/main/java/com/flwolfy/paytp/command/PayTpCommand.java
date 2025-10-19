@@ -63,6 +63,11 @@ public class PayTpCommand {
         .executes(PayTpCommand::payTpAccept)
     );
 
+    dispatcher.register(CommandManager.literal(configData.denyName())
+        // ===== /ptpd =====
+        .executes(PayTpCommand::payTpDeny)
+    );
+
     dispatcher.register(CommandManager.literal(configData.cancelName())
         // ===== /ptpc =====
         .executes(PayTpCommand::payTpCancel)
@@ -87,6 +92,7 @@ public class PayTpCommand {
         configData.commandName(),
         configData.commandName(),
         configData.acceptName(),
+        configData.denyName(),
         configData.cancelName(),
         configData.homeName(),
         configData.homeName() + " set"
@@ -120,6 +126,10 @@ public class PayTpCommand {
       PayTpMessageSender.msgNoTargetFound(sender);
       return 0;
     }
+    if (sender == target) {
+      PayTpMessageSender.msgSelfTp(sender);
+      return 0;
+    }
 
     requestManager.sendRequest(sender, target, () -> {
       if (teleport(sender, target.getPos(), target.getServerWorld(), false) == 1) {
@@ -128,8 +138,8 @@ public class PayTpCommand {
         PayTpMessageSender.msgRequesterNotEnough(target);
       }
     }, () -> {
-      PayTpMessageSender.msgTpCanceled(sender, sender.getName());
-      PayTpMessageSender.msgTpCanceled(target, sender.getName());
+      PayTpMessageSender.msgCancelTp(target, sender.getName());
+      PayTpMessageSender.msgTpCanceled(sender, target.getName());
     }, configData.expireTime());
 
     PayTpMessageSender.msgTpRequestSent(sender, target.getName());
@@ -137,7 +147,7 @@ public class PayTpCommand {
         target,
         sender.getName(),
         configData.acceptName(),
-        configData.cancelName(),
+        configData.denyName(),
         configData.expireTime()
     );
 
@@ -156,12 +166,24 @@ public class PayTpCommand {
     return Command.SINGLE_SUCCESS;
   }
 
-  private static int payTpCancel(CommandContext<ServerCommandSource> ctx) {
+  private static int payTpDeny(CommandContext<ServerCommandSource> ctx) {
     ServerPlayerEntity receiver = ctx.getSource().getPlayer();
     if (receiver == null) return 0;
 
-    if (!requestManager.cancel(receiver)) {
-      PayTpMessageSender.msgNoCancelRequest(receiver);
+    if (!requestManager.cancelByTarget(receiver)) {
+      PayTpMessageSender.msgNoDenyRequest(receiver);
+      return 0;
+    }
+
+    return Command.SINGLE_SUCCESS;
+  }
+
+  private static int payTpCancel(CommandContext<ServerCommandSource> ctx) {
+    ServerPlayerEntity sender = ctx.getSource().getPlayer();
+    if (sender == null) return 0;
+
+    if (!requestManager.cancelBySender(sender)) {
+      PayTpMessageSender.msgNoCancelRequest(sender);
       return 0;
     }
 

@@ -1,10 +1,12 @@
 package com.flwolfy.paytp.util;
 
+import net.minecraft.text.ClickEvent;
+import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
-public class PayTpTextFormatter {
+public class PayTpTextBuilder {
 
   public static final Formatting DEFAULT_TEXT_COLOR = Formatting.YELLOW;
   public static final Formatting DEFAULT_HIGHLIGHT_COLOR = Formatting.GREEN;
@@ -66,5 +68,30 @@ public class PayTpTextFormatter {
   public static Text format(Text template, Object... args) {
     return format(template, DEFAULT_TEXT_COLOR, DEFAULT_HIGHLIGHT_COLOR, args);
   }
+
+  /**
+   * Returns a new {@link Text} that executes a command when clicked and shows a hover tooltip,
+   * while preserving the original text's formatting (color, bold, italic, etc.).
+   *
+   * <p>Example usage:
+   * <pre>
+   * Text msg = Text.literal("Click me").formatted(Formatting.GREEN);
+   * Text clickable = PayTpTextBuilder.commandText(msg, Text.literal("Runs /hello"), "/hello");
+   * player.sendMessage(clickable);
+   * </pre>
+   *
+   * @param text          The original {@link Text} to copy. Its formatting will be preserved.
+   * @param hoverText     The {@link Text} to display when the player hovers over the clickable text.
+   * @param clickCommand  The command string to execute when the player clicks the text (e.g., "/hello").
+   * @return              A new {@link Text} object with the click and hover events applied.
+   */
+  public static Text commandText(Text text, Text hoverText, String clickCommand) {
+    return text.copy().setStyle(
+        text.getStyle()
+            .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, clickCommand))
+            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText))
+    );
+  }
+
 }
 

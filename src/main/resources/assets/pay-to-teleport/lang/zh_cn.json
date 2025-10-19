@@ -2,7 +2,7 @@
   "paytp.teleport": "传送%s！",
   "paytp.consume": "本次传送消费%s块%s，谢谢惠顾。",
 
-  "paytp.not-enough": "%s的数量不够，需要%s块%s而你只有%s块。",
+  "paytp.not-enough": "%s的数量不够，需要%s块%s而您只有%s块。",
   "paytp.requester-not-enough": "对方没有足够的金钱来传送。",
 
   "paytp.tp-home": "欢迎回家～",
@@ -10,15 +10,19 @@
   "paytp.set-home": "成功设置当前位置为您的%s！",
 
   "paytp.request": "正在提交传送请求至玩家%s...",
-  "paytp.receive": "玩家%s请求传送至你身旁...请求在%s秒后过期。\n请选择：",
-  "paytp.request.cancel": "%s的传送请求已取消。",
+  "paytp.receive": "玩家%s请求传送至您身旁...请求在%s秒后过期。\n请选择：",
+  "paytp.request.cancel.receiver": "%s的传送请求已取消。",
+  "paytp.request.cancel.sender": "传送至%s的请求已被取消。",
   "paytp.request.accept": "已同意%s的传送请求。",
 
+  "paytp.self-tp": "您不能传送到自己！",
   "paytp.no-target": "传送目标不正确！",
   "paytp.no-accept": "没有待接受的传送请求！",
+  "paytp.no-deny": "没有待拒绝的传送请求！",
   "paytp.no-cancel": "没有可以取消的传送请求！",
 
-  "paytp.hover": "点击%s传送",
+  "paytp.hover.reply": "点击%s传送",
+  "paytp.hover.command": "点击执行该%s指令",
 
   "paytp.you": "您",
   "paytp.success": "成功",
@@ -27,5 +31,26 @@
   "paytp.deny": "【拒绝】",
   "paytp.home": "【家】",
 
-  "paytp.help": "\n=============================================\n================ PayTp 指令帮助 ================\n=============================================\n以下是本插件提供的所有指令：\n\n[传送]\n    %s <x> <y> <z>\n        - 传送到指定坐标\n    %s <dimension> <x> <y> <z>\n        - 传送到指定维度及坐标\n    %s <player>\n        - 请求传送到目标玩家\n[请求控制]\n    %s\n        - 接受最近的传送请求\n    %s\n        - 取消或拒绝传送请求\n[家系统]\n    %s\n        - 回到你设定的家\n    %s\n        - 将当前位置设为家\n\n注意：所有传送将根据距离及跨维度消耗货币。\n============================================="
+  "paytp.help.header.title": "PayTp 指令帮助",
+  "paytp.help.intro": "以下是本插件提供的所有指令：",
+  "paytp.help.section.tp": "[传送]",
+  "paytp.help.tp.coord": "%s <x> <y> <z>",
+  "paytp.help.tp.coord.desc": "传送到指定坐标",
+  "paytp.help.tp.dim": "%s <维度> <x> <y> <z>",
+  "paytp.help.tp.dim.desc": "传送到指定维度及坐标",
+  "paytp.help.tp.player": "%s <玩家>",
+  "paytp.help.tp.player.desc": "请求传送到目标玩家",
+  "paytp.help.section.req": "[请求控制]",
+  "paytp.help.req.accept": "%s",
+  "paytp.help.req.accept.desc": "接受最近的传送请求",
+  "paytp.help.req.deny": "%s",
+  "paytp.help.req.deny.desc": "拒绝最近的传送请求",
+  "paytp.help.req.cancel": "%s",
+  "paytp.help.req.cancel.desc": "取消最近的传送请求",
+  "paytp.help.section.home": "[家系统]",
+  "paytp.help.home.goto": "%s",
+  "paytp.help.home.goto.desc": "回到您设定的家",
+  "paytp.help.home.set": "%s",
+  "paytp.help.home.set.desc": "将当前位置设为家",
+  "paytp.help.note": "注意：所有传送将根据距离及跨维度消耗货币。"
 }
