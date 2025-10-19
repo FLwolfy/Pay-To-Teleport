@@ -49,18 +49,44 @@ public class PayTpConfigManager {
 
   private static PayTpConfigManager loadConfig() {
     File file = new File("config/" + CONFIG_FILE_NAME);
+    PayTpConfigData defaults = PayTpConfigData.DEFAULT;
+
     if (!file.exists()) {
-      PayTpConfigData defaults = PayTpConfigData.DEFAULT;
       saveStatic(defaults, file);
       return new PayTpConfigManager(defaults);
     }
 
     try (FileReader reader = new FileReader(file)) {
-      PayTpConfigData data = GSON.fromJson(reader, PayTpConfigData.class);
+      var jsonElement = GSON.fromJson(reader, com.google.gson.JsonElement.class);
+      com.google.gson.JsonObject jsonObject = jsonElement != null && jsonElement.isJsonObject()
+          ? jsonElement.getAsJsonObject()
+          : new com.google.gson.JsonObject();
+
+      // Replace missing entries
+      com.google.gson.JsonObject defaultJson = GSON.toJsonTree(defaults).getAsJsonObject();
+      mergeDefaults(jsonObject, defaultJson);
+
+      PayTpConfigData data = GSON.fromJson(jsonObject, PayTpConfigData.class);
+      saveStatic(data, file);
+
       return new PayTpConfigManager(data);
-    } catch (IOException e) {
-      LOGGER.error("Failed to load PayTp config", e);
-      return new PayTpConfigManager(PayTpConfigData.DEFAULT);
+    } catch (Exception e) {
+      LOGGER.error("Failed to load PayTp config, using defaults", e);
+      saveStatic(defaults, file);
+      return new PayTpConfigManager(defaults);
+    }
+  }
+
+  private static void mergeDefaults(com.google.gson.JsonObject target, com.google.gson.JsonObject defaults) {
+    for (var entry : defaults.entrySet()) {
+      String key = entry.getKey();
+      var defaultValue = entry.getValue();
+
+      if (!target.has(key) || target.get(key).isJsonNull()) {
+        target.add(key, defaultValue);
+      } else if (defaultValue.isJsonObject() && target.get(key).isJsonObject()) {
+        mergeDefaults(target.getAsJsonObject(key), defaultValue.getAsJsonObject());
+      }
     }
   }
 
