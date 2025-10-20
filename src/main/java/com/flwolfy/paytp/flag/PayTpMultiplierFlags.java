@@ -1,7 +1,7 @@
 package com.flwolfy.paytp.flag;
 
 @AutoBitFlags
-public enum PayTpMultiplierFlags implements Flags {
+public enum PayTpMultiplierFlags {
   CROSS_DIMENSION,
   HOME,
   BACK
