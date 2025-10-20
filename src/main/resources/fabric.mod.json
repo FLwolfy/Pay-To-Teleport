@@ -17,6 +17,9 @@
 	"entrypoints": {
 		"main": [
 			"com.flwolfy.paytp.PayTpMod"
+		],
+		"modmenu": [
+      "com.flwolfy.paytp.data.modmenu.PayTpModMenu"
 		]
 	},
 	"depends": {
@@ -26,6 +29,7 @@
 		"fabric-api": "*"
 	},
 	"suggests": {
-		"another-mod": "*"
+		"cloth-config2": "*",
+		"modmenu": "*"
 	}
 }

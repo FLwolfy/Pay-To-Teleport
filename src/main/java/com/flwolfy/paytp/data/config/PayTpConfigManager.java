@@ -1,11 +1,13 @@
-package com.flwolfy.paytp.data;
+package com.flwolfy.paytp.data.config;
 
 import com.flwolfy.paytp.PayTpMod;
+
+import com.flwolfy.paytp.data.lang.PayTpLang;
+import com.flwolfy.paytp.data.lang.PayTpLangAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import org.slf4j.Logger;
 
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -13,14 +15,27 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.slf4j.Logger;
+
 /**
  * PayTpConfigManager handles loading and saving configuration for the Pay-to-Teleport mod.
  */
 public class PayTpConfigManager {
 
   private static final Logger LOGGER = PayTpMod.LOGGER;
-  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
   private static final Path CONFIG_PATH = Path.of("config", "paytp.json");
+  private static final Gson GSON;
+  static {
+    GsonBuilder gsonBuilder = new GsonBuilder();
+
+    // ================================
+    // Register customized adapter here
+    // ================================
+    gsonBuilder.registerTypeAdapter(PayTpLang.class, new PayTpLangAdapter());
+    // ================================
+
+    GSON = gsonBuilder.setPrettyPrinting().create();
+  }
 
   private PayTpConfigManager(PayTpConfigData data) {
     this.data = data;

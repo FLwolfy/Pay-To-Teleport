@@ -1,7 +1,7 @@
 package com.flwolfy.paytp.command;
 
 import com.flwolfy.paytp.PayTpMod;
-import com.flwolfy.paytp.data.PayTpConfigManager;
+import com.flwolfy.paytp.data.config.PayTpConfigManager;
 import com.flwolfy.paytp.data.PayTpData;
 import com.flwolfy.paytp.flag.Flags;
 import com.flwolfy.paytp.flag.PayTpMultiplierFlags;
@@ -45,7 +45,7 @@ public class PayTpCommand {
     requestManager = PayTpRequestManager.getInstance();
     homeManager = PayTpHomeManager.getInstance();
 
-    dispatcher.register(CommandManager.literal(configManager.data().commands().commandName())
+    dispatcher.register(CommandManager.literal(configManager.data().general().mainCommand())
         // ===== /ptp (help) =====
         .executes(PayTpCommand::payTpHelp)
         // ===== /ptp <player> =====
@@ -62,27 +62,27 @@ public class PayTpCommand {
         )
     );
 
-    dispatcher.register(CommandManager.literal(configManager.data().commands().backName())
+    dispatcher.register(CommandManager.literal(configManager.data().back().backCommand())
         // ===== /ptpback =====
         .executes(PayTpCommand::payTpBack)
     );
 
-    dispatcher.register(CommandManager.literal(configManager.data().commands().acceptName())
+    dispatcher.register(CommandManager.literal(configManager.data().request().requestCommand().acceptCommand())
         // ===== /ptpaccept =====
         .executes(PayTpCommand::payTpAccept)
     );
 
-    dispatcher.register(CommandManager.literal(configManager.data().commands().denyName())
+    dispatcher.register(CommandManager.literal(configManager.data().request().requestCommand().denyCommand())
         // ===== /ptpdeny =====
         .executes(PayTpCommand::payTpDeny)
     );
 
-    dispatcher.register(CommandManager.literal(configManager.data().commands().cancelName())
+    dispatcher.register(CommandManager.literal(configManager.data().request().requestCommand().cancelCommand())
         // ===== /ptpcancel =====
         .executes(PayTpCommand::payTpCancel)
     );
 
-    dispatcher.register(CommandManager.literal(configManager.data().commands().homeName())
+    dispatcher.register(CommandManager.literal(configManager.data().home().homeCommand())
         // ===== /ptphome =====
         .executes(PayTpCommand::payTpHome)
         // ===== /ptphome set =====
@@ -97,15 +97,15 @@ public class PayTpCommand {
 
     PayTpMessageSender.msgHelp(
         player,
-        configManager.data().commands().commandName(),
-        configManager.data().commands().commandName(),
-        configManager.data().commands().commandName(),
-        configManager.data().commands().backName(),
-        configManager.data().commands().acceptName(),
-        configManager.data().commands().denyName(),
-        configManager.data().commands().cancelName(),
-        configManager.data().commands().homeName(),
-        configManager.data().commands().homeName() + " set"
+        configManager.data().general().mainCommand(),
+        configManager.data().general().mainCommand(),
+        configManager.data().general().mainCommand(),
+        configManager.data().back().backCommand(),
+        configManager.data().request().requestCommand().acceptCommand(),
+        configManager.data().request().requestCommand().denyCommand(),
+        configManager.data().request().requestCommand().cancelCommand(),
+        configManager.data().home().homeCommand(),
+        configManager.data().home().homeCommand() + " set"
     );
 
     return Command.SINGLE_SUCCESS;
@@ -183,15 +183,15 @@ public class PayTpCommand {
     }, () -> {
       PayTpMessageSender.msgCancelTp(target, sender.getName());
       PayTpMessageSender.msgTpCanceled(sender, target.getName());
-    }, configManager.data().attributes().expireTime());
+    }, configManager.data().request().expireTime());
 
     PayTpMessageSender.msgTpRequestSent(sender, target.getName());
     PayTpMessageSender.msgTpRequestReceived(
         target,
         sender.getName(),
-        configManager.data().commands().acceptName(),
-        configManager.data().commands().denyName(),
-        configManager.data().attributes().expireTime()
+        configManager.data().request().requestCommand().acceptCommand(),
+        configManager.data().request().requestCommand().denyCommand(),
+        configManager.data().request().expireTime()
     );
 
     return Command.SINGLE_SUCCESS;
@@ -326,20 +326,20 @@ public class PayTpCommand {
     // Check payment
     // ---------------------------------
     int price = PayTpCalculator.calculatePrice(
-        configManager.data().prices().baseRadius(),
-        configManager.data().prices().rate(),
+        configManager.data().price().parameter().baseRadius(),
+        configManager.data().price().parameter().rate(),
         configManager.data().calculateMultiplier(multiplierFlags),
-        configManager.data().prices().minPrice(),
-        configManager.data().prices().maxPrice(),
+        configManager.data().price().parameter().minPrice(),
+        configManager.data().price().parameter().maxPrice(),
         fromData,
         toData
     );
 
-    int balance = PayTpCalculator.checkBalance(configManager.data().prices().currencyItem(), player, configManager.data().combineSettingFlags());
+    int balance = PayTpCalculator.checkBalance(configManager.data().price().currencyItem(), player, configManager.data().combineSettingFlags());
     if (balance < price) {
       PayTpMessageSender.msgTpFailed(
           player,
-          PayTpItemHandler.getItemByStringId(configManager.data().prices().currencyItem()).getName(),
+          PayTpItemHandler.getItemByStringId(configManager.data().price().currencyItem()).getName(),
           price,
           balance
       );
@@ -356,7 +356,7 @@ public class PayTpCommand {
     // ---------------------------------
     // Proceed payment
     // ---------------------------------
-    if (!PayTpCalculator.proceedPayment(configManager.data().prices().currencyItem(), player, price, configManager.data().combineSettingFlags())) {
+    if (!PayTpCalculator.proceedPayment(configManager.data().price().currencyItem(), player, price, configManager.data().combineSettingFlags())) {
       LOGGER.error("Payment proceed failed");
       return 0;
     }
@@ -372,7 +372,7 @@ public class PayTpCommand {
         player.getPitch(),
         entity -> {
           // Effect
-          if (configManager.data().attributes().particleEffect()) {
+          if (configManager.data().setting().effect().particleEffect()) {
             targetWorld.sendEntityStatus(player, (byte)46);
           }
 
@@ -380,13 +380,13 @@ public class PayTpCommand {
           if (Flags.check(multiplierFlags, PayTpMultiplierFlags.BACK)) {
             PayTpMessageSender.msgTpBackSucceeded(
                 player,
-                PayTpItemHandler.getItemByStringId(configManager.data().prices().currencyItem()).getName(),
+                PayTpItemHandler.getItemByStringId(configManager.data().price().currencyItem()).getName(),
                 price
             );
           } else {
             PayTpMessageSender.msgTpSucceeded(
                 player,
-                PayTpItemHandler.getItemByStringId(configManager.data().prices().currencyItem()).getName(),
+                PayTpItemHandler.getItemByStringId(configManager.data().price().currencyItem()).getName(),
                 price
             );
           }

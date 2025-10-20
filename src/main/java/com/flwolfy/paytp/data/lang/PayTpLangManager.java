@@ -1,4 +1,4 @@
-package com.flwolfy.paytp.data;
+package com.flwolfy.paytp.data.lang;
 
 import com.flwolfy.paytp.PayTpMod;
 
@@ -18,8 +18,8 @@ import org.slf4j.Logger;
 
 public class PayTpLangManager {
 
-  private static final Gson GSON = new Gson();
   private static final Logger LOGGER = PayTpMod.LOGGER;
+  private static final Gson GSON = new Gson();
   private static final String DEFAULT_LANGUAGE = PayTpLang.ENGLISH.getLangKey();
 
   private static PayTpLangManager instance;
@@ -70,12 +70,12 @@ public class PayTpLangManager {
   /**
    * Set the language for the loader to output text.
    */
-  public void setLanguage(String langKey) {
-    if (languageMap.containsKey(langKey)) {
-      language = langKey;
+  public void setLanguage(PayTpLang lang) {
+    if (languageMap.containsKey(lang.getLangKey())) {
+      language = lang.getLangKey();
     } else {
       language = DEFAULT_LANGUAGE;
-      LOGGER.warn("Language {} is not supported, set to default language {}.", langKey, DEFAULT_LANGUAGE);
+      LOGGER.warn("Language {} is not supported, set to default language {}.", lang.getLangKey(), DEFAULT_LANGUAGE);
     }
   }
 

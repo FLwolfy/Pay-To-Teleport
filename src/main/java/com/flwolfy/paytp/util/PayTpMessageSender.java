@@ -1,6 +1,6 @@
 package com.flwolfy.paytp.util;
 
-import com.flwolfy.paytp.data.PayTpLangManager;
+import com.flwolfy.paytp.data.lang.PayTpLangManager;
 
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.MutableText;

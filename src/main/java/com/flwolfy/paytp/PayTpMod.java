@@ -5,9 +5,9 @@ import com.flwolfy.paytp.command.PayTpCommand;
 
 import com.flwolfy.paytp.command.PayTpHomeManager;
 import com.flwolfy.paytp.command.PayTpRequestManager;
-import com.flwolfy.paytp.data.PayTpConfigData;
-import com.flwolfy.paytp.data.PayTpConfigManager;
-import com.flwolfy.paytp.data.PayTpLangManager;
+import com.flwolfy.paytp.data.config.PayTpConfigData;
+import com.flwolfy.paytp.data.config.PayTpConfigManager;
+import com.flwolfy.paytp.data.lang.PayTpLangManager;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -29,8 +29,8 @@ public class PayTpMod implements ModInitializer {
 	public void onInitialize() {
 		// Init manager singletons
 		PayTpConfigData initialData = PayTpConfigManager.getInstance().data();
-		PayTpLangManager.getInstance().setLanguage(initialData.language());
-		PayTpBackManager.getInstance().setMaxBackStack(initialData.maxBackStack());
+		PayTpLangManager.getInstance().setLanguage(initialData.general().language());
+		PayTpBackManager.getInstance().setMaxBackStack(initialData.back().maxBackStack());
 		PayTpHomeManager.getInstance();
 		PayTpRequestManager.getInstance();
 

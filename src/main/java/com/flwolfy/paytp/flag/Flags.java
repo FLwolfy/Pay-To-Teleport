@@ -41,7 +41,7 @@ public final class Flags {
   /**
    * Get the bit mask value of a specific flag.
    */
-  public static int bit(Object flag) {
+  public static <T> int bit(T flag) {
     return getBit(flag);
   }
 
