@@ -53,7 +53,7 @@ public record PayTpConfigData(
 
       "minecraft:diamond",
 
-      "en_us",
+      PayTpLang.ENGLISH.getLangKey(),
       10,
       10,
       true,

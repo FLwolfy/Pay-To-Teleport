@@ -5,6 +5,7 @@ import com.flwolfy.paytp.command.PayTpCommand;
 
 import com.flwolfy.paytp.command.PayTpHomeManager;
 import com.flwolfy.paytp.command.PayTpRequestManager;
+import com.flwolfy.paytp.data.PayTpConfigData;
 import com.flwolfy.paytp.data.PayTpConfigManager;
 import com.flwolfy.paytp.data.PayTpLangManager;
 
@@ -27,9 +28,9 @@ public class PayTpMod implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		// Init manager singletons
-		PayTpConfigManager.getInstance();
-		PayTpLangManager.getInstance();
-		PayTpBackManager.getInstance();
+		PayTpConfigData initialData = PayTpConfigManager.getInstance().data();
+		PayTpLangManager.getInstance().setLanguage(initialData.language());
+		PayTpBackManager.getInstance().setMaxBackStack(initialData.maxBackStack());
 		PayTpHomeManager.getInstance();
 		PayTpRequestManager.getInstance();
 

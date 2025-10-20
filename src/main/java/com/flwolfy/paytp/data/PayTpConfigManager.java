@@ -26,7 +26,7 @@ public class PayTpConfigManager {
     this.data = data;
   }
 
-  private final PayTpConfigData data;
+  private PayTpConfigData data;
 
   public static PayTpConfigManager getInstance() {
     if (instance == null) {
@@ -100,7 +100,12 @@ public class PayTpConfigManager {
     }
   }
 
-  public void save() {
+  // =================================== //
+  // ============= File APIs =========== //
+  // =================================== //
+
+  public void update(PayTpConfigData data) {
+    this.data = data;
     File file = new File("config/" + CONFIG_FILE_NAME);
     saveStatic(data, file);
   }

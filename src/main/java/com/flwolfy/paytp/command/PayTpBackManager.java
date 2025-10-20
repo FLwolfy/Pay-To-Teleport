@@ -23,17 +23,18 @@ public class PayTpBackManager {
   private static final int DEFAULT_MAX_BACK_STACK = 10;
 
   private static PayTpBackManager instance;
-  private static int maxBackStack;
 
   private final Map<UUID, Deque<PayTpData>> historyMap = new ConcurrentHashMap<>();
   private final Map<UUID, PayTpData> pairCache = new ConcurrentHashMap<>();
+
+  private int maxBackStack;
 
   private PayTpBackManager() {}
 
   public static PayTpBackManager getInstance() {
     if (instance == null) {
       instance = new PayTpBackManager();
-      maxBackStack = DEFAULT_MAX_BACK_STACK;
+      instance.maxBackStack = DEFAULT_MAX_BACK_STACK;
 
       // Register disconnect event
       ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
@@ -51,7 +52,7 @@ public class PayTpBackManager {
     return instance;
   }
 
-  public static void setMaxBackStack(int max) {
+  public void setMaxBackStack(int max) {
     maxBackStack = max;
   }
 

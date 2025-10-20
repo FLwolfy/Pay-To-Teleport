@@ -12,13 +12,6 @@ public class PayTpMessageSender {
 
   private PayTpMessageSender() {}
 
-  /**
-   * Change the message language to the specified language if supported.
-   */
-  public static void changeLanguage(String lang) {
-    LANG_LOADER.setLanguage(lang);
-  }
-
   // ========================================= //
   // ============= Message Sending =========== //
   // ========================================= //
