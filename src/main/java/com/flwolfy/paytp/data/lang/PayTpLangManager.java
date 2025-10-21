@@ -1,4 +1,4 @@
-package com.flwolfy.paytp.data;
+package com.flwolfy.paytp.data.lang;
 
 import com.flwolfy.paytp.PayTpMod;
 
@@ -10,7 +10,6 @@ import net.minecraft.text.Text;
 
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -19,10 +18,10 @@ import org.slf4j.Logger;
 
 public class PayTpLangManager {
 
-  private static final Gson GSON = new Gson();
+  public static final String DEFAULT_LANGUAGE = PayTpLang.ENGLISH.getLangKey();
+
   private static final Logger LOGGER = PayTpMod.LOGGER;
-  private static final String[] LANGUAGES = {"en_us", "zh_cn", "zh_tw"};
-  private static final String DEFAULT_LANGUAGE = "en_us";
+  private static final Gson GSON = new Gson();
 
   private static PayTpLangManager instance;
   private PayTpLangManager() {}
@@ -49,8 +48,8 @@ public class PayTpLangManager {
   private static Map<String, Map<String, String>> loadAllLanguages() {
     Map<String, Map<String, String>> langMap = new HashMap<>();
 
-    for (String lang : LANGUAGES) {
-      String path = "/assets/" + PayTpMod.MOD_ID + "/lang/" + lang + ".json";
+    for (PayTpLang langEnum : PayTpLang.values()) {
+      String path = "/assets/" + PayTpMod.MOD_ID + "/lang/" + langEnum.getLangKey() + ".json";
       try (InputStreamReader reader = new InputStreamReader(
           Objects.requireNonNull(PayTpLangManager.class.getResourceAsStream(path)))) {
 
@@ -58,11 +57,11 @@ public class PayTpLangManager {
         Map<String, String> map = GSON.fromJson(reader, type);
 
         if (map != null) {
-          langMap.put(lang, map);
+          langMap.put(langEnum.getLangKey(), map);
         }
 
       } catch (Exception e) {
-        LOGGER.error("Could not load language {}", lang, e);
+        LOGGER.error("Could not load language {}", langEnum.getLangKey(), e);
       }
     }
 
@@ -72,12 +71,12 @@ public class PayTpLangManager {
   /**
    * Set the language for the loader to output text.
    */
-  public void setLanguage(String lang) {
-    if (Arrays.asList(LANGUAGES).contains(lang)) {
-      language = lang;
+  public void setLanguage(PayTpLang lang) {
+    if (languageMap.containsKey(lang.getLangKey())) {
+      language = lang.getLangKey();
     } else {
       language = DEFAULT_LANGUAGE;
-      LOGGER.warn("Language {} is not supported, set to default language {}.", lang, DEFAULT_LANGUAGE);
+      LOGGER.warn("Language {} is not supported, set to default language {}.", lang.getLangKey(), DEFAULT_LANGUAGE);
     }
   }
 

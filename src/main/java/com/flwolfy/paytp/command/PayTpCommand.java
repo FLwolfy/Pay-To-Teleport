@@ -1,14 +1,12 @@
 package com.flwolfy.paytp.command;
 
 import com.flwolfy.paytp.PayTpMod;
-import com.flwolfy.paytp.data.PayTpConfigManager;
-import com.flwolfy.paytp.data.PayTpConfigData;
+import com.flwolfy.paytp.data.config.PayTpConfigManager;
 import com.flwolfy.paytp.data.PayTpData;
-import com.flwolfy.paytp.data.PayTpHomeData;
+import com.flwolfy.paytp.data.lang.PayTpLangManager;
 import com.flwolfy.paytp.flag.Flags;
 import com.flwolfy.paytp.flag.PayTpMultiplierFlags;
 import com.flwolfy.paytp.util.PayTpCalculator;
-
 import com.flwolfy.paytp.util.PayTpItemHandler;
 import com.flwolfy.paytp.util.PayTpMessageSender;
 
@@ -34,23 +32,26 @@ public class PayTpCommand {
 
   private static final Logger LOGGER = PayTpMod.LOGGER;
 
-  private static PayTpConfigData configData;
+  private static PayTpConfigManager configManager;
   private static PayTpBackManager backManager;
   private static PayTpRequestManager requestManager;
   private static PayTpHomeManager homeManager;
 
   private PayTpCommand() {}
 
-  public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
-    configData = PayTpConfigManager.getInstance().data();
+  public static void reload() {
+    configManager = PayTpConfigManager.getInstance();
     backManager = PayTpBackManager.getInstance();
     requestManager = PayTpRequestManager.getInstance();
     homeManager = PayTpHomeManager.getInstance();
 
-    PayTpMessageSender.changeLanguage(configData.language());
-    PayTpBackManager.setMaxBackStack(configData.maxBackStack());
+    // Language
+    PayTpLangManager.getInstance().setLanguage(configManager.data().general().language());
+    PayTpBackManager.getInstance().setMaxBackStack(configManager.data().back().maxBackStack());
+  }
 
-    dispatcher.register(CommandManager.literal(configData.commandName())
+  public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
+    dispatcher.register(CommandManager.literal(configManager.data().general().mainCommand())
         // ===== /ptp (help) =====
         .executes(PayTpCommand::payTpHelp)
         // ===== /ptp <player> =====
@@ -67,27 +68,27 @@ public class PayTpCommand {
         )
     );
 
-    dispatcher.register(CommandManager.literal(configData.backName())
+    dispatcher.register(CommandManager.literal(configManager.data().back().backCommand())
         // ===== /ptpback =====
         .executes(PayTpCommand::payTpBack)
     );
 
-    dispatcher.register(CommandManager.literal(configData.acceptName())
+    dispatcher.register(CommandManager.literal(configManager.data().request().requestCommand().acceptCommand())
         // ===== /ptpaccept =====
         .executes(PayTpCommand::payTpAccept)
     );
 
-    dispatcher.register(CommandManager.literal(configData.denyName())
+    dispatcher.register(CommandManager.literal(configManager.data().request().requestCommand().denyCommand())
         // ===== /ptpdeny =====
         .executes(PayTpCommand::payTpDeny)
     );
 
-    dispatcher.register(CommandManager.literal(configData.cancelName())
+    dispatcher.register(CommandManager.literal(configManager.data().request().requestCommand().cancelCommand())
         // ===== /ptpcancel =====
         .executes(PayTpCommand::payTpCancel)
     );
 
-    dispatcher.register(CommandManager.literal(configData.homeName())
+    dispatcher.register(CommandManager.literal(configManager.data().home().homeCommand())
         // ===== /ptphome =====
         .executes(PayTpCommand::payTpHome)
         // ===== /ptphome set =====
@@ -102,15 +103,15 @@ public class PayTpCommand {
 
     PayTpMessageSender.msgHelp(
         player,
-        configData.commandName(),
-        configData.commandName(),
-        configData.commandName(),
-        configData.backName(),
-        configData.acceptName(),
-        configData.denyName(),
-        configData.cancelName(),
-        configData.homeName(),
-        configData.homeName() + " set"
+        configManager.data().general().mainCommand(),
+        configManager.data().general().mainCommand(),
+        configManager.data().general().mainCommand(),
+        configManager.data().back().backCommand(),
+        configManager.data().request().requestCommand().acceptCommand(),
+        configManager.data().request().requestCommand().denyCommand(),
+        configManager.data().request().requestCommand().cancelCommand(),
+        configManager.data().home().homeCommand(),
+        configManager.data().home().homeCommand() + " set"
     );
 
     return Command.SINGLE_SUCCESS;
@@ -122,7 +123,7 @@ public class PayTpCommand {
 
     if (player == null) return 0;
 
-    PayTpData payTpData = new PayTpData(player.getWorld(), targetPos);
+    PayTpData payTpData = new PayTpData(player.getServerWorld().getRegistryKey(), targetPos);
     return teleport(
         player,
         payTpData,
@@ -138,9 +139,9 @@ public class PayTpCommand {
 
     if (player == null) return 0;
 
-    PayTpData payTpData = new PayTpData(targetDim, targetPos);
+    PayTpData payTpData = new PayTpData(targetDim.getRegistryKey(), targetPos);
 
-    int multiplierFlags = player.getWorld() == targetDim ?
+    int multiplierFlags = player.getServerWorld() == targetDim ?
         Flags.NO_FLAG :
         Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION);
 
@@ -166,9 +167,9 @@ public class PayTpCommand {
     }
 
     requestManager.sendRequest(sender, target, () -> {
-      PayTpData targetTp = new PayTpData(target.getWorld(), target.getPos());
+      PayTpData targetTp = new PayTpData(target.getServerWorld().getRegistryKey(), target.getPos());
 
-      int multiplierFlags = sender.getWorld() == target.getWorld() ?
+      int multiplierFlags = sender.getServerWorld() == target.getServerWorld() ?
           Flags.NO_FLAG :
           Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION);
 
@@ -188,15 +189,15 @@ public class PayTpCommand {
     }, () -> {
       PayTpMessageSender.msgCancelTp(target, sender.getName());
       PayTpMessageSender.msgTpCanceled(sender, target.getName());
-    }, configData.expireTime());
+    }, configManager.data().request().expireTime());
 
     PayTpMessageSender.msgTpRequestSent(sender, target.getName());
     PayTpMessageSender.msgTpRequestReceived(
         target,
         sender.getName(),
-        configData.acceptName(),
-        configData.denyName(),
-        configData.expireTime()
+        configManager.data().request().requestCommand().acceptCommand(),
+        configManager.data().request().requestCommand().denyCommand(),
+        configManager.data().request().expireTime()
     );
 
     return Command.SINGLE_SUCCESS;
@@ -248,8 +249,7 @@ public class PayTpCommand {
       return 0;
     }
 
-    @SuppressWarnings("resource")
-    int multiplierFlags = player.getWorld() == targetTp.world() ?
+    int multiplierFlags = player.getServerWorld().getRegistryKey() == targetTp.world() ?
         Flags.combine(PayTpMultiplierFlags.BACK) :
         Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION, PayTpMultiplierFlags.BACK);
 
@@ -279,19 +279,15 @@ public class PayTpCommand {
       return 0;
     }
 
-    PayTpHomeData home = homeManager.getHome(player);
-    ServerWorld targetWorld = player.getServer().getWorld(home.dimension());
-    if (targetWorld == null) return 0;
+    PayTpData home = homeManager.getHome(player);
 
-    PayTpData targetTp = new PayTpData(targetWorld, home.pos());
-
-    int multiplierFlags = player.getWorld() == targetWorld ?
+    int multiplierFlags = player.getServerWorld().getRegistryKey() == home.world() ?
         Flags.combine(PayTpMultiplierFlags.HOME) :
         Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION, PayTpMultiplierFlags.HOME);
 
     int result = teleport(
         player,
-        targetTp,
+        home,
         true,
         multiplierFlags
     );
@@ -322,29 +318,39 @@ public class PayTpCommand {
     // ---------------------------------
     // Fetch teleport info
     // ---------------------------------
-    ServerWorld fromWorld = player.getWorld();
-    ServerWorld targetWorld = targetData.world();
-    PayTpData fromData = new PayTpData(fromWorld, player.getPos());
-    PayTpData toData = new PayTpData(targetWorld, targetData.pos());
+    MinecraftServer server = player.getServer();
+    if (server == null) {
+      LOGGER.error("Failed to teleport to null server");
+      return 0;
+    }
+
+    ServerWorld targetWorld = server.getWorld(targetData.world());
+    if (targetWorld == null) {
+      LOGGER.error("Failed to teleport to null world");
+      return 0;
+    }
+
+    ServerWorld fromWorld = player.getServerWorld();
+    PayTpData fromData = new PayTpData(fromWorld.getRegistryKey(), player.getPos());
 
     // ---------------------------------
     // Check payment
     // ---------------------------------
     int price = PayTpCalculator.calculatePrice(
-        configData.baseRadius(),
-        configData.rate(),
-        configData.calculateMultiplier(multiplierFlags),
-        configData.minPrice(),
-        configData.maxPrice(),
+        configManager.data().price().parameter().baseRadius(),
+        configManager.data().price().parameter().rate(),
+        configManager.data().calculateMultiplier(multiplierFlags),
+        configManager.data().price().parameter().minPrice(),
+        configManager.data().price().parameter().maxPrice(),
         fromData,
-        toData
+        targetData
     );
 
-    int balance = PayTpCalculator.checkBalance(configData.currencyItem(), player, configData.combineSettingFlags());
+    int balance = PayTpCalculator.checkBalance(configManager.data().price().currencyItem(), player, configManager.data().combineSettingFlags());
     if (balance < price) {
       PayTpMessageSender.msgTpFailed(
           player,
-          PayTpItemHandler.getItemByStringId(configData.currencyItem()).getName(),
+          PayTpItemHandler.getItemByStringId(configManager.data().price().currencyItem()).getName(),
           price,
           balance
       );
@@ -355,13 +361,13 @@ public class PayTpCommand {
     // Record to back stack
     // ---------------------------------
     if (recordToBackStack) {
-      backManager.pushPair(player, fromData, toData);
+      backManager.pushPair(player, fromData, targetData);
     }
 
     // ---------------------------------
     // Proceed payment
     // ---------------------------------
-    if (!PayTpCalculator.proceedPayment(configData.currencyItem(), player, price, configData.combineSettingFlags())) {
+    if (!PayTpCalculator.proceedPayment(configManager.data().price().currencyItem(), player, price, configManager.data().combineSettingFlags())) {
       LOGGER.error("Payment proceed failed");
       return 0;
     }
@@ -377,7 +383,7 @@ public class PayTpCommand {
         player.getPitch(),
         entity -> {
           // Effect
-          if (configData.particleEffect()) {
+          if (configManager.data().setting().effect().particleEffect()) {
             targetWorld.sendEntityStatus(player, (byte)46);
           }
 
@@ -385,13 +391,13 @@ public class PayTpCommand {
           if (Flags.check(multiplierFlags, PayTpMultiplierFlags.BACK)) {
             PayTpMessageSender.msgTpBackSucceeded(
                 player,
-                PayTpItemHandler.getItemByStringId(configData.currencyItem()).getName(),
+                PayTpItemHandler.getItemByStringId(configManager.data().price().currencyItem()).getName(),
                 price
             );
           } else {
             PayTpMessageSender.msgTpSucceeded(
                 player,
-                PayTpItemHandler.getItemByStringId(configData.currencyItem()).getName(),
+                PayTpItemHandler.getItemByStringId(configManager.data().price().currencyItem()).getName(),
                 price
             );
           }

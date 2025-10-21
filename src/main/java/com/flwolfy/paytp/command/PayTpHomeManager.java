@@ -1,8 +1,7 @@
 package com.flwolfy.paytp.command;
 
 import com.flwolfy.paytp.PayTpMod;
-import com.flwolfy.paytp.data.PayTpHomeData;
-import com.flwolfy.paytp.data.PayTpHomeState;
+import com.flwolfy.paytp.data.PayTpData;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -10,7 +9,6 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.PersistentStateManager;
 
 import org.slf4j.Logger;
-
 
 public class PayTpHomeManager {
 
@@ -41,7 +39,7 @@ public class PayTpHomeManager {
     }
   }
 
-  public PayTpHomeData getHome(ServerPlayerEntity player) {
+  public PayTpData getHome(ServerPlayerEntity player) {
     MinecraftServer server = player.getServer();
     if (server != null) {
       ServerWorld overworld = player.getServer().getOverworld();

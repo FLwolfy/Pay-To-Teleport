@@ -1,4 +1,6 @@
-package com.flwolfy.paytp.data;
+package com.flwolfy.paytp.command;
+
+import com.flwolfy.paytp.data.PayTpData;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -18,13 +20,13 @@ public class PayTpHomeState extends PersistentState {
 
   private static final String PERSISTENT_STATE_ID = "paytp_home_state";
 
-  public static final Codec<PayTpHomeData> HOME_CODEC = RecordCodecBuilder.create(instance ->
+  public static final Codec<PayTpData> HOME_CODEC = RecordCodecBuilder.create(instance ->
       instance.group(
-          Codec.STRING.fieldOf("dimension").forGetter(pd -> pd.dimension().getValue().toString()),
+          Codec.STRING.fieldOf("dimension").forGetter(pd -> pd.world().getValue().toString()),
           Codec.DOUBLE.fieldOf("x").forGetter(pd -> pd.pos().x),
           Codec.DOUBLE.fieldOf("y").forGetter(pd -> pd.pos().y),
           Codec.DOUBLE.fieldOf("z").forGetter(pd -> pd.pos().z)
-      ).apply(instance, PayTpHomeData::new)
+      ).apply(instance, PayTpData::new)
   );
 
   public static final Codec<PayTpHomeState> CODEC = RecordCodecBuilder.create(instance ->
@@ -43,13 +45,13 @@ public class PayTpHomeState extends PersistentState {
       new PersistentStateType<>(PERSISTENT_STATE_ID, PayTpHomeState::new, CODEC, null);
 
 
-  private final Map<UUID, PayTpHomeData> homeMap;
+  private final Map<UUID, PayTpData> homeMap;
 
   public PayTpHomeState() {
     this.homeMap = new HashMap<>();
   }
 
-  private PayTpHomeState(Map<String, PayTpHomeData> map) {
+  private PayTpHomeState(Map<String, PayTpData> map) {
     this.homeMap = new HashMap<>();
     map.forEach((k, v) -> this.homeMap.put(UUID.fromString(k), v));
   }
@@ -58,11 +60,11 @@ public class PayTpHomeState extends PersistentState {
   // ============= Home Setting =========== //
   // ====================================== //
   public void setHome(UUID player, Vec3d pos, RegistryKey<World> dimension) {
-    homeMap.put(player, new PayTpHomeData(pos, dimension));
+    homeMap.put(player, new PayTpData(dimension, pos));
     markDirty();
   }
 
-  public PayTpHomeData getHome(UUID player) {
+  public PayTpData getHome(UUID player) {
     return homeMap.get(player);
   }
 
