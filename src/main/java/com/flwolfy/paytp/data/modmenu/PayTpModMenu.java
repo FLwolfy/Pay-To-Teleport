@@ -47,7 +47,7 @@ public class PayTpModMenu implements ModMenuApi {
   }
 
   private void saveConfig() {
-    PayTpConfigManager.getInstance().update(dataSupplier.get());
     LOGGER.info("Saving PayTpConfig...");
+    PayTpConfigManager.getInstance().update(dataSupplier.get());
   }
 }
