@@ -123,7 +123,7 @@ public class PayTpCommand {
 
     if (player == null) return 0;
 
-    PayTpData payTpData = new PayTpData(player.getWorld().getRegistryKey(), targetPos);
+    PayTpData payTpData = new PayTpData(player.getEntityWorld().getRegistryKey(), targetPos);
     return teleport(
         player,
         payTpData,
@@ -141,7 +141,7 @@ public class PayTpCommand {
 
     PayTpData payTpData = new PayTpData(targetDim.getRegistryKey(), targetPos);
 
-    int multiplierFlags = player.getWorld() == targetDim ?
+    int multiplierFlags = player.getEntityWorld() == targetDim ?
         Flags.NO_FLAG :
         Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION);
 
@@ -167,9 +167,9 @@ public class PayTpCommand {
     }
 
     requestManager.sendRequest(sender, target, () -> {
-      PayTpData targetTp = new PayTpData(target.getWorld().getRegistryKey(), target.getPos());
+      PayTpData targetTp = new PayTpData(target.getEntityWorld().getRegistryKey(), target.getEntityPos());
 
-      int multiplierFlags = sender.getWorld() == target.getWorld() ?
+      int multiplierFlags = sender.getEntityWorld() == target.getEntityWorld() ?
           Flags.NO_FLAG :
           Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION);
 
@@ -249,7 +249,7 @@ public class PayTpCommand {
       return 0;
     }
 
-    int multiplierFlags = player.getWorld().getRegistryKey() == targetTp.world() ?
+    int multiplierFlags = player.getEntityWorld().getRegistryKey() == targetTp.world() ?
         Flags.combine(PayTpMultiplierFlags.BACK) :
         Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION, PayTpMultiplierFlags.BACK);
 
@@ -271,8 +271,6 @@ public class PayTpCommand {
   private static int payTpHome(CommandContext<ServerCommandSource> ctx) {
     ServerPlayerEntity player = ctx.getSource().getPlayer();
     if (player == null) return 0;
-    MinecraftServer server = player.getServer();
-    if (server == null) return 0;
 
     if (!homeManager.hasHome(player)) {
       PayTpMessageSender.msgHomeNotSet(player);
@@ -281,7 +279,7 @@ public class PayTpCommand {
 
     PayTpData home = homeManager.getHome(player);
 
-    int multiplierFlags = player.getWorld().getRegistryKey() == home.world() ?
+    int multiplierFlags = player.getEntityWorld().getRegistryKey() == home.world() ?
         Flags.combine(PayTpMultiplierFlags.HOME) :
         Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION, PayTpMultiplierFlags.HOME);
 
@@ -318,20 +316,15 @@ public class PayTpCommand {
     // ---------------------------------
     // Fetch teleport info
     // ---------------------------------
-    MinecraftServer server = player.getServer();
-    if (server == null) {
-      LOGGER.error("Failed to teleport to null server");
-      return 0;
-    }
-
+    MinecraftServer server = player.getEntityWorld().getServer();
     ServerWorld targetWorld = server.getWorld(targetData.world());
     if (targetWorld == null) {
       LOGGER.error("Failed to teleport to null world");
       return 0;
     }
 
-    ServerWorld fromWorld = player.getWorld();
-    PayTpData fromData = new PayTpData(fromWorld.getRegistryKey(), player.getPos());
+    ServerWorld fromWorld = player.getEntityWorld();
+    PayTpData fromData = new PayTpData(fromWorld.getRegistryKey(), player.getEntityPos());
 
     // ---------------------------------
     // Check payment

@@ -278,7 +278,7 @@ public class PayTpMessageSender {
             PayTpTextBuilder.commandText(
                 Text.literal("/" + tpDimCommandName),
                 PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + tpDimCommandName),
-                "/" + tpDimCommandName + " " + player.getWorld().getRegistryKey().getValue().toString() + " ~ ~ ~"
+                "/" + tpDimCommandName + " " + player.getEntityWorld().getRegistryKey().getValue().toString() + " ~ ~ ~"
             ),
             PayTpTextBuilder.commandText(
                 Text.literal("/" + tpPlayerCommandName),

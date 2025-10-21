@@ -1,18 +1,12 @@
 package com.flwolfy.paytp.command;
 
-import com.flwolfy.paytp.PayTpMod;
 import com.flwolfy.paytp.data.PayTpData;
 
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.PersistentStateManager;
 
-import org.slf4j.Logger;
-
 public class PayTpHomeManager {
-
-  private static final Logger LOGGER = PayTpMod.LOGGER;
 
   private static PayTpHomeManager instance;
   private PayTpHomeManager() {}
@@ -30,34 +24,17 @@ public class PayTpHomeManager {
   }
 
   public void setHome(ServerPlayerEntity player) {
-    MinecraftServer server = player.getServer();
-    if (server != null) {
-      ServerWorld overworld = player.getServer().getOverworld();
-      getState(overworld).setHome(player.getUuid(), player.getPos(), player.getWorld().getRegistryKey());
-    } else {
-      LOGGER.warn("Failed to set home state, server is null");
-    }
+    ServerWorld overworld = player.getEntityWorld().getServer().getOverworld();
+    getState(overworld).setHome(player.getUuid(), player.getEntityPos(), player.getEntityWorld().getRegistryKey());
   }
 
   public PayTpData getHome(ServerPlayerEntity player) {
-    MinecraftServer server = player.getServer();
-    if (server != null) {
-      ServerWorld overworld = player.getServer().getOverworld();
-      return getState(overworld).getHome(player.getUuid());
-    } else {
-      LOGGER.warn("Failed to get home state, server is null");
-      return null;
-    }
+    ServerWorld overworld = player.getEntityWorld().getServer().getOverworld();
+    return getState(overworld).getHome(player.getUuid());
   }
 
   public boolean hasHome(ServerPlayerEntity player) {
-    MinecraftServer server = player.getServer();
-    if (server != null) {
-      ServerWorld overworld = player.getServer().getOverworld();
-      return getState(overworld).hasHome(player.getUuid());
-    } else {
-      LOGGER.warn("Failed to check home state, server is null");
-      return false;
-    }
+    ServerWorld overworld = player.getEntityWorld().getServer().getOverworld();
+    return getState(overworld).hasHome(player.getUuid());
   }
 }
