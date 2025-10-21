@@ -3,13 +3,13 @@
 	"id": "pay-to-teleport",
 	"version": "${version}",
 	"name": "Pay-To-Teleport",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "This is a minecraft fabric mod that allows you to teleport with configurable item costs.",
 	"authors": [
 		"FLwolfy"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/FLwolfy/Pay-To-Teleport",
+		"sources": "https://github.com/FLwolfy/Pay-To-Teleport"
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/pay-to-teleport/icon.png",

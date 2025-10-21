@@ -61,13 +61,13 @@
 
 
   "paytp.config.title": "PayTp 配置文件",
+  "paytp.config.title.warning": "您需要重启我的世界存档来应用所有设置!",
   "paytp.config.all": "全部",
   "paytp.config.other": "其他",
 
   "paytp.config.general": "通用",
   "paytp.config.language": "语言",
   "paytp.config.language.tooltip": "设置插件显示语言",
-  "paytp.config.language.warning": "您需要重启我的世界客户端来应用此设置!",
   "paytp.config.mainCommand": "主指令名",
   "paytp.config.mainCommand.tooltip": "设置插件的主要命令名称",
   "paytp.config.crossDimMultiplier": "跨维倍率",

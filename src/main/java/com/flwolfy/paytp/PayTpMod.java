@@ -5,12 +5,16 @@ import com.flwolfy.paytp.command.PayTpCommand;
 
 import com.flwolfy.paytp.command.PayTpHomeManager;
 import com.flwolfy.paytp.command.PayTpRequestManager;
-import com.flwolfy.paytp.data.config.PayTpConfigData;
+import com.flwolfy.paytp.data.PayTpData;
 import com.flwolfy.paytp.data.config.PayTpConfigManager;
 import com.flwolfy.paytp.data.lang.PayTpLangManager;
 
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+
+import net.minecraft.server.network.ServerPlayerEntity;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,18 +32,33 @@ public class PayTpMod implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		// Init manager singletons
-		PayTpConfigData initialData = PayTpConfigManager.getInstance().data();
-		PayTpLangManager.getInstance().setLanguage(initialData.general().language());
-		PayTpBackManager.getInstance().setMaxBackStack(initialData.back().maxBackStack());
+		PayTpConfigManager.getInstance();
+		PayTpLangManager.getInstance();
+		PayTpBackManager.getInstance();
 		PayTpHomeManager.getInstance();
 		PayTpRequestManager.getInstance();
 
-		// Register command
-		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-			PayTpCommand.register(dispatcher);
-		});
+		// Register events
+		registerEvents();
 
 		// Log complete
 		LOGGER.info("PayTpMod initialized!");
+	}
+
+	private void registerEvents() {
+		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+			PayTpCommand.reload();
+			PayTpCommand.register(server.getCommandManager().getDispatcher());
+		});
+
+		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+			PayTpBackManager.getInstance().clearHistory(handler.player);
+		});
+
+		ServerLivingEntityEvents.AFTER_DEATH.register((entity, livingEntity) -> {
+			if (entity instanceof ServerPlayerEntity player) {
+				PayTpBackManager.getInstance().pushSingle(player, new PayTpData(player.getServerWorld(), player.getPos()));
+			}
+		});
 	}
 }

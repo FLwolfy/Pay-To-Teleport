@@ -2,9 +2,6 @@ package com.flwolfy.paytp.command;
 
 import com.flwolfy.paytp.data.PayTpData;
 
-import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.ArrayDeque;
@@ -35,20 +32,7 @@ public class PayTpBackManager {
     if (instance == null) {
       instance = new PayTpBackManager();
       instance.maxBackStack = DEFAULT_MAX_BACK_STACK;
-
-      // Register disconnect event
-      ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
-        PayTpBackManager.getInstance().clearHistory(handler.player);
-      });
-
-      // Register death event
-      ServerLivingEntityEvents.AFTER_DEATH.register((entity, livingEntity) -> {
-        if (entity instanceof ServerPlayerEntity player) {
-          PayTpBackManager.getInstance().pushSingle(player, new PayTpData(player.getServerWorld(), player.getPos()));
-        }
-      });
     }
-
     return instance;
   }
 

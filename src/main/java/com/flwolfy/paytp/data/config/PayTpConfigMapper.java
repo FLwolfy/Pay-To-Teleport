@@ -56,7 +56,7 @@ public class PayTpConfigMapper {
    * @throws RuntimeException if the reconstruction fails due to reflection or missing fields
    */
   @SuppressWarnings("unchecked")
-  public static <T extends Record> T unflattenData(Class<T> recordClass, Map<String, Object> flatMap) {
+  public static <T extends Record> T unflattenData(Map<String, Object> flatMap, Class<T> recordClass) {
     try {
       RecordComponent[] components = recordClass.getRecordComponents();
       Object[] values = new Object[components.length];
@@ -74,7 +74,7 @@ public class PayTpConfigMapper {
               nestedMap.put(entry.getKey().substring(prefix.length()), entry.getValue());
             }
           }
-          values[i] = unflattenData((Class<T>) type, nestedMap);
+          values[i] = unflattenData(nestedMap, (Class<T>) type);
         } else {
           values[i] = flatMap.get(name);
         }

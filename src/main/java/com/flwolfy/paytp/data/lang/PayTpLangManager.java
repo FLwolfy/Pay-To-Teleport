@@ -18,9 +18,10 @@ import org.slf4j.Logger;
 
 public class PayTpLangManager {
 
+  public static final String DEFAULT_LANGUAGE = PayTpLang.ENGLISH.getLangKey();
+
   private static final Logger LOGGER = PayTpMod.LOGGER;
   private static final Gson GSON = new Gson();
-  private static final String DEFAULT_LANGUAGE = PayTpLang.ENGLISH.getLangKey();
 
   private static PayTpLangManager instance;
   private PayTpLangManager() {}

@@ -61,13 +61,13 @@
 
 
   "paytp.config.title": "PayTp Configuration",
+  "paytp.config.title.warning": "You need to relaunch your world to get all settings reloaded!",
   "paytp.config.all": "All",
   "paytp.config.other": "Others",
 
   "paytp.config.general": "General",
   "paytp.config.language": "Language",
   "paytp.config.language.tooltip": "Set the plugin display language",
-  "paytp.config.language.warning": "You need to relaunch your client to get it reloaded!",
   "paytp.config.mainCommand": "Main Command",
   "paytp.config.mainCommand.tooltip": "Set the main command name of the plugin",
   "paytp.config.crossDimMultiplier": "Cross-Dimension Multiplier",

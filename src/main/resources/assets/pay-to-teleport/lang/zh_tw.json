@@ -61,13 +61,13 @@
 
 
   "paytp.config.title": "PayTp 設定檔",
+  "paytp.config.title.warning": "你需要重新啟動你的存檔以重新載入所有設定！",
   "paytp.config.all": "全部",
   "paytp.config.other": "其他",
 
   "paytp.config.general": "一般",
   "paytp.config.language": "語言",
   "paytp.config.language.tooltip": "設定插件顯示語言",
-  "paytp.config.language.warning": "你需要重新啟動你的客戶端以重新載入！",
   "paytp.config.mainCommand": "主指令名稱",
   "paytp.config.mainCommand.tooltip": "設定插件的主要指令名稱",
   "paytp.config.crossDimMultiplier": "跨維倍率",

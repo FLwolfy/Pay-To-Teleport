@@ -3,6 +3,7 @@ package com.flwolfy.paytp.command;
 import com.flwolfy.paytp.PayTpMod;
 import com.flwolfy.paytp.data.config.PayTpConfigManager;
 import com.flwolfy.paytp.data.PayTpData;
+import com.flwolfy.paytp.data.lang.PayTpLangManager;
 import com.flwolfy.paytp.flag.Flags;
 import com.flwolfy.paytp.flag.PayTpMultiplierFlags;
 import com.flwolfy.paytp.util.PayTpCalculator;
@@ -39,12 +40,18 @@ public class PayTpCommand {
 
   private PayTpCommand() {}
 
-  public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
+  public static void reload() {
     configManager = PayTpConfigManager.getInstance();
     backManager = PayTpBackManager.getInstance();
     requestManager = PayTpRequestManager.getInstance();
     homeManager = PayTpHomeManager.getInstance();
 
+    // Language
+    PayTpLangManager.getInstance().setLanguage(configManager.data().general().language());
+    PayTpBackManager.getInstance().setMaxBackStack(configManager.data().back().maxBackStack());
+  }
+
+  public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
     dispatcher.register(CommandManager.literal(configManager.data().general().mainCommand())
         // ===== /ptp (help) =====
         .executes(PayTpCommand::payTpHelp)
