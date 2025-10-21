@@ -1,6 +1,8 @@
 package com.flwolfy.paytp.data;
 
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.registry.RegistryKey;
@@ -13,20 +15,25 @@ import java.util.Objects;
  * Two PayTpData are equal if they point to the same world and have nearly identical coordinates.
  */
 public record PayTpData(
-    ServerWorld world,
+    RegistryKey<World> world,
     Vec3d pos
 ) {
+  /**
+   * Another constructor support for serialization
+   */
+  public PayTpData(String dimensionId, double x, double y, double z) {
+    this(RegistryKey.of(RegistryKeys.WORLD, Identifier.tryParse(dimensionId)), new Vec3d(x, y, z));
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o)
       return true;
-    if (!(o instanceof PayTpData(ServerWorld world1, Vec3d pos1)))
+    if (!(o instanceof PayTpData(RegistryKey<World> world1, Vec3d pos1)))
       return false;
 
     // Compare world registry keys instead of instance references
-    RegistryKey<World> thisKey = this.world.getRegistryKey();
-    RegistryKey<World> otherKey = world1.getRegistryKey();
-    if (!Objects.equals(thisKey, otherKey)) return false;
+    if (!Objects.equals(world, world1)) return false;
 
     // Compare position with tolerance
     return MathHelper.approximatelyEquals(this.pos.x, pos1.x)

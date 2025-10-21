@@ -7,7 +7,6 @@ import com.flwolfy.paytp.data.lang.PayTpLangManager;
 import com.flwolfy.paytp.flag.Flags;
 import com.flwolfy.paytp.flag.PayTpMultiplierFlags;
 import com.flwolfy.paytp.util.PayTpCalculator;
-
 import com.flwolfy.paytp.util.PayTpItemHandler;
 import com.flwolfy.paytp.util.PayTpMessageSender;
 
@@ -124,7 +123,7 @@ public class PayTpCommand {
 
     if (player == null) return 0;
 
-    PayTpData payTpData = new PayTpData(player.getServerWorld(), targetPos);
+    PayTpData payTpData = new PayTpData(player.getServerWorld().getRegistryKey(), targetPos);
     return teleport(
         player,
         payTpData,
@@ -140,7 +139,7 @@ public class PayTpCommand {
 
     if (player == null) return 0;
 
-    PayTpData payTpData = new PayTpData(targetDim, targetPos);
+    PayTpData payTpData = new PayTpData(targetDim.getRegistryKey(), targetPos);
 
     int multiplierFlags = player.getServerWorld() == targetDim ?
         Flags.NO_FLAG :
@@ -168,7 +167,7 @@ public class PayTpCommand {
     }
 
     requestManager.sendRequest(sender, target, () -> {
-      PayTpData targetTp = new PayTpData(target.getServerWorld(), target.getPos());
+      PayTpData targetTp = new PayTpData(target.getServerWorld().getRegistryKey(), target.getPos());
 
       int multiplierFlags = sender.getServerWorld() == target.getServerWorld() ?
           Flags.NO_FLAG :
@@ -250,8 +249,7 @@ public class PayTpCommand {
       return 0;
     }
 
-    @SuppressWarnings("resource")
-    int multiplierFlags = player.getServerWorld() == targetTp.world() ?
+    int multiplierFlags = player.getServerWorld().getRegistryKey() == targetTp.world() ?
         Flags.combine(PayTpMultiplierFlags.BACK) :
         Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION, PayTpMultiplierFlags.BACK);
 
@@ -281,19 +279,15 @@ public class PayTpCommand {
       return 0;
     }
 
-    PayTpHomeManager.PayTpHomeData home = homeManager.getHome(player);
-    ServerWorld targetWorld = player.getServer().getWorld(home.dimension());
-    if (targetWorld == null) return 0;
+    PayTpData home = homeManager.getHome(player);
 
-    PayTpData targetTp = new PayTpData(targetWorld, home.pos());
-
-    int multiplierFlags = player.getServerWorld() == targetWorld ?
+    int multiplierFlags = player.getServerWorld().getRegistryKey() == home.world() ?
         Flags.combine(PayTpMultiplierFlags.HOME) :
         Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION, PayTpMultiplierFlags.HOME);
 
     int result = teleport(
         player,
-        targetTp,
+        home,
         true,
         multiplierFlags
     );
@@ -324,10 +318,20 @@ public class PayTpCommand {
     // ---------------------------------
     // Fetch teleport info
     // ---------------------------------
+    MinecraftServer server = player.getServer();
+    if (server == null) {
+      LOGGER.error("Failed to teleport to null server");
+      return 0;
+    }
+
+    ServerWorld targetWorld = server.getWorld(targetData.world());
+    if (targetWorld == null) {
+      LOGGER.error("Failed to teleport to null world");
+      return 0;
+    }
+
     ServerWorld fromWorld = player.getServerWorld();
-    ServerWorld targetWorld = targetData.world();
-    PayTpData fromData = new PayTpData(fromWorld, player.getPos());
-    PayTpData toData = new PayTpData(targetWorld, targetData.pos());
+    PayTpData fromData = new PayTpData(fromWorld.getRegistryKey(), player.getPos());
 
     // ---------------------------------
     // Check payment
@@ -339,7 +343,7 @@ public class PayTpCommand {
         configManager.data().price().parameter().minPrice(),
         configManager.data().price().parameter().maxPrice(),
         fromData,
-        toData
+        targetData
     );
 
     int balance = PayTpCalculator.checkBalance(configManager.data().price().currencyItem(), player, configManager.data().combineSettingFlags());
@@ -357,7 +361,7 @@ public class PayTpCommand {
     // Record to back stack
     // ---------------------------------
     if (recordToBackStack) {
-      backManager.pushPair(player, fromData, toData);
+      backManager.pushPair(player, fromData, targetData);
     }
 
     // ---------------------------------
