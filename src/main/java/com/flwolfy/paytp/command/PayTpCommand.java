@@ -123,7 +123,7 @@ public class PayTpCommand {
 
     if (player == null) return 0;
 
-    PayTpData payTpData = new PayTpData(player.getServerWorld().getRegistryKey(), targetPos);
+    PayTpData payTpData = new PayTpData(player.getWorld().getRegistryKey(), targetPos);
     return teleport(
         player,
         payTpData,
@@ -141,7 +141,7 @@ public class PayTpCommand {
 
     PayTpData payTpData = new PayTpData(targetDim.getRegistryKey(), targetPos);
 
-    int multiplierFlags = player.getServerWorld() == targetDim ?
+    int multiplierFlags = player.getWorld() == targetDim ?
         Flags.NO_FLAG :
         Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION);
 
@@ -167,9 +167,9 @@ public class PayTpCommand {
     }
 
     requestManager.sendRequest(sender, target, () -> {
-      PayTpData targetTp = new PayTpData(target.getServerWorld().getRegistryKey(), target.getPos());
+      PayTpData targetTp = new PayTpData(target.getWorld().getRegistryKey(), target.getPos());
 
-      int multiplierFlags = sender.getServerWorld() == target.getServerWorld() ?
+      int multiplierFlags = sender.getWorld() == target.getWorld() ?
           Flags.NO_FLAG :
           Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION);
 
@@ -249,7 +249,7 @@ public class PayTpCommand {
       return 0;
     }
 
-    int multiplierFlags = player.getServerWorld().getRegistryKey() == targetTp.world() ?
+    int multiplierFlags = player.getWorld().getRegistryKey() == targetTp.world() ?
         Flags.combine(PayTpMultiplierFlags.BACK) :
         Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION, PayTpMultiplierFlags.BACK);
 
@@ -281,7 +281,7 @@ public class PayTpCommand {
 
     PayTpData home = homeManager.getHome(player);
 
-    int multiplierFlags = player.getServerWorld().getRegistryKey() == home.world() ?
+    int multiplierFlags = player.getWorld().getRegistryKey() == home.world() ?
         Flags.combine(PayTpMultiplierFlags.HOME) :
         Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION, PayTpMultiplierFlags.HOME);
 
@@ -330,7 +330,7 @@ public class PayTpCommand {
       return 0;
     }
 
-    ServerWorld fromWorld = player.getServerWorld();
+    ServerWorld fromWorld = player.getWorld();
     PayTpData fromData = new PayTpData(fromWorld.getRegistryKey(), player.getPos());
 
     // ---------------------------------

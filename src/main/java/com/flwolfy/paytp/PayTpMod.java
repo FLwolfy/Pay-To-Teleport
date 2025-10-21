@@ -57,7 +57,7 @@ public class PayTpMod implements ModInitializer {
 
 		ServerLivingEntityEvents.AFTER_DEATH.register((entity, livingEntity) -> {
 			if (entity instanceof ServerPlayerEntity player) {
-				PayTpBackManager.getInstance().pushSingle(player, new PayTpData(player.getServerWorld().getRegistryKey(), player.getPos()));
+				PayTpBackManager.getInstance().pushSingle(player, new PayTpData(player.getWorld().getRegistryKey(), player.getPos()));
 			}
 		});
 	}
