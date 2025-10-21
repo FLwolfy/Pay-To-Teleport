@@ -2,9 +2,6 @@ package com.flwolfy.paytp.command;
 
 import com.flwolfy.paytp.data.PayTpData;
 
-import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.ArrayDeque;
@@ -23,35 +20,23 @@ public class PayTpBackManager {
   private static final int DEFAULT_MAX_BACK_STACK = 10;
 
   private static PayTpBackManager instance;
-  private static int maxBackStack;
 
   private final Map<UUID, Deque<PayTpData>> historyMap = new ConcurrentHashMap<>();
   private final Map<UUID, PayTpData> pairCache = new ConcurrentHashMap<>();
+
+  private int maxBackStack;
 
   private PayTpBackManager() {}
 
   public static PayTpBackManager getInstance() {
     if (instance == null) {
       instance = new PayTpBackManager();
-      maxBackStack = DEFAULT_MAX_BACK_STACK;
-
-      // Register disconnect event
-      ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
-          PayTpBackManager.getInstance().clearHistory(handler.player)
-      );
-
-      // Register death event
-      ServerLivingEntityEvents.AFTER_DEATH.register((entity, livingEntity) -> {
-        if (entity instanceof ServerPlayerEntity player) {
-          PayTpBackManager.getInstance().pushSingle(player, new PayTpData(player.getServerWorld(), player.getPos()));
-        }
-      });
+      instance.maxBackStack = DEFAULT_MAX_BACK_STACK;
     }
-
     return instance;
   }
 
-  public static void setMaxBackStack(int max) {
+  public void setMaxBackStack(int max) {
     maxBackStack = max;
   }
 

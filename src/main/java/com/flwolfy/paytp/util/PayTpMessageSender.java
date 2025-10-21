@@ -1,6 +1,6 @@
 package com.flwolfy.paytp.util;
 
-import com.flwolfy.paytp.data.PayTpLangManager;
+import com.flwolfy.paytp.data.lang.PayTpLangManager;
 
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.MutableText;
@@ -11,13 +11,6 @@ public class PayTpMessageSender {
   private static final PayTpLangManager LANG_LOADER = PayTpLangManager.getInstance();
 
   private PayTpMessageSender() {}
-
-  /**
-   * Change the message language to the specified language if supported.
-   */
-  public static void changeLanguage(String lang) {
-    LANG_LOADER.setLanguage(lang);
-  }
 
   // ========================================= //
   // ============= Message Sending =========== //
