@@ -98,6 +98,8 @@ public class PayTpMessageSender {
   public static void msgTpCanceled(ServerPlayerEntity player, Text targetText) {
     player.sendMessage(PayTpTextBuilder.format(
         LANG_LOADER.getText("paytp.request.cancel.sender"),
+        PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+        PayTpTextBuilder.DEFAULT_WARN_COLOR,
         targetText
     ), false);
   }
@@ -105,6 +107,8 @@ public class PayTpMessageSender {
   public static void msgCancelTp(ServerPlayerEntity player, Text senderText) {
     player.sendMessage(PayTpTextBuilder.format(
         LANG_LOADER.getText("paytp.request.cancel.receiver"),
+        PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+        PayTpTextBuilder.DEFAULT_WARN_COLOR,
         senderText
     ), false);
   }
@@ -121,12 +125,24 @@ public class PayTpMessageSender {
       Text senderText,
       String acceptCommandName,
       String denyCommandName,
-      int expireTime
+      int expireTime,
+      boolean here
   ) {
-    MutableText msg = (MutableText) PayTpTextBuilder.format(LANG_LOADER.getText("paytp.receive"),
-        senderText,
-        expireTime
-    );
+    MutableText msg = Text.empty();
+
+    if (here) {
+      msg.append(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.receive"),
+          senderText,
+          LANG_LOADER.getText("paytp.receive.here").formatted(PayTpTextBuilder.DEFAULT_WARN_COLOR),
+          expireTime
+      ));
+    } else {
+      msg.append(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.receive"),
+          senderText,
+          LANG_LOADER.getText("paytp.receive.to"),
+          expireTime
+      ));
+    }
 
     msg.append(PayTpTextBuilder.commandText(
         LANG_LOADER.getText("paytp.accept").formatted(
@@ -197,9 +213,9 @@ public class PayTpMessageSender {
   public static void msgHelp(
       ServerPlayerEntity player,
       String tpCommandName,
-      String tpDimCommandName,
-      String tpPlayerCommandName,
       String backCommandName,
+      String tpPlayerCommandName,
+      String tpPlayerHereCommandName,
       String acceptCommandName,
       String denyCommandName,
       String cancelCommandName,
@@ -212,16 +228,12 @@ public class PayTpMessageSender {
     String newline = "\n";
     String indentCmd = " ".repeat(4);
     String indentDesc = " ".repeat(8);
-    String divider = "=".repeat(45);
 
     // -------------------
     // Headers
     // -------------------
-    MutableText title = LANG_LOADER.getText("paytp.help.header.title");
-    int pad = Math.max(0, (45 - title.getString().length() - 2) / 2);
-    MutableText centeredTitle = Text.literal("=".repeat(pad) + " ")
-        .append(title)
-        .append(Text.literal(" " + "=".repeat(pad)));
+    MutableText title = LANG_LOADER.getText("paytp.help.title");
+    MutableText divider = LANG_LOADER.getText("paytp.help.divider");
 
     // -------------------
     // Text combinations
@@ -229,88 +241,106 @@ public class PayTpMessageSender {
     MutableText msg = Text.empty()
         // Header
         .append(newline)
-        .append(Text.literal(divider).append(newline))
-        .append(centeredTitle.append(newline))
-        .append(Text.literal(divider).append(newline))
+        .append(divider).append(newline)
+        .append(title).append(newline)
+        .append(divider).append(newline)
         .append(LANG_LOADER.getText("paytp.help.intro").append(newline).append(newline))
 
         // [Teleport]
         .append(LANG_LOADER.getText("paytp.help.section.tp").append(newline))
+        // ===== /ptp =====
         .append(Text.literal(indentCmd).append(LANG_LOADER.getText("paytp.help.tp.coord")).append(newline)
             .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.tp.coord.desc")).append(newline)))
-        .append(Text.literal(indentCmd).append(LANG_LOADER.getText("paytp.help.tp.dim")).append(newline)
-            .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.tp.dim.desc")).append(newline)))
-        .append(Text.literal(indentCmd).append(LANG_LOADER.getText("paytp.help.tp.player")).append(newline)
-            .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.tp.player.desc")).append(newline)))
+        // ===== /ptpback =====
         .append(Text.literal(indentCmd).append(LANG_LOADER.getText("paytp.help.tp.back")).append(newline)
             .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.tp.back.desc")).append(newline)))
 
         // [Request]
         .append(newline).append(LANG_LOADER.getText("paytp.help.section.req")).append(newline)
+        // ===== /ptpto =====
+        .append(Text.literal(indentCmd).append(LANG_LOADER.getText("paytp.help.req.to")).append(newline)
+            .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.req.to.desc")).append(newline)))
+        // ===== /ptphere =====
+        .append(Text.literal(indentCmd).append(LANG_LOADER.getText("paytp.help.req.here")).append(newline)
+            .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.req.here.desc")).append(newline)))
+        // ===== /ptpaccpet =====
         .append(Text.literal(indentCmd).append(LANG_LOADER.getText("paytp.help.req.accept")).append(newline)
             .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.req.accept.desc")).append(newline)))
+        // ===== /ptpdeny =====
         .append(Text.literal(indentCmd).append(LANG_LOADER.getText("paytp.help.req.deny")).append(newline)
             .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.req.deny.desc")).append(newline)))
+        // ===== /ptpcancel =====
         .append(Text.literal(indentCmd).append(LANG_LOADER.getText("paytp.help.req.cancel")).append(newline)
             .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.req.cancel.desc")).append(newline)))
 
         // [Home]
         .append(newline).append(LANG_LOADER.getText("paytp.help.section.home")).append(newline)
+        // ===== /ptphome =====
         .append(Text.literal(indentCmd).append(LANG_LOADER.getText("paytp.help.home.goto")).append(newline)
             .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.home.goto.desc")).append(newline)))
+        // ===== /ptphome set =====
         .append(Text.literal(indentCmd).append(LANG_LOADER.getText("paytp.help.home.set")).append(newline)
             .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.home.set.desc")).append(newline)))
 
         // Footer
         .append(newline).append(LANG_LOADER.getText("paytp.help.note")).append(newline)
-        .append(Text.literal(divider));
+        .append(divider);
 
     // -------------------
     // Text formatting
     // -------------------
     msg = Text.empty().append(
         PayTpTextBuilder.format(msg,
-            PayTpTextBuilder.commandText(
+            // ===== /ptp =====
+            PayTpTextBuilder.suggestCommandText(
                 Text.literal("/" + tpCommandName),
                 PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + tpCommandName),
-                "/" + tpCommandName + " ~ ~ ~"
+                "/" + tpCommandName + " " + player.getEntityWorld().getRegistryKey().getValue().toString() + " ~ ~ ~"
             ),
-            PayTpTextBuilder.commandText(
-                Text.literal("/" + tpDimCommandName),
-                PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + tpDimCommandName),
-                "/" + tpDimCommandName + " " + player.getEntityWorld().getRegistryKey().getValue().toString() + " ~ ~ ~"
-            ),
-            PayTpTextBuilder.commandText(
-                Text.literal("/" + tpPlayerCommandName),
-                PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + tpPlayerCommandName),
-                "/" + tpPlayerCommandName + " " + player.getName().getString()
-            ),
-            PayTpTextBuilder.commandText(
+            // ===== /ptpback =====
+            PayTpTextBuilder.suggestCommandText(
                 Text.literal("/" + backCommandName),
                 PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + backCommandName),
                 "/" + backCommandName
             ),
-            PayTpTextBuilder.commandText(
+            // ===== /ptpto =====
+            PayTpTextBuilder.suggestCommandText(
+                Text.literal("/" + tpPlayerCommandName),
+                PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + tpPlayerCommandName),
+                "/" + tpPlayerCommandName + " " + player.getName().getString()
+            ),
+            // ===== /ptphere =====
+            PayTpTextBuilder.suggestCommandText(
+                Text.literal("/" + tpPlayerHereCommandName),
+                PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + tpPlayerHereCommandName),
+                "/" + tpPlayerHereCommandName + " " + player.getName().getString()
+            ),
+            // ===== /ptpaccept =====
+            PayTpTextBuilder.suggestCommandText(
                 Text.literal("/" + acceptCommandName),
                 PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + acceptCommandName),
                 "/" + acceptCommandName
             ),
-            PayTpTextBuilder.commandText(
+            // ===== /ptpdeny =====
+            PayTpTextBuilder.suggestCommandText(
                 Text.literal("/" + denyCommandName),
                 PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + denyCommandName),
                 "/" + denyCommandName
             ),
-            PayTpTextBuilder.commandText(
+            // ===== /ptpcancel =====
+            PayTpTextBuilder.suggestCommandText(
                 Text.literal("/" + cancelCommandName),
                 PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + cancelCommandName),
                 "/" + cancelCommandName
             ),
-            PayTpTextBuilder.commandText(
+            // ===== /ptphome =====
+            PayTpTextBuilder.suggestCommandText(
                 Text.literal("/" + homeCommandName),
                 PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + homeCommandName),
                 "/" + homeCommandName
             ),
-            PayTpTextBuilder.commandText(
+            // ===== /ptphome set =====
+            PayTpTextBuilder.suggestCommandText(
                 Text.literal("/" + setHomeCommandName),
                 PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + setHomeCommandName),
                 "/" + setHomeCommandName
