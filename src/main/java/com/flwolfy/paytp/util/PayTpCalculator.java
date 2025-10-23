@@ -28,10 +28,8 @@ public class PayTpCalculator {
     Vec3d fromPos = from.pos();
     Vec3d toPos = to.pos();
 
-    @SuppressWarnings("resource")
-    RegistryKey<World> fromWorld = from.world().getRegistryKey();
-    @SuppressWarnings("resource")
-    RegistryKey<World> toWorld = to.world().getRegistryKey();
+    RegistryKey<World> fromWorld = from.world();
+    RegistryKey<World> toWorld = to.world();
 
     double distance;
     if (fromWorld == toWorld) {

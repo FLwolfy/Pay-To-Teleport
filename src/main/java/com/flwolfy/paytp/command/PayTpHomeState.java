@@ -1,6 +1,6 @@
 package com.flwolfy.paytp.command;
 
-import com.flwolfy.paytp.command.PayTpHomeManager.PayTpHomeData;
+import com.flwolfy.paytp.data.PayTpData;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +18,7 @@ import net.minecraft.world.PersistentState;
 import net.minecraft.world.World;
 
 public class PayTpHomeState extends PersistentState {
-  private final Map<UUID, PayTpHomeData> homeMap = new HashMap<>();
+  private final Map<UUID, PayTpData> homeMap = new HashMap<>();
   public static final Type<PayTpHomeState> TYPE = new Type<>(
       PayTpHomeState::new,
       PayTpHomeState::fromNbt,
@@ -42,7 +42,7 @@ public class PayTpHomeState extends PersistentState {
       Identifier dimId = Identifier.tryParse(dimStr);
       RegistryKey<World> dimKey = RegistryKey.of(RegistryKeys.WORLD, dimId);
 
-      state.homeMap.put(uuid, new PayTpHomeData(pos, dimKey));
+      state.homeMap.put(uuid, new PayTpData(dimKey, pos));
     }
     return state;
   }
@@ -50,10 +50,10 @@ public class PayTpHomeState extends PersistentState {
   @Override
   public NbtCompound writeNbt(NbtCompound nbt, WrapperLookup wrapperLookup) {
     NbtList list = new NbtList();
-    for (Map.Entry<UUID, PayTpHomeData> e : homeMap.entrySet()) {
+    for (Map.Entry<UUID, PayTpData> e : homeMap.entrySet()) {
       NbtCompound compound = new NbtCompound();
       compound.putUuid("uuid", e.getKey());
-      compound.putString("dimension", e.getValue().dimension().getValue().toString());
+      compound.putString("dimension", e.getValue().world().getValue().toString());
       compound.putDouble("x", e.getValue().pos().x);
       compound.putDouble("y", e.getValue().pos().y);
       compound.putDouble("z", e.getValue().pos().z);
@@ -64,11 +64,11 @@ public class PayTpHomeState extends PersistentState {
   }
 
   public void setHome(UUID player, Vec3d pos, RegistryKey<World> dimension) {
-    homeMap.put(player, new PayTpHomeData(pos, dimension));
+    homeMap.put(player, new PayTpData(dimension, pos));
     markDirty();
   }
 
-  public PayTpHomeData getHome(UUID player) {
+  public PayTpData getHome(UUID player) {
     return homeMap.get(player);
   }
 
