@@ -23,15 +23,18 @@ It supports flexible teleportation modes, multi-language localization, and fully
 
 ## Commands
 
-| Command                        | Description                                     |
-|--------------------------------|-------------------------------------------------|
-| `/ptp <x> <y> <z>`             | Teleport to specified coordinates               |
-| `/ptp <dimension> <x> <y> <z>` | Teleport to coordinates in a specific dimension |
-| `/ptpaccept`                   | Accept a teleport request                       |
-| `/ptpdeny`                     | Deny a teleport request                         |
-| `/ptpcancel`                   | Cancel a pending teleport request               |
-| `/ptpback`                     | Return to the previous location                 |
-| `/ptphome`                     | Teleport to your home (if configured)           |
+| Command                        | Description                                                 |
+|--------------------------------|-------------------------------------------------------------|
+| `/ptp `                        | Get command guide for PayTp.                                |
+| `/ptp (dimension) <x> <y> <z>` | Teleport to specified coordinates (in a specific dimension) |
+| `/ptpto <player>`              | Send request to teleport to a player                        |
+| `/ptphere <player>`            | Send request to a player to teleport to you                 |
+| `/ptpaccept (player)`          | Accept a teleport request (from a specific player)          |
+| `/ptpdeny (player)`            | Deny a teleport request (from a specific player)            |
+| `/ptpcancel (player)`          | Cancel a pending teleport request (to a specific player)    |
+| `/ptpback`                     | Return to the previous location                             |
+| `/ptphome`                     | Teleport to your home (if configured)                       |
+| `/ptphome set`                 | Set your home to your current position                      |
 
 ---
 
@@ -54,6 +57,8 @@ It supports flexible teleportation modes, multi-language localization, and fully
   },
   "request": {
     "requestCommand": {
+      "toCommand": "ptpto",
+      "here": "ptphere",
       "acceptCommand": "ptpaccept",
       "denyCommand": "ptpdeny",
       "cancelCommand": "ptpcancel"
@@ -110,11 +115,13 @@ It supports flexible teleportation modes, multi-language localization, and fully
 
 #### Request Commands
 
-| Field           | Type     | Description                                              |
-|-----------------|----------|----------------------------------------------------------|
-| `acceptCommand` | `string` | Command to accept a request (default `/ptpaccept`).      |
-| `denyCommand`   | `string` | Command to deny a request (default `/ptpdeny`).          |
-| `cancelCommand` | `string` | Command to cancel a sent request (default `/ptpcancel`). |
+| Field           | Type     | Description                                                                             |
+|-----------------|----------|-----------------------------------------------------------------------------------------|
+| `toCommand`     | `string` | Command to request teleporting to the target player (default `/ptpto`).                 |
+| `hereCommand`   | `string` | Command to request the target player to teleport to your location (default `/ptphere`). |
+| `acceptCommand` | `string` | Command to accept a request (default `/ptpaccept`).                                     |
+| `denyCommand`   | `string` | Command to deny a request (default `/ptpdeny`).                                         |
+| `cancelCommand` | `string` | Command to cancel a sent request (default `/ptpcancel`).                                |
 
 #### Configuration
 
@@ -187,14 +194,14 @@ It supports flexible teleportation modes, multi-language localization, and fully
 
 1. **Distance Calculation**:
 
-    - Same dimension:
-        - Use direct Euclidean distance.
-    - Cross-dimension:
-        - Overworld → Nether: ×8
-        - Nether → Overworld: ×0.125
-        - Entering/leaving The End: use distance from origin `(0,0,0)`.
-    - Other dimensions:
-        - Use Euclidean distance by default. Can customize in `PayTpCalculator#calculatePrice`.
+   - Same dimension:
+      - Use direct Euclidean distance.
+   - Cross-dimension:
+      - Overworld × 8 → Nether;
+      - Nether × 0.125 → Overworld;
+      - Entering/leaving The End: use the distance from whichever coordinate is in The End to the End center `(0,0,0)`.
+   - Other dimensions:
+      - Use Euclidean distance by default. Can customize in `PayTpCalculator#calculateDistance`.
 
 2. **Formula**:
 
@@ -218,11 +225,11 @@ Default `price` configuration:
 
 ```json
 {
-"minPrice": 1,
-"maxPrice": 64,
-"baseRadius": 10.0,
-"rate": 0.01,
-"crossDimMultiplier": 1.5
+   "minPrice": 1,
+   "maxPrice": 64,
+   "baseRadius": 10.0,
+   "rate": 0.01,
+   "crossDimMultiplier": 1.5
 }
 ```
 
@@ -253,14 +260,14 @@ If the **Cloth Config API** is installed, all settings can be adjusted directly 
 | Fabric Loader            | ✅                     |
 | Server Only              | ✅                     |
 | Client UI (Cloth Config) | ✅                     |
-| Multi-language Support   | zh_cn / zh_tw / en_us |
-| Minecraft Version        | 1.21+                 |
+| Multi-language Support   | en_us / zh_cn / zh_tw |
+| Minecraft Version        | 1.21.4+               |
 
 ---
 
 ## Credits
 
-This mod is inspired by early economy-style teleport plugins. The request logic references the TPA mod.  
+This mod is inspired by early economy-style teleport plugins. The request logic references the **Teleport Command** mod.  
 Developed using Fabric API and fully compatible with vanilla saves.  
 Feel free to submit issues or pull requests on GitHub to improve configuration and calculation algorithms.
 

@@ -20,17 +20,20 @@ See the English document [here](./README.md).
 
 ## 可用命令总览
 
-| 命令                      | 功能         |
-|-------------------------|------------|
-| `/ptp <玩家>`             | 请求传送到指定玩家。 |
-| `/ptp <x> <y> <z>`      | 传送到指定坐标。   |
-| `/ptp <维度> <x> <y> <z>` | 传送到指定维度坐标。 |
-| `/ptpback`              | 回到上一次传送点。  |
-| `/ptphome`              | 回家。        |
-| `/ptpsethome`           | 设置家。       |
-| `/ptpaccept`            | 接受传送请求。    |
-| `/ptpdeny`              | 拒绝传送请求。    |
-| `/ptpcancel`            | 取消传送请求。    |
+*指令中<>表示必填参数，()表示可选参数*
+
+| 命令                      | 功能              |
+|-------------------------|-----------------|
+| `/ptp`                  | 指令指南。           |
+| `/ptp (维度) <x> <y> <z>` | 传送到（指定维度的）指定坐标。 |
+| `/ptpto <玩家>`           | 请求传送到指定玩家。      |
+| `/ptphere <玩家>`         | 请求对方传送至自己当前位置。  |
+| `/ptpaccept (玩家)`       | 接受（指定玩家的）传送请求。  |
+| `/ptpdeny (玩家)`         | 拒绝（指定玩家的）传送请求。  |
+| `/ptpcancel (玩家)`       | 取消（指定玩家的）传送请求。  |
+| `/ptpback`              | 回到上一次传送点。       |
+| `/ptphome`              | 回家。             |
+| `/ptphome set`          | 设置家为当前位置。       |
 
 ---
 
@@ -46,48 +49,50 @@ See the English document [here](./README.md).
 
 ```json
 {
-  "general": {
-    "language": "en_us",
-    "mainCommand": "ptp",
-    "crossDimMultiplier": 1.5
-  },
-  "request": {
-    "requestCommand": {
-      "acceptCommand": "ptpaccept",
-      "denyCommand": "ptpdeny",
-      "cancelCommand": "ptpcancel"
-    },
-    "expireTime": 10
-  },
-  "home": {
-    "homeCommand": "ptphome",
-    "homeMultiplier": 0.5
-  },
-  "back": {
-    "backCommand": "ptpback",
-    "maxBackStack": 10,
-    "backMultiplier": 0.8
-  },
-  "price": {
-    "currencyItem": "minecraft:diamond",
-    "parameter": {
-      "minPrice": 1,
-      "maxPrice": 64,
-      "baseRadius": 10.0,
-      "rate": 0.01
-    }
-  },
-  "setting": {
-    "effect": {
-      "particleEffect": true
-    },
-    "flag": {
-      "allowEnderChest": true,
-      "prioritizeEnderChest": true,
-      "allowShulkerBox": false,
-      "prioritizeShulkerBox": false
-    }
-  }
+   "general": {
+      "language": "en_us",
+      "mainCommand": "ptp",
+      "crossDimMultiplier": 1.5
+   },
+   "request": {
+      "requestCommand": {
+         "toommand": "ptpto",
+         "hereCommand": "ptphere",
+         "acceptCommand": "ptpaccept",
+         "denyCommand": "ptpdeny",
+         "cancelCommand": "ptpcancel"
+      },
+      "expireTime": 10
+   },
+   "home": {
+      "homeCommand": "ptphome",
+      "homeMultiplier": 0.5
+   },
+   "back": {
+      "backCommand": "ptpback",
+      "maxBackStack": 10,
+      "backMultiplier": 0.8
+   },
+   "price": {
+      "currencyItem": "minecraft:diamond",
+      "parameter": {
+         "minPrice": 1,
+         "maxPrice": 64,
+         "baseRadius": 10.0,
+         "rate": 0.01
+      }
+   },
+   "setting": {
+      "effect": {
+         "particleEffect": true
+      },
+      "flag": {
+         "allowEnderChest": true,
+         "prioritizeEnderChest": true,
+         "allowShulkerBox": false,
+         "prioritizeShulkerBox": false
+      }
+   }
 }
 ```
 
@@ -109,11 +114,13 @@ See the English document [here](./README.md).
 
 #### 请求命令
 
-| 字段名             | 类型       | 说明                         |
-|-----------------|----------|----------------------------|
-| `acceptCommand` | `string` | 接受请求的命令（默认 `/ptpaccept`）   |
-| `denyCommand`   | `string` | 拒绝请求的命令（默认 `/ptpdeny`）     |
-| `cancelCommand` | `string` | 取消自己发出的请求（默认 `/ptpcancel`） |
+| 字段名             | 类型       | 说明                                 |
+|-----------------|----------|------------------------------------|
+| `toCommand`     | `string` | 请求传送至对方的命令（默认 `/ptpaccept`）        |
+| `hereCommand`   | `string` | 请求对方传送至自己当前位置的命令（默认 `/ptpaccept` ） |
+| `acceptCommand` | `string` | 接受请求的命令（默认 `/ptpaccept`）           |
+| `denyCommand`   | `string` | 拒绝请求的命令（默认 `/ptpdeny`）             |
+| `cancelCommand` | `string` | 取消自己发出的请求（默认 `/ptpcancel`）         |
 
 #### 配置
 
@@ -187,14 +194,14 @@ See the English document [here](./README.md).
 
 1. **计算距离**：
 
-    - 同一维度：
-        - 直接使用欧氏距离。
-    - 维度间传送：
-        - 从主世界 → 下界：乘以 8 倍。
-        - 从下界 → 主世界：乘以 0.125 倍。
-        - 进入/离开末地：使用到原点 `(0,0,0)` 的距离。
-    - 其他维度：
-        - 暂时使用裸欧氏距离计算，如果你要魔改源码，可以在`PayTpCalculator`中的`calculatePrice`进行设置。
+   - 同一维度：
+      - 直接使用欧氏距离。
+   - 维度间传送：
+      - 从主世界 × 8 → 下界；
+      - 从下界 × 1.25 → 主世界；
+      - 进入/离开末地：使用其中位于末地的坐标到末地中心 `(0,0,0)` 的距离。
+   - 其他维度：
+      - 暂时仅使用欧氏距离计算，如果你要魔改源码，可以在`PayTpCalculator`中的`calculatePrice`进行设置。
 
 2. **计算公式**：
 
@@ -218,11 +225,11 @@ See the English document [here](./README.md).
 
 ```json
 {
-"minPrice": 1,
-"maxPrice": 64,
-"baseRadius": 10.0,
-"rate": 0.01,
-"crossDimMultiplier": 1.5
+   "minPrice": 1,
+   "maxPrice": 64,
+   "baseRadius": 10.0,
+   "rate": 0.01,
+   "crossDimMultiplier": 1.5
 }
 ```
 
@@ -247,18 +254,18 @@ See the English document [here](./README.md).
 
 ## 兼容性与部署
 
-| 类型                    | 支持                    |
-|-----------------------|-----------------------|
-| Fabric Loader         | ✅                     |
-| Server Only           | ✅                     |
-| 客户端 UI (Cloth Config) | ✅                     |
-| 多语言支持                 | zh_cn / zh_tw / en_us |
-| Minecraft 版本          | 1.21+                 |
+| 类型                    | 支持                     |
+|-----------------------|------------------------|
+| Fabric Loader         | ✅                      |
+| Server Only           | ✅                      |
+| 客户端 UI (Cloth Config) | ✅                      |
+| 多语言支持                 | en_us / zh_cn / zh_tw  |
+| Minecraft 版本          | 1.21.4+                |
 
 ---
 
 ## 致谢
 
-本模组灵感来自早期经济型传送插件，请求逻辑参考TPA模组，使用 Fabric API 编写，兼容原版存档。
+本模组灵感来自早期经济型传送插件，请求逻辑参考**Teleport Command**模组，使用 Fabric API 编写，兼容原版存档。
 欢迎在 GitHub 上提交 Issue 或 PR 改进配置逻辑与算法。
 

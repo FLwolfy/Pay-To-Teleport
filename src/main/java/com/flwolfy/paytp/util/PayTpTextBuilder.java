@@ -1,6 +1,7 @@
 package com.flwolfy.paytp.util;
 
 import net.minecraft.text.ClickEvent.RunCommand;
+import net.minecraft.text.ClickEvent.SuggestCommand;
 import net.minecraft.text.HoverEvent.ShowText;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
@@ -91,6 +92,34 @@ public class PayTpTextBuilder {
     return text.copy().setStyle(
         text.getStyle()
             .withClickEvent(new RunCommand(clickCommand))
+            .withHoverEvent(new ShowText(hoverText))
+    );
+  }
+
+  /**
+   * Returns a new {@link Text} that suggests a command in the player's chat box when clicked
+   * and shows a hover tooltip, while preserving the original text's formatting (color, bold, italic, etc.).
+   *
+   * <p>Unlike RUN_COMMAND, this does not execute the command immediately. Instead,
+   * the command is placed in the chat input field, and the player can review or edit it
+   * before pressing Enter to execute it.
+   *
+   * <p>Example usage:
+   * <pre>
+   * Text msg = Text.literal("Click me").formatted(Formatting.GREEN);
+   * Text clickable = PayTpTextBuilder.commandText(msg, Text.literal("Suggests /hello"), "/hello");
+   * player.sendMessage(clickable);
+   * </pre>
+   *
+   * @param text          The original {@link Text} to copy. Its formatting will be preserved.
+   * @param hoverText     The {@link Text} to display when the player hovers over the clickable text.
+   * @param clickCommand  The command string to suggest in the chat input (e.g., "/hello").
+   * @return              A new {@link Text} object with the click suggestion and hover events applied.
+   */
+  public static Text suggestCommandText(Text text, Text hoverText, String clickCommand) {
+    return text.copy().setStyle(
+        text.getStyle()
+            .withClickEvent(new SuggestCommand(clickCommand))
             .withHoverEvent(new ShowText(hoverText))
     );
   }
