@@ -122,9 +122,9 @@ public class PayTpCommand {
     PayTpMessageSender.msgHelp(
         player,
         configManager.data().general().mainCommand(),
-        configManager.data().general().mainCommand(),
-        configManager.data().general().mainCommand(),
         configManager.data().back().backCommand(),
+        configManager.data().request().requestCommand().toCommand(),
+        configManager.data().request().requestCommand().hereCommand(),
         configManager.data().request().requestCommand().acceptCommand(),
         configManager.data().request().requestCommand().denyCommand(),
         configManager.data().request().requestCommand().cancelCommand(),

@@ -1,4 +1,4 @@
-package com.flwolfy.paytp.data.modmenu;
+package com.flwolfy.paytp.modmenu;
 
 import com.flwolfy.paytp.PayTpMod;
 import com.flwolfy.paytp.data.config.PayTpConfigData;
