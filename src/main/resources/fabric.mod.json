@@ -19,7 +19,7 @@
 			"com.flwolfy.paytp.PayTpMod"
 		],
 		"modmenu": [
-      "com.flwolfy.paytp.data.modmenu.PayTpModMenu"
+      "com.flwolfy.paytp.modmenu.PayTpModMenu"
 		]
 	},
 	"depends": {
