@@ -25,6 +25,8 @@ public record PayTpConfigData(
       int expireTime
   ) {
     public record RequestCommand(
+        String toCommand,
+        String hereCommand,
         String acceptCommand,
         String denyCommand,
         String cancelCommand
@@ -78,6 +80,8 @@ public record PayTpConfigData(
       ),
       new Request(
           new Request.RequestCommand(
+              "ptpto",
+              "ptphere",
               "ptpaccept",
               "ptpdeny",
               "ptpcancel"
