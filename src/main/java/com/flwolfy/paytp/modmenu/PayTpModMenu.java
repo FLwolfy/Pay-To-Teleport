@@ -1,4 +1,4 @@
-package com.flwolfy.paytp.data.modmenu;
+package com.flwolfy.paytp.modmenu;
 
 import com.flwolfy.paytp.PayTpMod;
 import com.flwolfy.paytp.data.config.PayTpConfigData;
@@ -12,16 +12,13 @@ import com.terraformersmc.modmenu.api.ModMenuApi;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 
-import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 
-import net.minecraft.util.Formatting;
 import org.slf4j.Logger;
 
 public class PayTpModMenu implements ModMenuApi {
 
   private static final Logger LOGGER = PayTpMod.LOGGER;
-  private static final Style DEFAULT_WARN_STYLE = Style.EMPTY.withColor(Formatting.GOLD).withItalic(true);
 
   private Supplier<PayTpConfigData> dataSupplier;
 
@@ -48,6 +45,7 @@ public class PayTpModMenu implements ModMenuApi {
 
   private void saveConfig() {
     LOGGER.info("Saving PayTpConfig...");
-    PayTpConfigManager.getInstance().update(dataSupplier.get());
+    PayTpConfigData data = dataSupplier.get();
+    PayTpConfigManager.getInstance().update(data);
   }
 }

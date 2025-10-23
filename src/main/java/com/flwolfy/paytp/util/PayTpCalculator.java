@@ -16,12 +16,7 @@ public class PayTpCalculator {
 
   private PayTpCalculator() {}
 
-  public static int calculatePrice(
-      double baseRadius,
-      double increaseRate,
-      double externalMultiplier,
-      int minPrice,
-      int maxPrice,
+  public static double calculateDistance(
       PayTpData from,
       PayTpData to
   ) {
@@ -43,11 +38,22 @@ public class PayTpCalculator {
     } else if (toWorld == World.NETHER) {
       distance = fromPos.distanceTo(toPos.multiply(0.125));
     } else {
-      // Note: If you have other worlds, customize your price calculation here.
-      //       Default -> price * crossDimMultiplier
+      // Note: If you have other worlds, customize your distance calculation here.
+      //       Default distance -> Euclidean distance
       distance = fromPos.distanceTo(toPos);
     }
 
+    return distance;
+  }
+
+  public static int calculatePrice(
+      double distance,
+      double baseRadius,
+      double increaseRate,
+      double externalMultiplier,
+      int minPrice,
+      int maxPrice
+  ) {
     double distanceBeyondBase = Math.max(0, distance - baseRadius);
     int calculatedPrice = (int) Math.round((minPrice + distanceBeyondBase * increaseRate) * externalMultiplier);
 

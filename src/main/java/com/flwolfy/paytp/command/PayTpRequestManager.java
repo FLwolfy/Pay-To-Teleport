@@ -142,7 +142,22 @@ public class PayTpRequestManager {
     }, expireTimeSeconds, TimeUnit.SECONDS);
   }
 
-  public boolean accept(ServerPlayerEntity target) {
+  public boolean accept(ServerPlayerEntity target, ServerPlayerEntity sender) {
+    Deque<RequestData> stack = pendingRequests.get(target.getUuid());
+    if (stack == null) return false;
+
+    for (Iterator<RequestData> it = stack.iterator(); it.hasNext();) {
+      RequestData data = it.next();
+      if (data.senderId.equals(sender.getUuid()) && data.accept()) {
+        it.remove();
+        if (stack.isEmpty()) pendingRequests.remove(target.getUuid());
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean acceptLatest(ServerPlayerEntity target) {
     Deque<RequestData> stack = pendingRequests.get(target.getUuid());
     if (stack == null) return false;
 
@@ -157,7 +172,22 @@ public class PayTpRequestManager {
     return false;
   }
 
-  public boolean cancelByTarget(ServerPlayerEntity target) {
+  public boolean deny(ServerPlayerEntity target, ServerPlayerEntity sender) {
+    Deque<RequestData> stack = pendingRequests.get(target.getUuid());
+    if (stack == null) return false;
+
+    for (Iterator<RequestData> it = stack.iterator(); it.hasNext();) {
+      RequestData data = it.next();
+      if (data.senderId.equals(sender.getUuid()) && data.cancel()) {
+        it.remove();
+        if (stack.isEmpty()) pendingRequests.remove(target.getUuid());
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean denyLatest(ServerPlayerEntity target) {
     Deque<RequestData> stack = pendingRequests.get(target.getUuid());
     if (stack == null) return false;
 
@@ -172,7 +202,24 @@ public class PayTpRequestManager {
     return false;
   }
 
-  public boolean cancelBySender(ServerPlayerEntity sender) {
+  public boolean cancel(ServerPlayerEntity sender, ServerPlayerEntity target) {
+    UUID senderId = sender.getUuid();
+    Deque<RequestData> stack = pendingRequests.get(target.getUuid());
+    if (stack == null) return false;
+
+    for (Iterator<RequestData> it = stack.iterator(); it.hasNext();) {
+      RequestData data = it.next();
+      if (data.senderId.equals(senderId) && data.cancel()) {
+        it.remove();
+        if (stack.isEmpty()) pendingRequests.remove(target.getUuid());
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public boolean cancelLatest(ServerPlayerEntity sender) {
     UUID senderId = sender.getUuid();
     for (Map.Entry<UUID, Deque<RequestData>> entry : pendingRequests.entrySet()) {
       Deque<RequestData> stack = entry.getValue();
@@ -187,5 +234,4 @@ public class PayTpRequestManager {
     }
     return false;
   }
-
 }
