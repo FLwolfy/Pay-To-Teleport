@@ -2,7 +2,6 @@ package com.flwolfy.paytp.data.modmenu;
 
 import com.flwolfy.paytp.PayTpMod;
 import com.flwolfy.paytp.data.config.PayTpConfigMapper;
-import com.flwolfy.paytp.data.lang.PayTpLangManager;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.RecordComponent;
@@ -30,7 +29,7 @@ public class PayTpClothConfigBuilder {
   private static final Logger LOGGER = PayTpMod.LOGGER;
   private static final Style DEFAULT_TITLE_STYLE = Style.EMPTY.withColor(Formatting.YELLOW).withBold(true);
   private static final Style DEFAULT_WARN_STYLE = Style.EMPTY.withColor(Formatting.GOLD).withItalic(true);
-  private static final PayTpLangManager LANG_LOADER = PayTpLangManager.getInstance();
+  private static final String BASE_KEY = "paytp.config.";
 
   private final ConfigBuilder builder;
   private final ConfigEntryBuilder entryBuilder;
@@ -51,29 +50,29 @@ public class PayTpClothConfigBuilder {
 
     Class<?> clazz = data.getClass();
     List<AbstractConfigListEntry<?>> otherEntries = new ArrayList<>();
-    ConfigCategory allCategory = builder.getOrCreateCategory(Text.translatable("paytp.config.all"));
+    ConfigCategory allCategory = builder.getOrCreateCategory(Text.translatable(BASE_KEY + "all"));
 
-    String warningKey = "paytp.config.title.warning";
+    String warningKey = BASE_KEY + "title.warning";
     MutableText warningText = Text.translatable(warningKey).setStyle(DEFAULT_WARN_STYLE);
     if (!warningText.getString().equals(warningKey)) {
       allCategory.addEntry(entryBuilder.startTextDescription(warningText).build());
     }
 
     for (RecordComponent component : clazz.getRecordComponents()) {
-      processComponent(data, defaultData, component, allCategory, otherEntries, "");
+      processComponent(data, defaultData, component, allCategory, otherEntries);
     }
 
     if (!otherEntries.isEmpty()) {
-      ConfigCategory otherCategory = builder.getOrCreateCategory(Text.translatable("paytp.config.other"));
+      ConfigCategory otherCategory = builder.getOrCreateCategory(Text.translatable(BASE_KEY + "other"));
       otherEntries.forEach(otherCategory::addEntry);
 
-      String otherWarningKey = "paytp.config.other.warning";
+      String otherWarningKey = BASE_KEY + "other.warning";
       MutableText otherWarningText = Text.translatable(otherWarningKey).setStyle(DEFAULT_WARN_STYLE);
-      if (!warningText.getString().equals(warningKey)) {
-        otherCategory.addEntry(entryBuilder.startTextDescription(warningText).build());
+      if (!otherWarningText.getString().equals(otherWarningKey)) {
+        otherCategory.addEntry(entryBuilder.startTextDescription(otherWarningText).build());
       }
 
-      SubCategoryBuilder otherSubCat = entryBuilder.startSubCategory(Text.translatable("paytp.config.other"))
+      SubCategoryBuilder otherSubCat = entryBuilder.startSubCategory(Text.translatable(BASE_KEY + "other"))
           .setExpanded(true);
       otherSubCat.addAll(otherEntries);
       allCategory.addEntry(otherSubCat.build());
@@ -86,16 +85,16 @@ public class PayTpClothConfigBuilder {
   }
 
   private void processComponent(Record record, Record defaultRecord, RecordComponent component,
-      ConfigCategory allCategory, List<AbstractConfigListEntry<?>> otherEntries, String prefix) {
+      ConfigCategory allCategory, List<AbstractConfigListEntry<?>> otherEntries) {
     try {
       Method accessor = component.getAccessor();
       Object value = accessor.invoke(record);
       Object defaultValue = accessor.invoke(defaultRecord);
 
       if (value != null && value.getClass().isRecord()) {
-        processRecordComponent(value, defaultValue, component, allCategory, prefix);
+        processRecordComponent(value, defaultValue, component, allCategory);
       } else {
-        otherEntries.add(createEntry(value, defaultValue, component, prefix));
+        otherEntries.add(createEntry(value, defaultValue, component, ""));
       }
     } catch (Exception e) {
       LOGGER.error("Error while processing component: {}", component.getName(), e);
@@ -106,24 +105,23 @@ public class PayTpClothConfigBuilder {
       Object value,
       Object defaultValue,
       RecordComponent component,
-      ConfigCategory allCategory,
-      String prefix
+      ConfigCategory allCategory
   ) {
     String key = component.getName();
-    ConfigCategory category = builder.getOrCreateCategory(Text.translatable("paytp.config." + key));
+    ConfigCategory category = builder.getOrCreateCategory(Text.translatable(BASE_KEY + key));
 
-    String warningKey = "paytp.config." + key + ".warning";
+    String warningKey = BASE_KEY + key + ".warning";
     MutableText warningText = Text.translatable(warningKey).setStyle(DEFAULT_WARN_STYLE);
     if (!warningText.getString().equals(warningKey)) {
       category.addEntry(entryBuilder.startTextDescription(warningText).build());
     }
 
-    processCategory(category, (Record) value, (Record) defaultValue, prefix + key + ".");
+    processCategory(category, (Record) value, (Record) defaultValue, key + ".");
 
     SubCategoryBuilder subCatInAllCategory = entryBuilder
-        .startSubCategory(Text.translatable("paytp.config." + key))
+        .startSubCategory(Text.translatable(BASE_KEY + key))
         .setExpanded(true);
-    processSubCategory(subCatInAllCategory, (Record) value, (Record) defaultValue, prefix + key + ".");
+    processSubCategory(subCatInAllCategory, (Record) value, (Record) defaultValue, key + ".");
     allCategory.addEntry(subCatInAllCategory.build());
   }
 
@@ -136,7 +134,7 @@ public class PayTpClothConfigBuilder {
 
         if (value != null && value.getClass().isRecord()) {
           SubCategoryBuilder subCategory = entryBuilder
-              .startSubCategory(Text.translatable("paytp.config." + component.getName()))
+              .startSubCategory(Text.translatable(BASE_KEY + prefix + component.getName()))
               .setExpanded(true);
           processSubCategory(subCategory, (Record) value, (Record) defaultValue, prefix + component.getName() + ".");
           category.addEntry(subCategory.build());
@@ -158,7 +156,7 @@ public class PayTpClothConfigBuilder {
 
         if (value != null && value.getClass().isRecord()) {
           subCatBuilder.add(entryBuilder.startTextDescription(
-              Text.translatable("paytp.config." + component.getName()).setStyle(DEFAULT_TITLE_STYLE)).build()
+              Text.translatable(BASE_KEY + prefix + component.getName()).setStyle(DEFAULT_TITLE_STYLE)).build()
           );
           List<AbstractConfigListEntry<?>> sectionEntries = new ArrayList<>();
           processSection(sectionEntries, (Record) value, (Record) defaultValue, prefix + component.getName() + ".");
@@ -202,8 +200,8 @@ public class PayTpClothConfigBuilder {
         defaultValue,
         prefix + component.getName(),
         newValue -> currentFlattenedData.put(prefix + component.getName(), newValue),
-        Text.translatable("paytp.config." + component.getName()),
-        Text.translatable("paytp.config." + component.getName() + ".tooltip")
+        Text.translatable(BASE_KEY + prefix + component.getName()),
+        Text.translatable(BASE_KEY + prefix + component.getName() + ".tooltip")
     );
   }
 }
