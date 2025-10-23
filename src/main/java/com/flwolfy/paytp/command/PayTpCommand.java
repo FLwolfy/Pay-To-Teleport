@@ -54,9 +54,6 @@ public class PayTpCommand {
     dispatcher.register(CommandManager.literal(configManager.data().general().mainCommand())
         // ===== /ptp (help) =====
         .executes(PayTpCommand::payTpHelp)
-        // ===== /ptp <player> =====
-        .then(CommandManager.argument("target", net.minecraft.command.argument.EntityArgumentType.player())
-            .executes(PayTpCommand::payTpPlayer))
         // ===== /ptp <pos> =====
         .then(CommandManager.argument("pos", Vec3ArgumentType.vec3())
             .executes(PayTpCommand::payTpCoords))
@@ -73,19 +70,40 @@ public class PayTpCommand {
         .executes(PayTpCommand::payTpBack)
     );
 
+    dispatcher.register(CommandManager.literal(configManager.data().request().requestCommand().toCommand())
+        // ===== /ptpto <player> =====
+        .then(CommandManager.argument("target", net.minecraft.command.argument.EntityArgumentType.player())
+            .executes(PayTpCommand::payTpPlayer))
+    );
+
+    dispatcher.register(CommandManager.literal(configManager.data().request().requestCommand().hereCommand())
+        // ===== /ptphere <player> =====
+        .then(CommandManager.argument("target", net.minecraft.command.argument.EntityArgumentType.player())
+            .executes(PayTpCommand::payTpPlayerHere))
+    );
+
     dispatcher.register(CommandManager.literal(configManager.data().request().requestCommand().acceptCommand())
         // ===== /ptpaccept =====
-        .executes(PayTpCommand::payTpAccept)
+        .executes(PayTpCommand::payTpAcceptLatest)
+        // ===== /ptpaccept <player> =====
+        .then(CommandManager.argument("sender", net.minecraft.command.argument.EntityArgumentType.player())
+            .executes(PayTpCommand::payTpAccept))
     );
 
     dispatcher.register(CommandManager.literal(configManager.data().request().requestCommand().denyCommand())
         // ===== /ptpdeny =====
-        .executes(PayTpCommand::payTpDeny)
+        .executes(PayTpCommand::payTpDenyLatest)
+        // ===== /ptpdeny <player> =====
+        .then(CommandManager.argument("sender", net.minecraft.command.argument.EntityArgumentType.player())
+            .executes(PayTpCommand::payTpDeny))
     );
 
     dispatcher.register(CommandManager.literal(configManager.data().request().requestCommand().cancelCommand())
         // ===== /ptpcancel =====
-        .executes(PayTpCommand::payTpCancel)
+        .executes(PayTpCommand::payTpCancelLatest)
+        // ===== /ptpcancel <player> =====
+        .then(CommandManager.argument("target", net.minecraft.command.argument.EntityArgumentType.player())
+            .executes(PayTpCommand::payTpCancel))
     );
 
     dispatcher.register(CommandManager.literal(configManager.data().home().homeCommand())
@@ -104,9 +122,9 @@ public class PayTpCommand {
     PayTpMessageSender.msgHelp(
         player,
         configManager.data().general().mainCommand(),
-        configManager.data().general().mainCommand(),
-        configManager.data().general().mainCommand(),
         configManager.data().back().backCommand(),
+        configManager.data().request().requestCommand().toCommand(),
+        configManager.data().request().requestCommand().hereCommand(),
         configManager.data().request().requestCommand().acceptCommand(),
         configManager.data().request().requestCommand().denyCommand(),
         configManager.data().request().requestCommand().cancelCommand(),
@@ -156,6 +174,7 @@ public class PayTpCommand {
   private static int payTpPlayer(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
     ServerPlayerEntity sender = ctx.getSource().getPlayer();
     ServerPlayerEntity target = EntityArgumentType.getPlayer(ctx, "target");
+
     if (sender == null) return 0;
     if (target == null) {
       PayTpMessageSender.msgNoTargetFound(sender);
@@ -195,19 +214,67 @@ public class PayTpCommand {
     PayTpMessageSender.msgTpRequestReceived(
         target,
         sender.getName(),
-        configManager.data().request().requestCommand().acceptCommand(),
-        configManager.data().request().requestCommand().denyCommand(),
-        configManager.data().request().expireTime()
+        configManager.data().request().requestCommand().acceptCommand() + " " + sender.getName().getString(),
+        configManager.data().request().requestCommand().denyCommand() + " " + sender.getName().getString(),
+        configManager.data().request().expireTime(),
+        false
     );
 
     return Command.SINGLE_SUCCESS;
   }
 
-  private static int payTpAccept(CommandContext<ServerCommandSource> ctx) {
+  private static int payTpPlayerHere(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+    ServerPlayerEntity sender = ctx.getSource().getPlayer();
+    if (sender == null) return 0;
+    PayTpData senderTp = new PayTpData(sender.getWorld().getRegistryKey(), sender.getPos());
+
+    ServerPlayerEntity target = EntityArgumentType.getPlayer(ctx, "target");
+    if (target == null) {
+      PayTpMessageSender.msgNoTargetFound(sender);
+      return 0;
+    }
+    if (sender == target) {
+      PayTpMessageSender.msgSelfTp(sender);
+      return 0;
+    }
+
+    requestManager.sendRequest(sender, target, () -> {
+
+      int multiplierFlags = sender.getWorld() == target.getWorld() ?
+          Flags.NO_FLAG :
+          Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION);
+
+      teleport(
+          target,
+          senderTp,
+          true,
+          multiplierFlags
+      );
+
+    }, () -> {
+      PayTpMessageSender.msgCancelTp(target, sender.getName());
+      PayTpMessageSender.msgTpCanceled(sender, target.getName());
+    }, configManager.data().request().expireTime());
+
+    PayTpMessageSender.msgTpRequestSent(sender, target.getName());
+    PayTpMessageSender.msgTpRequestReceived(
+        target,
+        sender.getName(),
+        configManager.data().request().requestCommand().acceptCommand() + " " + sender.getName().getString(),
+        configManager.data().request().requestCommand().denyCommand() + " " + sender.getName().getString(),
+        configManager.data().request().expireTime(),
+        true
+    );
+
+    return Command.SINGLE_SUCCESS;
+  }
+
+  private static int payTpAccept(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
     ServerPlayerEntity receiver = ctx.getSource().getPlayer();
     if (receiver == null) return 0;
 
-    if (!requestManager.accept(receiver)) {
+    ServerPlayerEntity sender = EntityArgumentType.getPlayer(ctx, "sender");
+    if (!requestManager.accept(receiver, sender)) {
       PayTpMessageSender.msgNoAcceptRequest(receiver);
       return 0;
     }
@@ -215,11 +282,36 @@ public class PayTpCommand {
     return Command.SINGLE_SUCCESS;
   }
 
-  private static int payTpDeny(CommandContext<ServerCommandSource> ctx) {
+  private static int payTpAcceptLatest(CommandContext<ServerCommandSource> ctx) {
     ServerPlayerEntity receiver = ctx.getSource().getPlayer();
     if (receiver == null) return 0;
 
-    if (!requestManager.cancelByTarget(receiver)) {
+    if (!requestManager.acceptLatest(receiver)) {
+      PayTpMessageSender.msgNoAcceptRequest(receiver);
+      return 0;
+    }
+
+    return Command.SINGLE_SUCCESS;
+  }
+
+  private static int payTpDeny(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+    ServerPlayerEntity receiver = ctx.getSource().getPlayer();
+    if (receiver == null) return 0;
+
+    ServerPlayerEntity sender = EntityArgumentType.getPlayer(ctx, "sender");
+    if (!requestManager.deny(receiver, sender)) {
+      PayTpMessageSender.msgNoAcceptRequest(receiver);
+      return 0;
+    }
+
+    return Command.SINGLE_SUCCESS;
+  }
+
+  private static int payTpDenyLatest(CommandContext<ServerCommandSource> ctx) {
+    ServerPlayerEntity receiver = ctx.getSource().getPlayer();
+    if (receiver == null) return 0;
+
+    if (!requestManager.denyLatest(receiver)) {
       PayTpMessageSender.msgNoDenyRequest(receiver);
       return 0;
     }
@@ -227,11 +319,24 @@ public class PayTpCommand {
     return Command.SINGLE_SUCCESS;
   }
 
-  private static int payTpCancel(CommandContext<ServerCommandSource> ctx) {
+  private static int payTpCancel(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
     ServerPlayerEntity sender = ctx.getSource().getPlayer();
     if (sender == null) return 0;
 
-    if (!requestManager.cancelBySender(sender)) {
+    ServerPlayerEntity target = EntityArgumentType.getPlayer(ctx, "target");
+    if (!requestManager.cancel(sender, target)) {
+      PayTpMessageSender.msgNoCancelRequest(sender);
+      return 0;
+    }
+
+    return Command.SINGLE_SUCCESS;
+  }
+
+  private static int payTpCancelLatest(CommandContext<ServerCommandSource> ctx) {
+    ServerPlayerEntity sender = ctx.getSource().getPlayer();
+    if (sender == null) return 0;
+
+    if (!requestManager.cancelLatest(sender)) {
       PayTpMessageSender.msgNoCancelRequest(sender);
       return 0;
     }
@@ -266,7 +371,6 @@ public class PayTpCommand {
 
     return result;
   }
-
 
   private static int payTpHome(CommandContext<ServerCommandSource> ctx) {
     ServerPlayerEntity player = ctx.getSource().getPlayer();
@@ -336,14 +440,14 @@ public class PayTpCommand {
     // ---------------------------------
     // Check payment
     // ---------------------------------
+    double distance = PayTpCalculator.calculateDistance(targetData, fromData);
     int price = PayTpCalculator.calculatePrice(
+        distance,
         configManager.data().price().parameter().baseRadius(),
         configManager.data().price().parameter().rate(),
         configManager.data().calculateMultiplier(multiplierFlags),
         configManager.data().price().parameter().minPrice(),
-        configManager.data().price().parameter().maxPrice(),
-        fromData,
-        targetData
+        configManager.data().price().parameter().maxPrice()
     );
 
     int balance = PayTpCalculator.checkBalance(configManager.data().price().currencyItem(), player, configManager.data().combineSettingFlags());
