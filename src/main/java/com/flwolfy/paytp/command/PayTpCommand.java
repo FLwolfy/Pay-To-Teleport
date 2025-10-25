@@ -60,18 +60,17 @@ public class PayTpCommand {
   }
 
   public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
+    // ===== /ptp =====
     dispatcher.register(CommandManager.literal(HELP_COMMAND)
-        // ===== /ptp =====
         .executes(PayTpCommand::payTpHelp)
     );
 
+    // ===== /ptp (dimension) <pos> =====
     String mainCmd = configData.general().mainCommand();
     if (!mainCmd.isEmpty()) {
       dispatcher.register(CommandManager.literal(mainCmd)
-          // ===== /ptp <pos> =====
           .then(CommandManager.argument("pos", Vec3ArgumentType.vec3())
               .executes(PayTpCommand::payTpCoords))
-          // ===== /ptp <dimension> <pos> =====
           .then(CommandManager.argument("dimension", DimensionArgumentType.dimension())
               .then(CommandManager.argument("pos", Vec3ArgumentType.vec3())
                   .executes(PayTpCommand::payTpDimCoords)
@@ -80,6 +79,7 @@ public class PayTpCommand {
       );
     }
 
+    // ===== /ptpback =====
     String backCmd = configData.back().backCommand();
     if (!backCmd.isEmpty()) {
       dispatcher.register(CommandManager.literal(backCmd)
@@ -87,6 +87,7 @@ public class PayTpCommand {
       );
     }
 
+    // ===== /ptpto <player> =====
     String tpToCmd = configData.request().requestCommand().toCommand();
     if (!tpToCmd.isEmpty()) {
       dispatcher.register(CommandManager.literal(tpToCmd)
@@ -95,6 +96,7 @@ public class PayTpCommand {
       );
     }
 
+    // ===== /ptphere <player> =====
     String tpHereCmd = configData.request().requestCommand().hereCommand();
     if (!tpHereCmd.isEmpty()) {
       dispatcher.register(CommandManager.literal(tpHereCmd)
@@ -103,6 +105,7 @@ public class PayTpCommand {
       );
     }
 
+    // ===== /ptpaccept (player) =====
     String acceptCmd = configData.request().requestCommand().acceptCommand();
     if (!acceptCmd.isEmpty()) {
       dispatcher.register(CommandManager.literal(acceptCmd)
@@ -112,6 +115,7 @@ public class PayTpCommand {
       );
     }
 
+    // ===== /ptpdeny (player) =====
     String denyCmd = configData.request().requestCommand().denyCommand();
     if (!denyCmd.isEmpty()) {
       dispatcher.register(CommandManager.literal(denyCmd)
@@ -121,6 +125,7 @@ public class PayTpCommand {
       );
     }
 
+    // ===== /ptpcancel (player) =====
     String cancelCmd = configData.request().requestCommand().cancelCommand();
     if (!cancelCmd.isEmpty()) {
       dispatcher.register(CommandManager.literal(cancelCmd)
@@ -130,6 +135,7 @@ public class PayTpCommand {
       );
     }
 
+    // ===== /ptphome (set) =====
     String homeCmd = configData.home().homeCommand();
     if (!homeCmd.isEmpty()) {
       dispatcher.register(CommandManager.literal(homeCmd)
