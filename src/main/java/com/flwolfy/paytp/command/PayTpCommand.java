@@ -1,6 +1,7 @@
 package com.flwolfy.paytp.command;
 
 import com.flwolfy.paytp.PayTpMod;
+import com.flwolfy.paytp.data.config.PayTpConfigData;
 import com.flwolfy.paytp.data.config.PayTpConfigManager;
 import com.flwolfy.paytp.data.PayTpData;
 import com.flwolfy.paytp.data.lang.PayTpLangManager;
@@ -31,88 +32,112 @@ import org.slf4j.Logger;
 public class PayTpCommand {
 
   private static final Logger LOGGER = PayTpMod.LOGGER;
+  private static final String HELP_COMMAND = "ptp";
 
   private static PayTpConfigManager configManager;
   private static PayTpBackManager backManager;
   private static PayTpRequestManager requestManager;
   private static PayTpHomeManager homeManager;
+  
+  private static PayTpConfigData configData;
 
   private PayTpCommand() {}
-
-  public static void reload() {
+  
+  public static void init() {
     configManager = PayTpConfigManager.getInstance();
     backManager = PayTpBackManager.getInstance();
     requestManager = PayTpRequestManager.getInstance();
     homeManager = PayTpHomeManager.getInstance();
+  }
+
+  public static void reload() {
+    // Config
+    configData = configManager.data();
 
     // Language
-    PayTpLangManager.getInstance().setLanguage(configManager.data().general().language());
-    PayTpBackManager.getInstance().setMaxBackStack(configManager.data().back().maxBackStack());
+    PayTpLangManager.getInstance().setLanguage(configData.general().language());
+    PayTpBackManager.getInstance().setMaxBackStack(configData.back().maxBackStack());
   }
 
   public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
-    dispatcher.register(CommandManager.literal(configManager.data().general().mainCommand())
-        // ===== /ptp (help) =====
+    dispatcher.register(CommandManager.literal(HELP_COMMAND)
+        // ===== /ptp =====
         .executes(PayTpCommand::payTpHelp)
-        // ===== /ptp <pos> =====
-        .then(CommandManager.argument("pos", Vec3ArgumentType.vec3())
-            .executes(PayTpCommand::payTpCoords))
-        // ===== /ptp <dimension> <pos> =====
-        .then(CommandManager.argument("dimension", DimensionArgumentType.dimension())
-            .then(CommandManager.argument("pos", Vec3ArgumentType.vec3())
-                .executes(PayTpCommand::payTpDimCoords)
-            )
-        )
     );
 
-    dispatcher.register(CommandManager.literal(configManager.data().back().backCommand())
-        // ===== /ptpback =====
-        .executes(PayTpCommand::payTpBack)
-    );
+    String mainCmd = configData.general().mainCommand();
+    if (!mainCmd.isEmpty()) {
+      dispatcher.register(CommandManager.literal(mainCmd)
+          // ===== /ptp <pos> =====
+          .then(CommandManager.argument("pos", Vec3ArgumentType.vec3())
+              .executes(PayTpCommand::payTpCoords))
+          // ===== /ptp <dimension> <pos> =====
+          .then(CommandManager.argument("dimension", DimensionArgumentType.dimension())
+              .then(CommandManager.argument("pos", Vec3ArgumentType.vec3())
+                  .executes(PayTpCommand::payTpDimCoords)
+              )
+          )
+      );
+    }
 
-    dispatcher.register(CommandManager.literal(configManager.data().request().requestCommand().toCommand())
-        // ===== /ptpto <player> =====
-        .then(CommandManager.argument("target", net.minecraft.command.argument.EntityArgumentType.player())
-            .executes(PayTpCommand::payTpPlayer))
-    );
+    String backCmd = configData.back().backCommand();
+    if (!backCmd.isEmpty()) {
+      dispatcher.register(CommandManager.literal(backCmd)
+          .executes(PayTpCommand::payTpBack)
+      );
+    }
 
-    dispatcher.register(CommandManager.literal(configManager.data().request().requestCommand().hereCommand())
-        // ===== /ptphere <player> =====
-        .then(CommandManager.argument("target", net.minecraft.command.argument.EntityArgumentType.player())
-            .executes(PayTpCommand::payTpPlayerHere))
-    );
+    String tpToCmd = configData.request().requestCommand().toCommand();
+    if (!tpToCmd.isEmpty()) {
+      dispatcher.register(CommandManager.literal(tpToCmd)
+          .then(CommandManager.argument("target", EntityArgumentType.player())
+              .executes(PayTpCommand::payTpPlayer))
+      );
+    }
 
-    dispatcher.register(CommandManager.literal(configManager.data().request().requestCommand().acceptCommand())
-        // ===== /ptpaccept =====
-        .executes(PayTpCommand::payTpAcceptLatest)
-        // ===== /ptpaccept <player> =====
-        .then(CommandManager.argument("sender", net.minecraft.command.argument.EntityArgumentType.player())
-            .executes(PayTpCommand::payTpAccept))
-    );
+    String tpHereCmd = configData.request().requestCommand().hereCommand();
+    if (!tpHereCmd.isEmpty()) {
+      dispatcher.register(CommandManager.literal(tpHereCmd)
+          .then(CommandManager.argument("target", EntityArgumentType.player())
+              .executes(PayTpCommand::payTpPlayerHere))
+      );
+    }
 
-    dispatcher.register(CommandManager.literal(configManager.data().request().requestCommand().denyCommand())
-        // ===== /ptpdeny =====
-        .executes(PayTpCommand::payTpDenyLatest)
-        // ===== /ptpdeny <player> =====
-        .then(CommandManager.argument("sender", net.minecraft.command.argument.EntityArgumentType.player())
-            .executes(PayTpCommand::payTpDeny))
-    );
+    String acceptCmd = configData.request().requestCommand().acceptCommand();
+    if (!acceptCmd.isEmpty()) {
+      dispatcher.register(CommandManager.literal(acceptCmd)
+          .executes(PayTpCommand::payTpAcceptLatest)
+          .then(CommandManager.argument("sender", EntityArgumentType.player())
+              .executes(PayTpCommand::payTpAccept))
+      );
+    }
 
-    dispatcher.register(CommandManager.literal(configManager.data().request().requestCommand().cancelCommand())
-        // ===== /ptpcancel =====
-        .executes(PayTpCommand::payTpCancelLatest)
-        // ===== /ptpcancel <player> =====
-        .then(CommandManager.argument("target", net.minecraft.command.argument.EntityArgumentType.player())
-            .executes(PayTpCommand::payTpCancel))
-    );
+    String denyCmd = configData.request().requestCommand().denyCommand();
+    if (!denyCmd.isEmpty()) {
+      dispatcher.register(CommandManager.literal(denyCmd)
+          .executes(PayTpCommand::payTpDenyLatest)
+          .then(CommandManager.argument("sender", EntityArgumentType.player())
+              .executes(PayTpCommand::payTpDeny))
+      );
+    }
 
-    dispatcher.register(CommandManager.literal(configManager.data().home().homeCommand())
-        // ===== /ptphome =====
-        .executes(PayTpCommand::payTpHome)
-        // ===== /ptphome set =====
-        .then(CommandManager.literal("set")
-            .executes(PayTpCommand::payTpSetHome))
-    );
+    String cancelCmd = configData.request().requestCommand().cancelCommand();
+    if (!cancelCmd.isEmpty()) {
+      dispatcher.register(CommandManager.literal(cancelCmd)
+          .executes(PayTpCommand::payTpCancelLatest)
+          .then(CommandManager.argument("target", EntityArgumentType.player())
+              .executes(PayTpCommand::payTpCancel))
+      );
+    }
+
+    String homeCmd = configData.home().homeCommand();
+    if (!homeCmd.isEmpty()) {
+      dispatcher.register(CommandManager.literal(homeCmd)
+          .executes(PayTpCommand::payTpHome)
+          .then(CommandManager.literal("set")
+              .executes(PayTpCommand::payTpSetHome))
+      );
+    }
   }
 
   private static int payTpHelp(CommandContext<ServerCommandSource> ctx) {
@@ -121,15 +146,15 @@ public class PayTpCommand {
 
     PayTpMessageSender.msgHelp(
         player,
-        configManager.data().general().mainCommand(),
-        configManager.data().back().backCommand(),
-        configManager.data().request().requestCommand().toCommand(),
-        configManager.data().request().requestCommand().hereCommand(),
-        configManager.data().request().requestCommand().acceptCommand(),
-        configManager.data().request().requestCommand().denyCommand(),
-        configManager.data().request().requestCommand().cancelCommand(),
-        configManager.data().home().homeCommand(),
-        configManager.data().home().homeCommand() + " set"
+        configData.general().mainCommand(),
+        configData.back().backCommand(),
+        configData.request().requestCommand().toCommand(),
+        configData.request().requestCommand().hereCommand(),
+        configData.request().requestCommand().acceptCommand(),
+        configData.request().requestCommand().denyCommand(),
+        configData.request().requestCommand().cancelCommand(),
+        configData.home().homeCommand(),
+        configData.home().homeCommand() + " set"
     );
 
     return Command.SINGLE_SUCCESS;
@@ -208,15 +233,15 @@ public class PayTpCommand {
     }, () -> {
       PayTpMessageSender.msgCancelTp(target, sender.getName());
       PayTpMessageSender.msgTpCanceled(sender, target.getName());
-    }, configManager.data().request().expireTime());
+    }, configData.request().expireTime());
 
     PayTpMessageSender.msgTpRequestSent(sender, target.getName());
     PayTpMessageSender.msgTpRequestReceived(
         target,
         sender.getName(),
-        configManager.data().request().requestCommand().acceptCommand() + " " + sender.getName().getString(),
-        configManager.data().request().requestCommand().denyCommand() + " " + sender.getName().getString(),
-        configManager.data().request().expireTime(),
+        configData.request().requestCommand().acceptCommand() + " " + sender.getName().getString(),
+        configData.request().requestCommand().denyCommand() + " " + sender.getName().getString(),
+        configData.request().expireTime(),
         false
     );
 
@@ -254,15 +279,15 @@ public class PayTpCommand {
     }, () -> {
       PayTpMessageSender.msgCancelTp(target, sender.getName());
       PayTpMessageSender.msgTpCanceled(sender, target.getName());
-    }, configManager.data().request().expireTime());
+    }, configData.request().expireTime());
 
     PayTpMessageSender.msgTpRequestSent(sender, target.getName());
     PayTpMessageSender.msgTpRequestReceived(
         target,
         sender.getName(),
-        configManager.data().request().requestCommand().acceptCommand() + " " + sender.getName().getString(),
-        configManager.data().request().requestCommand().denyCommand() + " " + sender.getName().getString(),
-        configManager.data().request().expireTime(),
+        configData.request().requestCommand().acceptCommand() + " " + sender.getName().getString(),
+        configData.request().requestCommand().denyCommand() + " " + sender.getName().getString(),
+        configData.request().expireTime(),
         true
     );
 
@@ -443,18 +468,18 @@ public class PayTpCommand {
     double distance = PayTpCalculator.calculateDistance(targetData, fromData);
     int price = PayTpCalculator.calculatePrice(
         distance,
-        configManager.data().price().parameter().baseRadius(),
-        configManager.data().price().parameter().rate(),
-        configManager.data().calculateMultiplier(multiplierFlags),
-        configManager.data().price().parameter().minPrice(),
-        configManager.data().price().parameter().maxPrice()
+        configData.price().parameter().baseRadius(),
+        configData.price().parameter().rate(),
+        configData.calculateMultiplier(multiplierFlags),
+        configData.price().parameter().minPrice(),
+        configData.price().parameter().maxPrice()
     );
 
-    int balance = PayTpCalculator.checkBalance(configManager.data().price().currencyItem(), player, configManager.data().combineSettingFlags());
+    int balance = PayTpCalculator.checkBalance(configData.price().currencyItem(), player, configData.combineSettingFlags());
     if (balance < price) {
       PayTpMessageSender.msgTpFailed(
           player,
-          PayTpItemHandler.getItemByStringId(configManager.data().price().currencyItem()).getName(),
+          PayTpItemHandler.getItemByStringId(configData.price().currencyItem()).getName(),
           price,
           balance
       );
@@ -471,7 +496,7 @@ public class PayTpCommand {
     // ---------------------------------
     // Proceed payment
     // ---------------------------------
-    if (!PayTpCalculator.proceedPayment(configManager.data().price().currencyItem(), player, price, configManager.data().combineSettingFlags())) {
+    if (!PayTpCalculator.proceedPayment(configData.price().currencyItem(), player, price, configData.combineSettingFlags())) {
       LOGGER.error("Payment proceed failed");
       return 0;
     }
@@ -487,7 +512,7 @@ public class PayTpCommand {
         player.getPitch(),
         entity -> {
           // Effect
-          if (configManager.data().setting().effect().particleEffect()) {
+          if (configData.setting().effect().particleEffect()) {
             targetWorld.sendEntityStatus(player, (byte)46);
           }
 
@@ -495,13 +520,13 @@ public class PayTpCommand {
           if (Flags.check(multiplierFlags, PayTpMultiplierFlags.BACK)) {
             PayTpMessageSender.msgTpBackSucceeded(
                 player,
-                PayTpItemHandler.getItemByStringId(configManager.data().price().currencyItem()).getName(),
+                PayTpItemHandler.getItemByStringId(configData.price().currencyItem()).getName(),
                 price
             );
           } else {
             PayTpMessageSender.msgTpSucceeded(
                 player,
-                PayTpItemHandler.getItemByStringId(configManager.data().price().currencyItem()).getName(),
+                PayTpItemHandler.getItemByStringId(configData.price().currencyItem()).getName(),
                 price
             );
           }
