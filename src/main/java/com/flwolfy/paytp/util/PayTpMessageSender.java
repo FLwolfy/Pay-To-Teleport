@@ -2,6 +2,9 @@ package com.flwolfy.paytp.util;
 
 import com.flwolfy.paytp.data.lang.PayTpLangManager;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
@@ -244,110 +247,162 @@ public class PayTpMessageSender {
         .append(divider).append(newline)
         .append(title).append(newline)
         .append(divider).append(newline)
-        .append(LANG_LOADER.getText("paytp.help.intro").append(newline).append(newline))
+        .append(LANG_LOADER.getText("paytp.help.intro").append(newline).append(newline));
 
-        // [Teleport]
-        .append(LANG_LOADER.getText("paytp.help.section.tp").append(newline))
-        // ===== /ptp =====
-        .append(Text.literal(indentCmd).append(LANG_LOADER.getText("paytp.help.tp.coord")).append(newline)
-            .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.tp.coord.desc")).append(newline)))
-        // ===== /ptpback =====
-        .append(Text.literal(indentCmd).append(LANG_LOADER.getText("paytp.help.tp.back")).append(newline)
-            .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.tp.back.desc")).append(newline)))
+    // [Teleport]
+    msg.append(LANG_LOADER.getText("paytp.help.section.tp").append(newline));
+    if (!tpCommandName.isEmpty()) {
+      msg.append(Text.literal(indentCmd)
+          .append(LANG_LOADER.getText("paytp.help.tp.coord")).append(newline)
+          .append(Text.literal(indentDesc + "- ")
+              .append(LANG_LOADER.getText("paytp.help.tp.coord.desc")).append(newline)));
+    }
+    if (!backCommandName.isEmpty()) {
+      msg.append(Text.literal(indentCmd)
+          .append(LANG_LOADER.getText("paytp.help.tp.back")).append(newline)
+          .append(Text.literal(indentDesc + "- ")
+              .append(LANG_LOADER.getText("paytp.help.tp.back.desc")).append(newline)));
+    }
 
-        // [Request]
-        .append(newline).append(LANG_LOADER.getText("paytp.help.section.req")).append(newline)
-        // ===== /ptpto =====
-        .append(Text.literal(indentCmd).append(LANG_LOADER.getText("paytp.help.req.to")).append(newline)
-            .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.req.to.desc")).append(newline)))
-        // ===== /ptphere =====
-        .append(Text.literal(indentCmd).append(LANG_LOADER.getText("paytp.help.req.here")).append(newline)
-            .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.req.here.desc")).append(newline)))
-        // ===== /ptpaccpet =====
-        .append(Text.literal(indentCmd).append(LANG_LOADER.getText("paytp.help.req.accept")).append(newline)
-            .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.req.accept.desc")).append(newline)))
-        // ===== /ptpdeny =====
-        .append(Text.literal(indentCmd).append(LANG_LOADER.getText("paytp.help.req.deny")).append(newline)
-            .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.req.deny.desc")).append(newline)))
-        // ===== /ptpcancel =====
-        .append(Text.literal(indentCmd).append(LANG_LOADER.getText("paytp.help.req.cancel")).append(newline)
-            .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.req.cancel.desc")).append(newline)))
+    // [Request]
+    msg.append(newline).append(LANG_LOADER.getText("paytp.help.section.req")).append(newline);
+    if (!tpPlayerCommandName.isEmpty()) {
+      msg.append(Text.literal(indentCmd)
+          .append(LANG_LOADER.getText("paytp.help.req.to")).append(newline)
+          .append(Text.literal(indentDesc + "- ")
+              .append(LANG_LOADER.getText("paytp.help.req.to.desc")).append(newline)));
+    }
+    if (!tpPlayerHereCommandName.isEmpty()) {
+      msg.append(Text.literal(indentCmd)
+          .append(LANG_LOADER.getText("paytp.help.req.here")).append(newline)
+          .append(Text.literal(indentDesc + "- ")
+              .append(LANG_LOADER.getText("paytp.help.req.here.desc")).append(newline)));
+    }
+    if (!acceptCommandName.isEmpty()) {
+      msg.append(Text.literal(indentCmd)
+          .append(LANG_LOADER.getText("paytp.help.req.accept")).append(newline)
+          .append(Text.literal(indentDesc + "- ")
+              .append(LANG_LOADER.getText("paytp.help.req.accept.desc")).append(newline)));
+    }
+    if (!denyCommandName.isEmpty()) {
+      msg.append(Text.literal(indentCmd)
+          .append(LANG_LOADER.getText("paytp.help.req.deny")).append(newline)
+          .append(Text.literal(indentDesc + "- ")
+              .append(LANG_LOADER.getText("paytp.help.req.deny.desc")).append(newline)));
+    }
+    if (!cancelCommandName.isEmpty()) {
+      msg.append(Text.literal(indentCmd)
+          .append(LANG_LOADER.getText("paytp.help.req.cancel")).append(newline)
+          .append(Text.literal(indentDesc + "- ")
+              .append(LANG_LOADER.getText("paytp.help.req.cancel.desc")).append(newline)));
+    }
 
-        // [Home]
-        .append(newline).append(LANG_LOADER.getText("paytp.help.section.home")).append(newline)
-        // ===== /ptphome =====
-        .append(Text.literal(indentCmd).append(LANG_LOADER.getText("paytp.help.home.goto")).append(newline)
-            .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.home.goto.desc")).append(newline)))
-        // ===== /ptphome set =====
-        .append(Text.literal(indentCmd).append(LANG_LOADER.getText("paytp.help.home.set")).append(newline)
-            .append(Text.literal(indentDesc + "- ").append(LANG_LOADER.getText("paytp.help.home.set.desc")).append(newline)))
+    // [Home]
+    msg.append(newline).append(LANG_LOADER.getText("paytp.help.section.home")).append(newline);
+    if (!homeCommandName.isEmpty()) {
+      msg.append(Text.literal(indentCmd)
+          .append(LANG_LOADER.getText("paytp.help.home.goto")).append(newline)
+          .append(Text.literal(indentDesc + "- ")
+              .append(LANG_LOADER.getText("paytp.help.home.goto.desc")).append(newline)));
+    }
+    if (!setHomeCommandName.isEmpty()) {
+      msg.append(Text.literal(indentCmd)
+          .append(LANG_LOADER.getText("paytp.help.home.set")).append(newline)
+          .append(Text.literal(indentDesc + "- ")
+              .append(LANG_LOADER.getText("paytp.help.home.set.desc")).append(newline)));
+    }
 
-        // Footer
-        .append(newline).append(LANG_LOADER.getText("paytp.help.note")).append(newline)
+    // Footer
+    msg.append(newline).append(LANG_LOADER.getText("paytp.help.note")).append(newline)
         .append(divider);
 
     // -------------------
     // Text formatting
     // -------------------
-    msg = Text.empty().append(
-        PayTpTextBuilder.format(msg,
-            // ===== /ptp =====
-            PayTpTextBuilder.suggestCommandText(
-                Text.literal("/" + tpCommandName),
-                PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + tpCommandName),
-                "/" + tpCommandName + " " + player.getEntityWorld().getRegistryKey().getValue().toString() + " ~ ~ ~"
-            ),
-            // ===== /ptpback =====
-            PayTpTextBuilder.suggestCommandText(
-                Text.literal("/" + backCommandName),
-                PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + backCommandName),
-                "/" + backCommandName
-            ),
-            // ===== /ptpto =====
-            PayTpTextBuilder.suggestCommandText(
-                Text.literal("/" + tpPlayerCommandName),
-                PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + tpPlayerCommandName),
-                "/" + tpPlayerCommandName + " " + player.getName().getString()
-            ),
-            // ===== /ptphere =====
-            PayTpTextBuilder.suggestCommandText(
-                Text.literal("/" + tpPlayerHereCommandName),
-                PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + tpPlayerHereCommandName),
-                "/" + tpPlayerHereCommandName + " " + player.getName().getString()
-            ),
-            // ===== /ptpaccept =====
-            PayTpTextBuilder.suggestCommandText(
-                Text.literal("/" + acceptCommandName),
-                PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + acceptCommandName),
-                "/" + acceptCommandName
-            ),
-            // ===== /ptpdeny =====
-            PayTpTextBuilder.suggestCommandText(
-                Text.literal("/" + denyCommandName),
-                PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + denyCommandName),
-                "/" + denyCommandName
-            ),
-            // ===== /ptpcancel =====
-            PayTpTextBuilder.suggestCommandText(
-                Text.literal("/" + cancelCommandName),
-                PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + cancelCommandName),
-                "/" + cancelCommandName
-            ),
-            // ===== /ptphome =====
-            PayTpTextBuilder.suggestCommandText(
-                Text.literal("/" + homeCommandName),
-                PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + homeCommandName),
-                "/" + homeCommandName
-            ),
-            // ===== /ptphome set =====
-            PayTpTextBuilder.suggestCommandText(
-                Text.literal("/" + setHomeCommandName),
-                PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + setHomeCommandName),
-                "/" + setHomeCommandName
-            )
-        )
-    );
+    List<Text> formattedTexts = new ArrayList<>();
 
+    // ==== /ptp =====
+    if (!tpCommandName.isEmpty()) {
+      formattedTexts.add(PayTpTextBuilder.suggestCommandText(
+          Text.literal("/" + tpCommandName),
+          PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + tpCommandName),
+          "/" + tpCommandName + " " + player.getEntityWorld().getRegistryKey().getValue().toString() + " ~ ~ ~"
+      ));
+    }
+
+    // ==== /ptpback =====
+    if (!backCommandName.isEmpty()) {
+      formattedTexts.add(PayTpTextBuilder.suggestCommandText(
+          Text.literal("/" + backCommandName),
+          PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + backCommandName),
+          "/" + backCommandName
+      ));
+    }
+
+    // ==== /ptpto =====
+    if (!tpPlayerCommandName.isEmpty()) {
+      formattedTexts.add(PayTpTextBuilder.suggestCommandText(
+          Text.literal("/" + tpPlayerCommandName),
+          PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + tpPlayerCommandName),
+          "/" + tpPlayerCommandName + " " + player.getName().getString()
+      ));
+    }
+
+    // ==== /ptphere =====
+    if (!tpPlayerHereCommandName.isEmpty()) {
+      formattedTexts.add(PayTpTextBuilder.suggestCommandText(
+          Text.literal("/" + tpPlayerHereCommandName),
+          PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + tpPlayerHereCommandName),
+          "/" + tpPlayerHereCommandName + " " + player.getName().getString()
+      ));
+    }
+
+    // ==== /ptpaccpet =====
+    if (!acceptCommandName.isEmpty()) {
+      formattedTexts.add(PayTpTextBuilder.suggestCommandText(
+          Text.literal("/" + acceptCommandName),
+          PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + acceptCommandName),
+          "/" + acceptCommandName
+      ));
+    }
+
+    // ==== /ptpdeny =====
+    if (!denyCommandName.isEmpty()) {
+      formattedTexts.add(PayTpTextBuilder.suggestCommandText(
+          Text.literal("/" + denyCommandName),
+          PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + denyCommandName),
+          "/" + denyCommandName
+      ));
+    }
+
+    // ==== /ptpcancel =====
+    if (!cancelCommandName.isEmpty()) {
+      formattedTexts.add(PayTpTextBuilder.suggestCommandText(
+          Text.literal("/" + cancelCommandName),
+          PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + cancelCommandName),
+          "/" + cancelCommandName
+      ));
+    }
+
+    // ==== /ptphome =====
+    if (!homeCommandName.isEmpty()) {
+      formattedTexts.add(PayTpTextBuilder.suggestCommandText(
+          Text.literal("/" + homeCommandName),
+          PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + homeCommandName),
+          "/" + homeCommandName
+      ));
+    }
+
+    // ==== /ptphome set =====
+    if (!setHomeCommandName.isEmpty()) {
+      formattedTexts.add(PayTpTextBuilder.suggestCommandText(
+          Text.literal("/" + setHomeCommandName),
+          PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + setHomeCommandName),
+          "/" + setHomeCommandName
+      ));
+    }
+
+    msg = Text.empty().append(PayTpTextBuilder.format(msg, formattedTexts.toArray()));
     player.sendMessage(msg, false);
   }
 
