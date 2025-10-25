@@ -67,15 +67,15 @@
 
 
   "paytp.config.title": "PayTp 設定檔",
-  "paytp.config.title.warning": "你需要重新啟動你的存檔以重新載入所有設定！",
+  "paytp.config.title.warning": "⚙ 對於所有指令名稱，您可以透過設置為空字串來禁用它們。\n⚠ 你需要重新啟動你的存檔以重新載入所有設定！",
   "paytp.config.all": "全部",
   "paytp.config.other": "其他",
 
   "paytp.config.general": "一般",
   "paytp.config.general.language": "語言",
   "paytp.config.general.language.tooltip": "設定插件顯示語言",
-  "paytp.config.general.mainCommand": "主指令名稱",
-  "paytp.config.general.mainCommand.tooltip": "設定插件的主要指令名稱",
+  "paytp.config.general.mainCommand": "主傳送指令名稱",
+  "paytp.config.general.mainCommand.tooltip": "設定插件的座標傳送指令名稱",
   "paytp.config.general.crossDimMultiplier": "跨維倍率",
   "paytp.config.general.crossDimMultiplier.tooltip": "跨維度傳送時的價格倍率",
 

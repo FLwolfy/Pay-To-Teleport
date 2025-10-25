@@ -38,6 +38,9 @@ public class PayTpMod implements ModInitializer {
 		PayTpHomeManager.getInstance();
 		PayTpRequestManager.getInstance();
 
+		// Init command
+		PayTpCommand.init();
+
 		// Register events
 		registerEvents();
 
