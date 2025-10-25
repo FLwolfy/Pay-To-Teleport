@@ -68,15 +68,15 @@
 
 
   "paytp.config.title": "PayTp 配置文件",
-  "paytp.config.title.warning": "您需要重启我的世界存档来应用所有设置!",
+  "paytp.config.title.warning": "⚙ 对于所有指令名称，您可以通过设置为空字符串来禁用它们。\n⚠ 您需要重启我的世界存档来应用所有设置!",
   "paytp.config.all": "全部",
   "paytp.config.other": "其他",
 
   "paytp.config.general": "通用",
   "paytp.config.general.language": "语言",
   "paytp.config.general.language.tooltip": "设置插件显示语言",
-  "paytp.config.general.mainCommand": "主指令名",
-  "paytp.config.general.mainCommand.tooltip": "设置插件的主要命令名称",
+  "paytp.config.general.mainCommand": "主传送命令",
+  "paytp.config.general.mainCommand.tooltip": "设置插件的坐标传送命令名称",
   "paytp.config.general.crossDimMultiplier": "跨维倍率",
   "paytp.config.general.crossDimMultiplier.tooltip": "跨维度传送时的价格倍率",
 
