@@ -67,15 +67,15 @@
 
 
   "paytp.config.title": "PayTp Configuration",
-  "paytp.config.title.warning": "You need to relaunch your world to get all settings reloaded!",
+  "paytp.config.title.warning": "⚙ For all command names, you can disable them by setting them to an empty string.\n⚠ You need to relaunch your world to get all settings reloaded!",
   "paytp.config.all": "All",
   "paytp.config.other": "Others",
 
   "paytp.config.general": "General",
   "paytp.config.general.language": "Language",
-  "paytp.config.general.language.tooltip": "Set the plugin display language",
-  "paytp.config.general.mainCommand": "Main Command",
-  "paytp.config.general.mainCommand.tooltip": "Set the main command name of the plugin",
+  "paytp.config.general.language.tooltip": "Set the mod display language",
+  "paytp.config.general.mainCommand": "Main Teleport Command",
+  "paytp.config.general.mainCommand.tooltip": "Set the coordinate teleport command name of the mod",
   "paytp.config.general.crossDimMultiplier": "Cross-Dimension Multiplier",
   "paytp.config.general.crossDimMultiplier.tooltip": "Price multiplier when teleporting across dimensions",
 
