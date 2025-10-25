@@ -34,15 +34,21 @@ public class PayTpMessageSender {
       Text currencyItemText,
       int price
   ) {
-    Text msg = Text.empty()
-        .append(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.teleport"),
+    MutableText msg = Text.empty()
+        .append(PayTpTextBuilder.format(
+            LANG_LOADER.getText("paytp.teleport"),
             LANG_LOADER.getText("paytp.success")
-        ))
-        .append(Text.literal("\n"))
-        .append(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.consume"),
-            price,
-            currencyItemText
         ));
+
+    if (price > 0) {
+      msg = msg
+          .append(Text.literal("\n"))
+          .append(PayTpTextBuilder.format(
+              LANG_LOADER.getText("paytp.consume"),
+              price,
+              currencyItemText
+          ));
+    }
 
     player.sendMessage(msg, false);
   }
@@ -52,15 +58,21 @@ public class PayTpMessageSender {
       Text currencyItemText,
       int price
   ) {
-    Text msg = Text.empty()
-        .append(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.tp-back"),
+    MutableText msg = Text.empty()
+        .append(PayTpTextBuilder.format(
+            LANG_LOADER.getText("paytp.tp-back"),
             LANG_LOADER.getText("paytp.success")
-        ))
-        .append(Text.literal("\n"))
-        .append(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.consume"),
-            price,
-            currencyItemText
         ));
+
+    if (price > 0) {
+      msg = msg
+          .append(Text.literal("\n"))
+          .append(PayTpTextBuilder.format(
+              LANG_LOADER.getText("paytp.consume"),
+              price,
+              currencyItemText
+          ));
+    }
 
     player.sendMessage(msg, false);
   }
