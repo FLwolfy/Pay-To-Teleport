@@ -29,6 +29,10 @@ public class PayTpHomeManager {
     return manager.getOrCreate(PayTpHomeState.TYPE);
   }
 
+  // =================== //
+  // ====== Home ======= //
+  // =================== //
+
   public void setHome(ServerPlayerEntity player) {
     MinecraftServer server = player.getServer();
     if (server != null) {
