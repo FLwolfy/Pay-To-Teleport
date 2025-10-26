@@ -11,9 +11,16 @@ import com.flwolfy.paytp.util.PayTpCalculator;
 import com.flwolfy.paytp.util.PayTpItemHandler;
 import com.flwolfy.paytp.util.PayTpMessageSender;
 
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import net.minecraft.command.ControlFlowAware.Command;
 import net.minecraft.command.argument.DimensionArgumentType;
@@ -35,28 +42,35 @@ public class PayTpCommand {
   private static final String HELP_COMMAND = "ptp";
 
   private static PayTpConfigManager configManager;
+  private static PayTpLangManager langManager;
   private static PayTpBackManager backManager;
   private static PayTpRequestManager requestManager;
   private static PayTpHomeManager homeManager;
-  
+  private static PayTpWrapManager wrapManager;
+
   private static PayTpConfigData configData;
 
   private PayTpCommand() {}
   
   public static void init() {
+    // Init manager singletons
     configManager = PayTpConfigManager.getInstance();
+    langManager = PayTpLangManager.getInstance();
     backManager = PayTpBackManager.getInstance();
     requestManager = PayTpRequestManager.getInstance();
     homeManager = PayTpHomeManager.getInstance();
+    wrapManager = PayTpWrapManager.getInstance();
   }
 
   public static void reload() {
-    // Config
+    // Config data
     configData = configManager.data();
 
-    // Language
-    PayTpLangManager.getInstance().setLanguage(configData.general().language());
-    PayTpBackManager.getInstance().setMaxBackStack(configData.back().maxBackStack());
+    // Config content
+    langManager.setLanguage(configData.general().language());
+    backManager.setMaxBackStack(configData.back().maxBackStack());
+    wrapManager.setMaxInactiveTicks(configData.wrap().maxInactiveTicks());
+    wrapManager.setCheckPeriodTicks(configData.wrap().checkPeriodTicks());
   }
 
   public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
@@ -135,7 +149,7 @@ public class PayTpCommand {
       );
     }
 
-    // ===== /ptphome (set) =====
+    // ===== /ptphome =====
     String homeCmd = configData.home().homeCommand();
     if (!homeCmd.isEmpty()) {
       dispatcher.register(CommandManager.literal(homeCmd)
@@ -144,6 +158,32 @@ public class PayTpCommand {
               .executes(PayTpCommand::payTpSetHome))
       );
     }
+
+    // ===== /ptpwrap =====
+    String wrapCmd = configData.wrap().wrapCommand();
+    dispatcher.register(CommandManager.literal(wrapCmd)
+        .then(CommandManager.literal("create")
+            .then(CommandManager.argument("name", StringArgumentType.greedyString())
+                .executes(PayTpCommand::payTpCreateWrap)
+            )
+        )
+        .then(CommandManager.literal("delete")
+            .then(CommandManager.argument("name", StringArgumentType.greedyString())
+                .executes(PayTpCommand::payTpDeleteWrap)
+            )
+        )
+        .then(CommandManager.literal("list")
+            .executes(ctx -> payTpListWrap(ctx, 1))
+            .then(CommandManager.argument("page", IntegerArgumentType.integer(1))
+                .executes(ctx -> payTpListWrap(ctx, IntegerArgumentType.getInteger(ctx, "page")))
+            )
+        )
+        .then(CommandManager.argument("name", StringArgumentType.greedyString())
+            .suggests(PayTpCommand::payTpWrapSuggest)
+            .executes(PayTpCommand::payTpWrap)
+        )
+    );
+
   }
 
   private static int payTpHelp(CommandContext<ServerCommandSource> ctx) {
@@ -160,7 +200,11 @@ public class PayTpCommand {
         configData.request().requestCommand().denyCommand(),
         configData.request().requestCommand().cancelCommand(),
         configData.home().homeCommand(),
-        configData.home().homeCommand() + " set"
+        configData.home().homeCommand().isEmpty() ? "" : configData.home().homeCommand() + " set",
+        configData.wrap().wrapCommand(),
+        configData.wrap().wrapCommand().isEmpty() ? "" : configData.wrap().wrapCommand() + " create",
+        configData.wrap().wrapCommand().isEmpty() ? "" : configData.wrap().wrapCommand() + " delete",
+        configData.wrap().wrapCommand().isEmpty() ? "" : configData.wrap().wrapCommand() + " list"
     );
 
     return Command.SINGLE_SUCCESS;
@@ -442,6 +486,109 @@ public class PayTpCommand {
     return Command.SINGLE_SUCCESS;
   }
 
+  private static int payTpWrap(CommandContext<ServerCommandSource> ctx) {
+    ServerPlayerEntity player = ctx.getSource().getPlayer();
+    if (player == null) return 0;
+
+    String name = StringArgumentType.getString(ctx, "name");
+    PayTpData target = wrapManager.getWrap(player, name);
+    if (target == null) {
+      PayTpMessageSender.msgNoWrap(player, name);
+      return 0;
+    }
+
+    int multiplierFlags = player.getEntityWorld().getRegistryKey() == target.world() ?
+        Flags.combine(PayTpMultiplierFlags.WRAP) :
+        Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION, PayTpMultiplierFlags.WRAP);
+
+    return PayTpCommand.teleport(
+        player,
+        target,
+        true,
+        multiplierFlags
+    );
+  }
+
+  private static CompletableFuture<Suggestions> payTpWrapSuggest(
+      CommandContext<ServerCommandSource> context,
+      SuggestionsBuilder builder
+  ) {
+    ServerCommandSource source = context.getSource();
+    ServerPlayerEntity player = source.getPlayer();
+    if (player == null) return builder.buildFuture();
+
+    Map<String, PayTpData> wraps = wrapManager.getAllWraps(player);
+    if (wraps != null) {
+      for (String name : wraps.keySet()) {
+        builder.suggest(name);
+      }
+    }
+
+    return builder.buildFuture();
+  }
+
+  private static int payTpCreateWrap(CommandContext<ServerCommandSource> ctx) {
+    ServerPlayerEntity player = ctx.getSource().getPlayer();
+    MinecraftServer server = ctx.getSource().getServer();
+    if (player == null) return 0;
+
+    String name = StringArgumentType.getString(ctx, "name");
+
+    if (wrapManager.hasWrap(player, name)) {
+      PayTpMessageSender.msgWrapExist(player, name);
+      return 0;
+    }
+
+    if (!wrapManager.createWrap(player, name)) {
+      PayTpMessageSender.msgWrapCreateFailed(player, name);
+      return 0;
+    }
+
+    for (ServerPlayerEntity onlinePlayer : server.getPlayerManager().getPlayerList()) {
+      PayTpMessageSender.msgWrapCreated(onlinePlayer, player, name);
+    }
+
+    return Command.SINGLE_SUCCESS;
+  }
+
+  private static int payTpDeleteWrap(CommandContext<ServerCommandSource> ctx) {
+    MinecraftServer server = ctx.getSource().getServer();
+    ServerPlayerEntity player = ctx.getSource().getPlayer();
+    if (player == null) return 0;
+
+    String name = StringArgumentType.getString(ctx, "name");
+    if (!wrapManager.deleteWrap(player, name)) {
+      PayTpMessageSender.msgNoWrap(player, name);
+      return 0;
+    }
+
+    for (ServerPlayerEntity onlinePlayer : server.getPlayerManager().getPlayerList()) {
+      PayTpMessageSender.msgWrapDeleted(onlinePlayer, player, name);
+    }
+
+    return Command.SINGLE_SUCCESS;
+  }
+
+  private static int payTpListWrap(CommandContext<ServerCommandSource> ctx, int page) {
+    ServerPlayerEntity player = ctx.getSource().getPlayer();
+    if (player == null) return 0;
+
+    Map<String, PayTpData> wraps = wrapManager.getAllWraps(player);
+    if (wraps.isEmpty()) {
+      PayTpMessageSender.msgEmptyWrap(player);
+    } else {
+      PayTpMessageSender.msgWrapList(
+          player,
+          wraps,
+          configData.wrap().wrapCommand(),
+          configData.wrap().wrapCommand() + " list",
+          page
+      );
+    }
+
+    return Command.SINGLE_SUCCESS;
+  }
+
   private static int teleport(
       ServerPlayerEntity player,
       PayTpData targetData,
@@ -459,7 +606,7 @@ public class PayTpCommand {
     }
 
     ServerWorld fromWorld = player.getEntityWorld();
-    PayTpData fromData = new PayTpData(fromWorld.getRegistryKey(), player.getEntityPos());
+    PayTpData fromData = new PayTpData(fromWorld.getRegistryKey(), player.getPos());
 
     // ---------------------------------
     // Check payment
