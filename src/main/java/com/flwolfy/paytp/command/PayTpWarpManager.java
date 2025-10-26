@@ -16,24 +16,24 @@ import org.slf4j.Logger;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PayTpWrapManager {
+public class PayTpWarpManager {
 
   private static final Logger LOGGER = PayTpMod.LOGGER;
   private static final int DEFAULT_MAX_INACTIVE_TICKS = 100;
   private static final int DEFAULT_CHECK_PERIOD_TICKS = 20;
 
-  private final Map<String, Integer> wrapTimers = new HashMap<>();
+  private final Map<String, Integer> warpTimers = new HashMap<>();
 
   private int maxInactiveTicks;
   private int checkPeriodTicks;
   private int tickCounter;
 
-  private static PayTpWrapManager instance;
-  private PayTpWrapManager() {}
+  private static PayTpWarpManager instance;
+  private PayTpWarpManager() {}
 
-  public static PayTpWrapManager getInstance() {
+  public static PayTpWarpManager getInstance() {
     if (instance == null) {
-      instance = new PayTpWrapManager();
+      instance = new PayTpWarpManager();
       instance.maxInactiveTicks = DEFAULT_MAX_INACTIVE_TICKS;
       instance.checkPeriodTicks = DEFAULT_CHECK_PERIOD_TICKS;
     }
@@ -48,16 +48,16 @@ public class PayTpWrapManager {
     this.maxInactiveTicks = maxInactiveTicks;
   }
 
-  private PayTpWrapState getState(ServerWorld world) {
+  private PayTpWarpState getState(ServerWorld world) {
     PersistentStateManager manager = world.getPersistentStateManager();
-    return manager.getOrCreate(PayTpWrapState.TYPE, PayTpWrapState.STATE_ID);
+    return manager.getOrCreate(PayTpWarpState.TYPE, PayTpWarpState.STATE_ID);
   }
 
   // =================== //
-  // ====== Wrap ======= //
+  // ====== Warp ======= //
   // =================== //
 
-  public void checkWrapState(MinecraftServer server, Consumer<String> onRemove) {
+  public void checkWarpState(MinecraftServer server, Consumer<String> onRemove) {
     tickCounter++;
     if (tickCounter % checkPeriodTicks != 0) {
       return;
@@ -66,15 +66,15 @@ public class PayTpWrapManager {
     }
 
     ServerWorld storageWorld = server.getOverworld();
-    Map<String, PayTpData> wraps = new HashMap<>(getState(storageWorld).getAllWraps());
+    Map<String, PayTpData> warps = new HashMap<>(getState(storageWorld).getAllWarps());
 
-    for (Map.Entry<String, PayTpData> entry : wraps.entrySet()) {
+    for (Map.Entry<String, PayTpData> entry : warps.entrySet()) {
       String name = entry.getKey();
       PayTpData beaconData = getState(storageWorld).getBeacon(name);
       if (beaconData == null) continue;
 
-      ServerWorld wrapWorld = storageWorld.getServer().getWorld(beaconData.world());
-      if (wrapWorld == null) continue;
+      ServerWorld warpWorld = storageWorld.getServer().getWorld(beaconData.world());
+      if (warpWorld == null) continue;
 
       BlockPos pos = new BlockPos(
           (int) Math.round(beaconData.pos().x),
@@ -82,43 +82,43 @@ public class PayTpWrapManager {
           (int) Math.round(beaconData.pos().z)
       );
 
-      if (!wrapWorld.isChunkLoaded(pos.getX() >> 4, pos.getZ() >> 4)) {
+      if (!warpWorld.isChunkLoaded(pos.getX() >> 4, pos.getZ() >> 4)) {
         continue;
       }
 
       boolean hasBeam = false;
-      if (wrapWorld.getBlockState(pos).getBlock() instanceof BeaconBlock) {
-        BeaconBlockEntity beaconEntity = (BeaconBlockEntity) wrapWorld.getBlockEntity(pos);
+      if (warpWorld.getBlockState(pos).getBlock() instanceof BeaconBlock) {
+        BeaconBlockEntity beaconEntity = (BeaconBlockEntity) warpWorld.getBlockEntity(pos);
         if (beaconEntity != null && !beaconEntity.getBeamSegments().isEmpty()) {
           hasBeam = true;
         }
       } else {
-        LOGGER.info("Wrap {} removed: beacon missing.", name);
-        getState(storageWorld).removeWrap(name);
-        wrapTimers.remove(name);
+        LOGGER.info("Warp {} removed: beacon missing.", name);
+        getState(storageWorld).removeWarp(name);
+        warpTimers.remove(name);
         onRemove.accept(name);
       }
 
       if (hasBeam) {
-        wrapTimers.put(name, 0);
+        warpTimers.put(name, 0);
       } else {
-        int ticks = wrapTimers.getOrDefault(name, 0) + checkPeriodTicks;
+        int ticks = warpTimers.getOrDefault(name, 0) + checkPeriodTicks;
         if (ticks >= maxInactiveTicks) {
-          LOGGER.info("Wrap {} removed: beacon inactive > {}s.", name, maxInactiveTicks / 20);
-          getState(storageWorld).removeWrap(name);
-          wrapTimers.remove(name);
+          LOGGER.info("Warp {} removed: beacon inactive > {}s.", name, maxInactiveTicks / 20);
+          getState(storageWorld).removeWarp(name);
+          warpTimers.remove(name);
           onRemove.accept(name);
         } else {
-          wrapTimers.put(name, ticks);
+          warpTimers.put(name, ticks);
         }
       }
     }
   }
 
-  public boolean createWrap(ServerPlayerEntity player, String name) {
+  public boolean createWarp(ServerPlayerEntity player, String name) {
     MinecraftServer server = player.getServer();
     if (server == null) {
-      LOGGER.error("Create wrap: Server is null.");
+      LOGGER.error("Create warp: Server is null.");
       return false;
     }
 
@@ -141,55 +141,55 @@ public class PayTpWrapManager {
       return false;
     }
 
-    PayTpData wrapData = new PayTpData(world.getRegistryKey(), player.getPos());
+    PayTpData warpData = new PayTpData(world.getRegistryKey(), player.getPos());
     PayTpData beaconData = new PayTpData(
         world.getRegistryKey(),
         new Vec3d(beaconPos.getX(), beaconPos.getY(), beaconPos.getZ())
     );
 
-    return getState(world).setWrap(name, wrapData, beaconData);
+    return getState(world).setWarp(name, warpData, beaconData);
   }
 
-  public boolean hasWrap(ServerPlayerEntity player, String name) {
+  public boolean hasWarp(ServerPlayerEntity player, String name) {
     MinecraftServer server = player.getServer();
     if (server != null) {
       ServerWorld overworld = server.getOverworld();
-      return getState(overworld).hasWrap(name);
+      return getState(overworld).hasWarp(name);
     } else {
-      LOGGER.warn("Failed to check wrap, server is null");
+      LOGGER.warn("Failed to check warp, server is null");
     }
     return false;
   }
 
-  public boolean deleteWrap(ServerPlayerEntity player, String name) {
+  public boolean deleteWarp(ServerPlayerEntity player, String name) {
     MinecraftServer server = player.getServer();
     if (server != null) {
       ServerWorld overworld = server.getOverworld();
-      return getState(overworld).removeWrap(name);
+      return getState(overworld).removeWarp(name);
     } else {
-      LOGGER.warn("Failed to delete wrap, server is null");
+      LOGGER.warn("Failed to delete warp, server is null");
     }
     return false;
   }
 
-  public PayTpData getWrap(ServerPlayerEntity player, String name) {
+  public PayTpData getWarp(ServerPlayerEntity player, String name) {
     MinecraftServer server = player.getServer();
     if (server != null) {
       ServerWorld overworld = server.getOverworld();
-      return getState(overworld).getWrap(name);
+      return getState(overworld).getWarp(name);
     } else {
-      LOGGER.warn("Failed to get wrap, server is null");
+      LOGGER.warn("Failed to get warp, server is null");
       return null;
     }
   }
 
-  public Map<String, PayTpData> getAllWraps(ServerPlayerEntity player) {
+  public Map<String, PayTpData> getAllWarps(ServerPlayerEntity player) {
     MinecraftServer server = player.getServer();
     if (server != null) {
       ServerWorld overworld = server.getOverworld();
-      return getState(overworld).getAllWraps();
+      return getState(overworld).getAllWarps();
     } else {
-      LOGGER.warn("Failed to get all wraps, server is null");
+      LOGGER.warn("Failed to get all warps, server is null");
       return null;
     }
   }

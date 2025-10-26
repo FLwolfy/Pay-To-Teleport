@@ -17,31 +17,31 @@ import net.minecraft.world.PersistentState;
 import net.minecraft.world.World;
 
 /**
- * 世界级 Wrap 存储状态（不与玩家绑定）
+ * 世界级 Warp 存储状态（不与玩家绑定）
  */
-public class PayTpWrapState extends PersistentState {
+public class PayTpWarpState extends PersistentState {
 
-  public static final String STATE_ID = "paytp_wrap_state";
+  public static final String STATE_ID = "paytp_warp_state";
 
-  private final Map<String, PayTpData> wrapMap = new HashMap<>();
+  private final Map<String, PayTpData> warpMap = new HashMap<>();
   private final Map<String, PayTpData> beaconMap = new HashMap<>();
 
-  public static final Type<PayTpWrapState> TYPE = new Type<>(
-      PayTpWrapState::new,
-      PayTpWrapState::fromNbt,
+  public static final Type<PayTpWarpState> TYPE = new Type<>(
+      PayTpWarpState::new,
+      PayTpWarpState::fromNbt,
       null
   );
 
-  public PayTpWrapState() {}
+  public PayTpWarpState() {}
 
-  public static PayTpWrapState fromNbt(NbtCompound nbt, WrapperLookup lookup) {
-    PayTpWrapState state = new PayTpWrapState();
-    NbtList list = nbt.getList("wraps", NbtElement.COMPOUND_TYPE);
+  public static PayTpWarpState fromNbt(NbtCompound nbt, WrapperLookup lookup) {
+    PayTpWarpState state = new PayTpWarpState();
+    NbtList list = nbt.getList("warps", NbtElement.COMPOUND_TYPE);
     for (int i = 0; i < list.size(); i++) {
       NbtCompound entry = list.getCompound(i);
       String name = entry.getString("name");
 
-      // wrap 坐标
+      // warp 坐标
       String dimStr = entry.getString("dimension");
       double x = entry.getDouble("x");
       double y = entry.getDouble("y");
@@ -61,16 +61,16 @@ public class PayTpWrapState extends PersistentState {
         state.beaconMap.put(name, beacon);
       }
 
-      state.wrapMap.put(name, data);
+      state.warpMap.put(name, data);
     }
     return state;
   }
 
   @Override
-  public NbtCompound writeNbt(NbtCompound nbt, WrapperLookup wrapperLookup) {
+  public NbtCompound writeNbt(NbtCompound nbt, WrapperLookup warpperLookup) {
     NbtList list = new NbtList();
-    for (String name : wrapMap.keySet()) {
-      PayTpData data = wrapMap.get(name);
+    for (String name : warpMap.keySet()) {
+      PayTpData data = warpMap.get(name);
       NbtCompound entry = new NbtCompound();
       entry.putString("name", name);
       entry.putString("dimension", data.world().getValue().toString());
@@ -90,16 +90,16 @@ public class PayTpWrapState extends PersistentState {
 
       list.add(entry);
     }
-    nbt.put("wraps", list);
+    nbt.put("warps", list);
     return nbt;
   }
 
   // -----------------------------
-  // wrap API
+  // warp API
   // -----------------------------
 
-  public boolean setWrap(String name, PayTpData wrapData, PayTpData beaconData) {
-    if (wrapMap.containsKey(name)) {
+  public boolean setWarp(String name, PayTpData warpData, PayTpData beaconData) {
+    if (warpMap.containsKey(name)) {
       return false;
     }
 
@@ -109,15 +109,15 @@ public class PayTpWrapState extends PersistentState {
       }
     }
 
-    wrapMap.put(name, wrapData);
+    warpMap.put(name, warpData);
     beaconMap.put(name, beaconData);
     markDirty();
     return true;
   }
 
-  public boolean removeWrap(String name) {
-    if (wrapMap.containsKey(name)) {
-      wrapMap.remove(name);
+  public boolean removeWarp(String name) {
+    if (warpMap.containsKey(name)) {
+      warpMap.remove(name);
       beaconMap.remove(name);
       markDirty();
       return true;
@@ -126,16 +126,16 @@ public class PayTpWrapState extends PersistentState {
     return false;
   }
 
-  public boolean hasWrap(String name) {
-    return wrapMap.containsKey(name);
+  public boolean hasWarp(String name) {
+    return warpMap.containsKey(name);
   }
 
-  public PayTpData getWrap(String name) {
-    return wrapMap.get(name);
+  public PayTpData getWarp(String name) {
+    return warpMap.get(name);
   }
 
-  public Map<String, PayTpData> getAllWraps() {
-    return wrapMap;
+  public Map<String, PayTpData> getAllWarps() {
+    return warpMap;
   }
 
   public PayTpData getBeacon(String name) {
