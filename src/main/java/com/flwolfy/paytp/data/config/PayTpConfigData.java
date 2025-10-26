@@ -10,6 +10,7 @@ public record PayTpConfigData(
     Request request,
     Home home,
     Back back,
+    Wrap wrap,
     Price price,
     Setting setting
 ) {
@@ -42,6 +43,13 @@ public record PayTpConfigData(
       String backCommand,
       int maxBackStack,
       double backMultiplier
+  ) {}
+
+  public record Wrap(
+      String wrapCommand,
+      int maxInactiveTicks,
+      int checkPeriodTicks,
+      double wrapMultiplier
   ) {}
 
   public record Price(
@@ -97,6 +105,12 @@ public record PayTpConfigData(
           10,
           0.8
       ),
+      new Wrap(
+          "ptpwrap",
+          100,
+          20,
+          0.5
+      ),
       new Price(
           "minecraft:diamond",
           new Price.Parameter(
@@ -135,6 +149,8 @@ public record PayTpConfigData(
       multiplier *= home.homeMultiplier();
     if (Flags.check(multiplierFlags, PayTpMultiplierFlags.BACK))
       multiplier *= back.backMultiplier();
+    if (Flags.check(multiplierFlags, PayTpMultiplierFlags.WRAP))
+      multiplier *= wrap.wrapMultiplier();
     return multiplier;
   }
 }

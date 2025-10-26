@@ -6,6 +6,7 @@ import net.minecraft.registry.RegistryKey;
 import net.minecraft.world.World;
 
 import java.util.Objects;
+import java.util.Locale;
 
 /**
  * Represents a teleport point: (world, position).
@@ -29,6 +30,16 @@ public record PayTpData(
     return MathHelper.approximatelyEquals(this.pos.x, pos1.x)
         && MathHelper.approximatelyEquals(this.pos.y, pos1.y)
         && MathHelper.approximatelyEquals(this.pos.z, pos1.z);
+  }
+
+  @Override
+  public String toString() {
+    return String.format(
+        Locale.ROOT,
+        "<%s, (%.2f, %.2f, %.2f)>",
+        world.getValue(),
+        pos.x, pos.y, pos.z
+    );
   }
 }
 

@@ -4,5 +4,6 @@ package com.flwolfy.paytp.flag;
 public enum PayTpMultiplierFlags {
   CROSS_DIMENSION,
   HOME,
-  BACK
+  BACK,
+  WRAP
 }

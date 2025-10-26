@@ -18,7 +18,11 @@ import net.minecraft.world.PersistentState;
 import net.minecraft.world.World;
 
 public class PayTpHomeState extends PersistentState {
+
+  public static final String STATE_ID = "paytp_home_state";
+
   private final Map<UUID, PayTpData> homeMap = new HashMap<>();
+
   public static final Type<PayTpHomeState> TYPE = new Type<>(
       PayTpHomeState::new,
       PayTpHomeState::fromNbt,

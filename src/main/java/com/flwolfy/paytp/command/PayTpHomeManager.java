@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 public class PayTpHomeManager {
 
   private static final Logger LOGGER = PayTpMod.LOGGER;
-  private static final String PERSISTENT_STATE_ID = "paytp_home_state";
 
   private static PayTpHomeManager instance;
   private PayTpHomeManager() {}
@@ -28,8 +27,12 @@ public class PayTpHomeManager {
 
   private PayTpHomeState getState(ServerWorld world) {
     PersistentStateManager manager = world.getPersistentStateManager();
-    return manager.getOrCreate(PayTpHomeState.TYPE, PERSISTENT_STATE_ID);
+    return manager.getOrCreate(PayTpHomeState.TYPE, PayTpHomeState.STATE_ID);
   }
+
+  // =================== //
+  // ====== Home ======= //
+  // =================== //
 
   public void setHome(ServerPlayerEntity player) {
     MinecraftServer server = player.getServer();
