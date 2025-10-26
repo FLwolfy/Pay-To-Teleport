@@ -213,11 +213,11 @@ public class PayTpMessageSender {
     player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-back")), false);
   }
 
-  public static void msgNoWrap(ServerPlayerEntity player, String wrapName) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-wrap"),
+  public static void msgNoWarp(ServerPlayerEntity player, String warpName) {
+    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-warp"),
         PayTpTextBuilder.DEFAULT_TEXT_COLOR,
         PayTpTextBuilder.DEFAULT_WARN_COLOR
-        , wrapName
+        , warpName
     ), false);
   }
 
@@ -237,31 +237,31 @@ public class PayTpMessageSender {
     player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-home")), false);
   }
 
-  public static void msgWrapCreated(ServerPlayerEntity player, ServerPlayerEntity createPlayer, String name) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.create-wrap"),
+  public static void msgWarpCreated(ServerPlayerEntity player, ServerPlayerEntity createPlayer, String name) {
+    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.create-warp"),
         name,
         createPlayer.getName()
     ), false);
   }
 
-  public static void msgWrapExist(ServerPlayerEntity player, String name) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.wrap-exist"),
+  public static void msgWarpExist(ServerPlayerEntity player, String name) {
+    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.warp-exist"),
         PayTpTextBuilder.DEFAULT_TEXT_COLOR,
         PayTpTextBuilder.DEFAULT_WARN_COLOR,
         name
     ), false);
   }
 
-  public static void msgWrapCreateFailed(ServerPlayerEntity player, String name) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.create-wrap-failed"),
+  public static void msgWarpCreateFailed(ServerPlayerEntity player, String name) {
+    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.create-warp-failed"),
         PayTpTextBuilder.DEFAULT_TEXT_COLOR,
         PayTpTextBuilder.DEFAULT_WARN_COLOR,
         name
     ), false);
   }
 
-  public static void msgWrapDeleted(ServerPlayerEntity player, ServerPlayerEntity deletePlayer, String name) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.delete-wrap"),
+  public static void msgWarpDeleted(ServerPlayerEntity player, ServerPlayerEntity deletePlayer, String name) {
+    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.delete-warp"),
         PayTpTextBuilder.DEFAULT_TEXT_COLOR,
         PayTpTextBuilder.DEFAULT_WARN_COLOR,
         name,
@@ -269,8 +269,8 @@ public class PayTpMessageSender {
     ), false);
   }
 
-  public static void msgWrapDeletedServer(ServerPlayerEntity player, String name) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.delete-wrap-server"),
+  public static void msgWarpDeletedServer(ServerPlayerEntity player, String name) {
+    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.delete-warp-server"),
         PayTpTextBuilder.DEFAULT_TEXT_COLOR,
         PayTpTextBuilder.DEFAULT_WARN_COLOR,
         name,
@@ -278,21 +278,21 @@ public class PayTpMessageSender {
     ), false);
   }
 
-  public static void msgEmptyWrap(ServerPlayerEntity player) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.empty-wrap")), false);
+  public static void msgEmptyWarp(ServerPlayerEntity player) {
+    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.empty-warp")), false);
   }
 
-  public static void msgWrapList(
+  public static void msgWarpList(
       ServerPlayerEntity player,
-      Map<String, PayTpData> wrapList,
-      String wrapCommandName,
-      String wrapListCommandName,
+      Map<String, PayTpData> warpList,
+      String warpCommandName,
+      String warpListCommandName,
       int page
   ) {
     final int PAGE_SIZE = 8;
 
     String newline = "\n";
-    List<Map.Entry<String, PayTpData>> entries = new ArrayList<>(wrapList.entrySet());
+    List<Map.Entry<String, PayTpData>> entries = new ArrayList<>(warpList.entrySet());
 
     int totalPages = Math.max(1, (int) Math.ceil(entries.size() / (double) PAGE_SIZE));
     page = Math.max(1, Math.min(page, totalPages));
@@ -301,7 +301,7 @@ public class PayTpMessageSender {
     msg.append(newline);
     msg.append(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.help.divider")));
     msg.append(newline);
-    msg.append(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.wrap-list")));
+    msg.append(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.warp-list")));
 
     int start = (page - 1) * PAGE_SIZE;
     int end = Math.min(start + PAGE_SIZE, entries.size());
@@ -311,8 +311,8 @@ public class PayTpMessageSender {
       msg.append(newline);
       msg.append(PayTpTextBuilder.commandText(
           Text.literal(entry.getKey()).formatted(PayTpTextBuilder.DEFAULT_HIGHLIGHT_COLOR),
-          PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.wrap"), entry.getKey()),
-          "/" + wrapCommandName + " " + entry.getKey()
+          PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.warp"), entry.getKey()),
+          "/" + warpCommandName + " " + entry.getKey()
       ));
       msg.append(Text.literal(" "));
       msg.append(Text.literal(entry.getValue().toString()).formatted(PayTpTextBuilder.DEFAULT_SHADE_COLOR));
@@ -327,7 +327,7 @@ public class PayTpMessageSender {
       pageButtons.append(PayTpTextBuilder.commandText(
           Text.literal("⏪").formatted(PayTpTextBuilder.DEFAULT_TEXT_COLOR),
           PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.page"), (page - 1)),
-          "/" + wrapListCommandName + " " + (page - 1)
+          "/" + warpListCommandName + " " + (page - 1)
       ));
     } else {
       pageButtons.append(Text.literal("⏪").formatted(PayTpTextBuilder.DEFAULT_SHADE_COLOR));
@@ -341,7 +341,7 @@ public class PayTpMessageSender {
       pageButtons.append(PayTpTextBuilder.commandText(
           Text.literal("⏩").formatted(PayTpTextBuilder.DEFAULT_TEXT_COLOR),
           PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.page"), (page + 1)),
-          "/" + wrapListCommandName + " " + (page + 1)
+          "/" + warpListCommandName + " " + (page + 1)
       ));
     } else {
       pageButtons.append(Text.literal("⏩").formatted(PayTpTextBuilder.DEFAULT_SHADE_COLOR));
@@ -365,10 +365,10 @@ public class PayTpMessageSender {
       String cancelCommandName,
       String homeCommandName,
       String setHomeCommandName,
-      String wrapCommandName,
-      String wrapCreateCommandName,
-      String wrapDeleteCommandName,
-      String wrapListCommandName
+      String warpCommandName,
+      String warpCreateCommandName,
+      String warpDeleteCommandName,
+      String warpListCommandName
   ) {
     // -------------------
     // Reuse texts
@@ -440,12 +440,12 @@ public class PayTpMessageSender {
       appendCmdText.accept("paytp.help.home.set", setHomeCommandName);
     });
 
-    // Wrap
-    appendSectionIfNotEmpty.accept("paytp.help.section.wrap", () -> {
-      appendCmdText.accept("paytp.help.wrap.goto", wrapCommandName);
-      appendCmdText.accept("paytp.help.wrap.create", wrapCreateCommandName);
-      appendCmdText.accept("paytp.help.wrap.delete", wrapDeleteCommandName);
-      appendCmdText.accept("paytp.help.wrap.list", wrapListCommandName);
+    // Warp
+    appendSectionIfNotEmpty.accept("paytp.help.section.warp", () -> {
+      appendCmdText.accept("paytp.help.warp.goto", warpCommandName);
+      appendCmdText.accept("paytp.help.warp.create", warpCreateCommandName);
+      appendCmdText.accept("paytp.help.warp.delete", warpDeleteCommandName);
+      appendCmdText.accept("paytp.help.warp.list", warpListCommandName);
     });
 
     // -------------------
@@ -485,11 +485,11 @@ public class PayTpMessageSender {
     suggestIfNotEmpty.apply(homeCommandName, "/" + homeCommandName);
     suggestIfNotEmpty.apply(setHomeCommandName, "/" + setHomeCommandName);
 
-    // Wrap
-    suggestIfNotEmpty.apply(wrapCommandName, "/" + wrapCommandName + " <name>");
-    suggestIfNotEmpty.apply(wrapCreateCommandName, "/" + wrapCreateCommandName + " <name>");
-    suggestIfNotEmpty.apply(wrapDeleteCommandName, "/" + wrapDeleteCommandName + " <name>");
-    suggestIfNotEmpty.apply(wrapListCommandName, "/" + wrapListCommandName + " (page)");
+    // Warp
+    suggestIfNotEmpty.apply(warpCommandName, "/" + warpCommandName + " <name>");
+    suggestIfNotEmpty.apply(warpCreateCommandName, "/" + warpCreateCommandName + " <name>");
+    suggestIfNotEmpty.apply(warpDeleteCommandName, "/" + warpDeleteCommandName + " <name>");
+    suggestIfNotEmpty.apply(warpListCommandName, "/" + warpListCommandName + " (page)");
 
     // -------------------
     // Msg Send
