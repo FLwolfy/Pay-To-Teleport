@@ -10,7 +10,7 @@ public record PayTpConfigData(
     Request request,
     Home home,
     Back back,
-    Wrap wrap,
+    Warp warp,
     Price price,
     Setting setting
 ) {
@@ -45,11 +45,11 @@ public record PayTpConfigData(
       double backMultiplier
   ) {}
 
-  public record Wrap(
-      String wrapCommand,
+  public record Warp(
+      String warpCommand,
       int maxInactiveTicks,
       int checkPeriodTicks,
-      double wrapMultiplier
+      double warpMultiplier
   ) {}
 
   public record Price(
@@ -105,8 +105,8 @@ public record PayTpConfigData(
           10,
           0.8
       ),
-      new Wrap(
-          "ptpwrap",
+      new Warp(
+          "ptpwarp",
           100,
           20,
           0.5
@@ -149,8 +149,8 @@ public record PayTpConfigData(
       multiplier *= home.homeMultiplier();
     if (Flags.check(multiplierFlags, PayTpMultiplierFlags.BACK))
       multiplier *= back.backMultiplier();
-    if (Flags.check(multiplierFlags, PayTpMultiplierFlags.WRAP))
-      multiplier *= wrap.wrapMultiplier();
+    if (Flags.check(multiplierFlags, PayTpMultiplierFlags.WARP))
+      multiplier *= warp.warpMultiplier();
     return multiplier;
   }
 }
