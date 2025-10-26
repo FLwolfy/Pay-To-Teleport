@@ -46,7 +46,7 @@ public class PayTpCommand {
   private static PayTpBackManager backManager;
   private static PayTpRequestManager requestManager;
   private static PayTpHomeManager homeManager;
-  private static PayTpWrapManager wrapManager;
+  private static PayTpWarpManager warpManager;
 
   private static PayTpConfigData configData;
 
@@ -59,7 +59,7 @@ public class PayTpCommand {
     backManager = PayTpBackManager.getInstance();
     requestManager = PayTpRequestManager.getInstance();
     homeManager = PayTpHomeManager.getInstance();
-    wrapManager = PayTpWrapManager.getInstance();
+    warpManager = PayTpWarpManager.getInstance();
   }
 
   public static void reload() {
@@ -69,8 +69,8 @@ public class PayTpCommand {
     // Config content
     langManager.setLanguage(configData.general().language());
     backManager.setMaxBackStack(configData.back().maxBackStack());
-    wrapManager.setMaxInactiveTicks(configData.wrap().maxInactiveTicks());
-    wrapManager.setCheckPeriodTicks(configData.wrap().checkPeriodTicks());
+    warpManager.setMaxInactiveTicks(configData.warp().maxInactiveTicks());
+    warpManager.setCheckPeriodTicks(configData.warp().checkPeriodTicks());
   }
 
   public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
@@ -159,28 +159,28 @@ public class PayTpCommand {
       );
     }
 
-    // ===== /ptpwrap =====
-    String wrapCmd = configData.wrap().wrapCommand();
-    dispatcher.register(CommandManager.literal(wrapCmd)
+    // ===== /ptpwarp =====
+    String warpCmd = configData.warp().warpCommand();
+    dispatcher.register(CommandManager.literal(warpCmd)
         .then(CommandManager.literal("create")
             .then(CommandManager.argument("name", StringArgumentType.greedyString())
-                .executes(PayTpCommand::payTpCreateWrap)
+                .executes(PayTpCommand::payTpCreateWarp)
             )
         )
         .then(CommandManager.literal("delete")
             .then(CommandManager.argument("name", StringArgumentType.greedyString())
-                .executes(PayTpCommand::payTpDeleteWrap)
+                .executes(PayTpCommand::payTpDeleteWarp)
             )
         )
         .then(CommandManager.literal("list")
-            .executes(ctx -> payTpListWrap(ctx, 1))
+            .executes(ctx -> payTpListWarp(ctx, 1))
             .then(CommandManager.argument("page", IntegerArgumentType.integer(1))
-                .executes(ctx -> payTpListWrap(ctx, IntegerArgumentType.getInteger(ctx, "page")))
+                .executes(ctx -> payTpListWarp(ctx, IntegerArgumentType.getInteger(ctx, "page")))
             )
         )
         .then(CommandManager.argument("name", StringArgumentType.greedyString())
-            .suggests(PayTpCommand::payTpWrapSuggest)
-            .executes(PayTpCommand::payTpWrap)
+            .suggests(PayTpCommand::payTpWarpSuggest)
+            .executes(PayTpCommand::payTpWarp)
         )
     );
 
@@ -201,10 +201,10 @@ public class PayTpCommand {
         configData.request().requestCommand().cancelCommand(),
         configData.home().homeCommand(),
         configData.home().homeCommand().isEmpty() ? "" : configData.home().homeCommand() + " set",
-        configData.wrap().wrapCommand(),
-        configData.wrap().wrapCommand().isEmpty() ? "" : configData.wrap().wrapCommand() + " create",
-        configData.wrap().wrapCommand().isEmpty() ? "" : configData.wrap().wrapCommand() + " delete",
-        configData.wrap().wrapCommand().isEmpty() ? "" : configData.wrap().wrapCommand() + " list"
+        configData.warp().warpCommand(),
+        configData.warp().warpCommand().isEmpty() ? "" : configData.warp().warpCommand() + " create",
+        configData.warp().warpCommand().isEmpty() ? "" : configData.warp().warpCommand() + " delete",
+        configData.warp().warpCommand().isEmpty() ? "" : configData.warp().warpCommand() + " list"
     );
 
     return Command.SINGLE_SUCCESS;
@@ -486,20 +486,20 @@ public class PayTpCommand {
     return Command.SINGLE_SUCCESS;
   }
 
-  private static int payTpWrap(CommandContext<ServerCommandSource> ctx) {
+  private static int payTpWarp(CommandContext<ServerCommandSource> ctx) {
     ServerPlayerEntity player = ctx.getSource().getPlayer();
     if (player == null) return 0;
 
     String name = StringArgumentType.getString(ctx, "name");
-    PayTpData target = wrapManager.getWrap(player, name);
+    PayTpData target = warpManager.getWarp(player, name);
     if (target == null) {
-      PayTpMessageSender.msgNoWrap(player, name);
+      PayTpMessageSender.msgNoWarp(player, name);
       return 0;
     }
 
     int multiplierFlags = player.getEntityWorld().getRegistryKey() == target.world() ?
-        Flags.combine(PayTpMultiplierFlags.WRAP) :
-        Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION, PayTpMultiplierFlags.WRAP);
+        Flags.combine(PayTpMultiplierFlags.WARP) :
+        Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION, PayTpMultiplierFlags.WARP);
 
     return PayTpCommand.teleport(
         player,
@@ -509,7 +509,7 @@ public class PayTpCommand {
     );
   }
 
-  private static CompletableFuture<Suggestions> payTpWrapSuggest(
+  private static CompletableFuture<Suggestions> payTpWarpSuggest(
       CommandContext<ServerCommandSource> context,
       SuggestionsBuilder builder
   ) {
@@ -517,9 +517,9 @@ public class PayTpCommand {
     ServerPlayerEntity player = source.getPlayer();
     if (player == null) return builder.buildFuture();
 
-    Map<String, PayTpData> wraps = wrapManager.getAllWraps(player);
-    if (wraps != null) {
-      for (String name : wraps.keySet()) {
+    Map<String, PayTpData> warps = warpManager.getAllWarps(player);
+    if (warps != null) {
+      for (String name : warps.keySet()) {
         builder.suggest(name);
       }
     }
@@ -527,61 +527,61 @@ public class PayTpCommand {
     return builder.buildFuture();
   }
 
-  private static int payTpCreateWrap(CommandContext<ServerCommandSource> ctx) {
+  private static int payTpCreateWarp(CommandContext<ServerCommandSource> ctx) {
     ServerPlayerEntity player = ctx.getSource().getPlayer();
     MinecraftServer server = ctx.getSource().getServer();
     if (player == null) return 0;
 
     String name = StringArgumentType.getString(ctx, "name");
 
-    if (wrapManager.hasWrap(player, name)) {
-      PayTpMessageSender.msgWrapExist(player, name);
+    if (warpManager.hasWarp(player, name)) {
+      PayTpMessageSender.msgWarpExist(player, name);
       return 0;
     }
 
-    if (!wrapManager.createWrap(player, name)) {
-      PayTpMessageSender.msgWrapCreateFailed(player, name);
+    if (!warpManager.createWarp(player, name)) {
+      PayTpMessageSender.msgWarpCreateFailed(player, name);
       return 0;
     }
 
     for (ServerPlayerEntity onlinePlayer : server.getPlayerManager().getPlayerList()) {
-      PayTpMessageSender.msgWrapCreated(onlinePlayer, player, name);
+      PayTpMessageSender.msgWarpCreated(onlinePlayer, player, name);
     }
 
     return Command.SINGLE_SUCCESS;
   }
 
-  private static int payTpDeleteWrap(CommandContext<ServerCommandSource> ctx) {
+  private static int payTpDeleteWarp(CommandContext<ServerCommandSource> ctx) {
     MinecraftServer server = ctx.getSource().getServer();
     ServerPlayerEntity player = ctx.getSource().getPlayer();
     if (player == null) return 0;
 
     String name = StringArgumentType.getString(ctx, "name");
-    if (!wrapManager.deleteWrap(player, name)) {
-      PayTpMessageSender.msgNoWrap(player, name);
+    if (!warpManager.deleteWarp(player, name)) {
+      PayTpMessageSender.msgNoWarp(player, name);
       return 0;
     }
 
     for (ServerPlayerEntity onlinePlayer : server.getPlayerManager().getPlayerList()) {
-      PayTpMessageSender.msgWrapDeleted(onlinePlayer, player, name);
+      PayTpMessageSender.msgWarpDeleted(onlinePlayer, player, name);
     }
 
     return Command.SINGLE_SUCCESS;
   }
 
-  private static int payTpListWrap(CommandContext<ServerCommandSource> ctx, int page) {
+  private static int payTpListWarp(CommandContext<ServerCommandSource> ctx, int page) {
     ServerPlayerEntity player = ctx.getSource().getPlayer();
     if (player == null) return 0;
 
-    Map<String, PayTpData> wraps = wrapManager.getAllWraps(player);
-    if (wraps.isEmpty()) {
-      PayTpMessageSender.msgEmptyWrap(player);
+    Map<String, PayTpData> warps = warpManager.getAllWarps(player);
+    if (warps.isEmpty()) {
+      PayTpMessageSender.msgEmptyWarp(player);
     } else {
-      PayTpMessageSender.msgWrapList(
+      PayTpMessageSender.msgWarpList(
           player,
-          wraps,
-          configData.wrap().wrapCommand(),
-          configData.wrap().wrapCommand() + " list",
+          warps,
+          configData.warp().warpCommand(),
+          configData.warp().warpCommand() + " list",
           page
       );
     }
@@ -606,7 +606,7 @@ public class PayTpCommand {
     }
 
     ServerWorld fromWorld = player.getEntityWorld();
-    PayTpData fromData = new PayTpData(fromWorld.getRegistryKey(), player.getPos());
+    PayTpData fromData = new PayTpData(fromWorld.getRegistryKey(), player.getEntityPos());
 
     // ---------------------------------
     // Check payment

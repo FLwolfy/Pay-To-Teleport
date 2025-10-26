@@ -2,7 +2,7 @@ package com.flwolfy.paytp;
 
 import com.flwolfy.paytp.command.PayTpBackManager;
 import com.flwolfy.paytp.command.PayTpCommand;
-import com.flwolfy.paytp.command.PayTpWrapManager;
+import com.flwolfy.paytp.command.PayTpWarpManager;
 import com.flwolfy.paytp.data.PayTpData;
 import com.flwolfy.paytp.util.PayTpMessageSender;
 
@@ -60,9 +60,9 @@ public class PayTpMod implements ModInitializer {
 
 		ServerTickEvents.END_WORLD_TICK.register(world -> {
 			if (!world.getRegistryKey().equals(World.OVERWORLD)) return;
-			PayTpWrapManager.getInstance().checkWrapState(world.getServer(), name -> {
+			PayTpWarpManager.getInstance().checkWarpState(world.getServer(), name -> {
 				for (ServerPlayerEntity onlinePlayer : world.getServer().getPlayerManager().getPlayerList()) {
-					PayTpMessageSender.msgWrapDeletedServer(onlinePlayer, name);
+					PayTpMessageSender.msgWarpDeletedServer(onlinePlayer, name);
 				}
 			});
 		});
