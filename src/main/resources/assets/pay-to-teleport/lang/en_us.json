@@ -125,7 +125,7 @@
 
   "paytp.config.warp": "Waypoint",
   "paytp.config.warp.warpCommand": "Waypoint Command",
-  "paytp.config.warp.warpCommand.tooltip": "The command used to teleport to a waypoint",
+  "paytp.config.warp.warpCommand.tooltip": "Command name to teleport to a waypoint",
   "paytp.config.warp.maxInactiveTicks": "Maximum Cooldown",
   "paytp.config.warp.maxInactiveTicks.tooltip": "The cooldown time before a waypoint is deleted after its associated beacon is deactivated",
   "paytp.config.warp.checkPeriodTicks": "Check Interval",

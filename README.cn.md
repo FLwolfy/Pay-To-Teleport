@@ -6,34 +6,43 @@ See the English document [here](./README.md).
 
 ## 简介
 
-**PayTp** 是一款轻量但功能齐全的“付费传送”模组，让玩家在服务器或单人世界中使用物品作为货币进行传送。  
-支持以下特性：
+**PayTp** 是一款轻量但功能齐全的“付费传送”模组，让玩家在服务器或单人世界中使用物品作为货币进行传送。支持以下特性：
 
+- 跨维度的指定坐标传送
 - 玩家间传送请求系统
 - 家（Home）与回溯（Back）功能
-- 自定义传送价格算法
+- 信标传送点（Warp）功能
+- 可调整的传送价格算法
 - 末影箱 / 潜影盒 支付支持
-- Cloth Config 图形化配置界面（客户端）
+- **Cloth Config** 图形化配置界面（客户端）
 - 可作为 **纯服务器端模组** 使用（Server-Side Only）
+
+大部分功能可通过将其对应指令名称设置为**空字符串**来**禁用**。
+比方说：将配置文件中的`general.mainCommand`从`ptp`修改为**空**，可以禁用坐标tp功能。
+游戏内帮助文档将会自动适配。
 
 ---
 
 ## 可用命令总览
 
-*指令中<>表示必填参数，()表示可选参数*
+*显示均为默认配置下指令名，其中<>表示必填参数，()表示可选参数*
 
-| 命令                      | 功能              |
-|-------------------------|-----------------|
-| `/ptp`                  | 指令指南。           |
-| `/ptp (维度) <x> <y> <z>` | 传送到（指定维度的）指定坐标。 |
-| `/ptpto <玩家>`           | 请求传送到指定玩家。      |
-| `/ptphere <玩家>`         | 请求对方传送至自己当前位置。  |
-| `/ptpaccept (玩家)`       | 接受（指定玩家的）传送请求。  |
-| `/ptpdeny (玩家)`         | 拒绝（指定玩家的）传送请求。  |
-| `/ptpcancel (玩家)`       | 取消（指定玩家的）传送请求。  |
-| `/ptpback`              | 回到上一次传送点。       |
-| `/ptphome`              | 回家。             |
-| `/ptphome set`          | 设置家为当前位置。       |
+| 命令                      | 功能                   |
+|-------------------------|----------------------|
+| `/ptp`                  | 指令指南。                |
+| `/ptp (维度) <x> <y> <z>` | 传送到（指定维度的）指定坐标。      |
+| `/ptpto <玩家>`           | 请求传送到指定玩家。           |
+| `/ptphere <玩家>`         | 请求对方传送至自己当前位置。       |
+| `/ptpaccept (玩家)`       | 接受（指定玩家的）传送请求。       |
+| `/ptpdeny (玩家)`         | 拒绝（指定玩家的）传送请求。       |
+| `/ptpcancel (玩家)`       | 取消（指定玩家的）传送请求。       |
+| `/ptpback`              | 回到上一次传送点。            |
+| `/ptphome`              | 回家。                  |
+| `/ptphome set`          | 设置家为当前位置。            |
+| `/ptpwarp <名称>`         | 前往指定名称的全服传送点。        |
+| `/ptpwarp create <名称>`  | 创建新的全服传送点（需在激活信标光束内） |
+| `/ptpwarp delete <名称>`  | 删除指定名称的全服传送点         |
+| `/ptpwarp list (页数)`    | 查看全服所有的传送点           |
 
 ---
 
@@ -49,50 +58,57 @@ See the English document [here](./README.md).
 
 ```json
 {
-   "general": {
-      "language": "en_us",
-      "mainCommand": "ptp",
-      "crossDimMultiplier": 1.5
-   },
-   "request": {
-      "requestCommand": {
-         "toommand": "ptpto",
-         "hereCommand": "ptphere",
-         "acceptCommand": "ptpaccept",
-         "denyCommand": "ptpdeny",
-         "cancelCommand": "ptpcancel"
-      },
-      "expireTime": 10
-   },
-   "home": {
-      "homeCommand": "ptphome",
-      "homeMultiplier": 0.5
-   },
-   "back": {
-      "backCommand": "ptpback",
-      "maxBackStack": 10,
-      "backMultiplier": 0.8
-   },
-   "price": {
-      "currencyItem": "minecraft:diamond",
-      "parameter": {
-         "minPrice": 1,
-         "maxPrice": 64,
-         "baseRadius": 10.0,
-         "rate": 0.01
-      }
-   },
-   "setting": {
-      "effect": {
-         "particleEffect": true
-      },
-      "flag": {
-         "allowEnderChest": true,
-         "prioritizeEnderChest": true,
-         "allowShulkerBox": false,
-         "prioritizeShulkerBox": false
-      }
-   }
+  "general": {
+    "language": "en_us",
+    "mainCommand": "ptp",
+    "crossDimMultiplier": 1.5
+  },
+  "request": {
+    "requestCommand": {
+      "toommand": "ptpto",
+      "hereCommand": "ptphere",
+      "acceptCommand": "ptpaccept",
+      "denyCommand": "ptpdeny",
+      "cancelCommand": "ptpcancel"
+    },
+    "expireTime": 10
+  },
+  "home": {
+    "homeCommand": "ptphome",
+    "homeMultiplier": 0.5
+  },
+  "back": {
+    "backCommand": "ptpback",
+    "maxBackStack": 10,
+    "backMultiplier": 0.8
+  }, 
+  "warp": {
+    "warpCommand": "ptpwarp",
+    "maxInactiveTicks": 100,
+    "checkPeriodTicks": 20,
+    "warpMultiplier": 0.5
+  },
+  "price": {
+    "currencyItem": "minecraft:diamond",
+    "parameter": {
+      "minPrice": 1,
+      "maxPrice": 64,
+      "baseRadius": 10.0,
+      "rate": 0.01
+    }
+  },
+  "setting": {
+    "effect": {
+      "particleEffect": true,
+      "soundEffect": true
+    },
+    "flag": {
+      "allowEnderChest": true,
+      "prioritizeEnderChest": true,
+      "allowShulkerBox": false,
+      "prioritizeShulkerBox": false
+    }
+  }
 }
 ```
 
@@ -149,6 +165,17 @@ See the English document [here](./README.md).
 
 ---
 
+### 传送点系统
+
+| 字段名                | 类型       | 说明                            |
+|--------------------|----------|-------------------------------|
+| `warpCommand`      | `string` | 前往传送点的命令（默认 `/ptpwarp`）       |
+| `maxInactiveTicks` | `int`    | 当绑定的传送点对应信标失效后，该传送点被删除前的冷却时间。 |
+| `checkPeriodTicks` | `int`    | 传送点与信标的匹配检查间隔时间。              |
+| `warpMultiplier`   | `double` | 传送至传送点时的倍率，例如 0.5 表示半价。       |
+
+---
+
 
 ### 花费计算设置
 
@@ -176,6 +203,7 @@ See the English document [here](./README.md).
 | 字段名              | 类型        | 说明            |
 |------------------|-----------|---------------|
 | `particleEffect` | `boolean` | 是否启用传送时的粒子效果。 |
+| `soundEffect`    | `boolean` | 是否启用传送时的声音效果。 |
 
 #### 特性开关
 
@@ -194,14 +222,14 @@ See the English document [here](./README.md).
 
 1. **计算距离**：
 
-   - 同一维度：
-      - 直接使用欧氏距离。
-   - 维度间传送：
-      - 从主世界 × 8 → 下界；
-      - 从下界 × 1.25 → 主世界；
-      - 进入/离开末地：使用其中位于末地的坐标到末地中心 `(0,0,0)` 的距离。
-   - 其他维度：
-      - 暂时仅使用欧氏距离计算，如果你要魔改源码，可以在`PayTpCalculator`中的`calculatePrice`进行设置。
+    - 同一维度：
+        - 直接使用欧氏距离。
+    - 维度间传送：
+        - 从主世界 × 8 → 下界；
+        - 从下界 × 1.25 → 主世界；
+        - 进入/离开末地：使用其中位于末地的坐标到末地中心 `(0,0,0)` 的距离。
+    - 其他维度：
+        - 暂时仅使用欧氏距离计算，如果你要魔改源码，可以在`PayTpCalculator`中的`calculatePrice`进行设置。
 
 2. **计算公式**：
 
@@ -266,6 +294,6 @@ See the English document [here](./README.md).
 
 ## 致谢
 
-本模组灵感来自早期经济型传送插件，请求逻辑参考**Teleport Command**模组，使用 Fabric API 编写，兼容原版存档。
+本模组灵感来自早期经济型传送插件，请求逻辑参考**Teleport Command**模组，传送点系统参考**Beacon Waypoint**模组。使用 Fabric API 编写，兼容原版存档。
 欢迎在 GitHub 上提交 Issue 或 PR 改进配置逻辑与算法。
 
