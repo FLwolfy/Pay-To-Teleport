@@ -50,7 +50,7 @@ public class PayTpWarpManager {
 
   private PayTpWarpState getState(ServerWorld world) {
     PersistentStateManager manager = world.getPersistentStateManager();
-    return manager.getOrCreate(PayTpWarpState.TYPE, PayTpWarpState.STATE_ID);
+    return manager.getOrCreate(PayTpWarpState.TYPE);
   }
 
   // =================== //
