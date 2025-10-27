@@ -158,6 +158,8 @@
   "paytp.config.setting.effect": "Effects",
   "paytp.config.setting.effect.particleEffect": "Enable Particle Effects",
   "paytp.config.setting.effect.particleEffect.tooltip": "Show particle effects during teleportation",
+  "paytp.config.setting.effect.soundEffect": "Enable Sound Effects",
+  "paytp.config.setting.effect.soundEffect.tooltip": "Play sound effects during teleporting",
   "paytp.config.setting.flag": "Feature Toggles",
   "paytp.config.setting.flag.allowEnderChest": "Allow Ender Chest Payment",
   "paytp.config.setting.flag.allowEnderChest.tooltip": "Allow using Ender Chest for teleport payment",
