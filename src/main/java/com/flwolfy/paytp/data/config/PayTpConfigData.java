@@ -69,7 +69,8 @@ public record PayTpConfigData(
       Flag flag
   ) {
     public record Effect(
-        boolean particleEffect
+        boolean particleEffect,
+        boolean soundEffect
     ) {}
 
     public record Flag(
@@ -121,7 +122,10 @@ public record PayTpConfigData(
           )
       ),
       new Setting(
-          new Setting.Effect(true),
+          new Setting.Effect(
+              true,
+              true
+          ),
           new Setting.Flag(
               true,
               true,
