@@ -299,7 +299,7 @@ public class PayTpCommand {
     );
 
     if (configData.setting().effect().soundEffect()) {
-      target.getServerWorld().playSoundFromEntity(
+      target.getWorld().playSoundFromEntity(
           null,
           target,
           SoundEvents.ENTITY_PLAYER_LEVELUP,
@@ -356,7 +356,7 @@ public class PayTpCommand {
     );
 
     if (configData.setting().effect().soundEffect()) {
-      target.getServerWorld().playSoundFromEntity(
+      target.getWorld().playSoundFromEntity(
           null,
           target,
           SoundEvents.ENTITY_PLAYER_LEVELUP,
@@ -522,7 +522,7 @@ public class PayTpCommand {
       return 0;
     }
 
-    int multiplierFlags = player.getServerWorld().getRegistryKey() == target.world() ?
+    int multiplierFlags = player.getWorld().getRegistryKey() == target.world() ?
         Flags.combine(PayTpMultiplierFlags.WARP) :
         Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION, PayTpMultiplierFlags.WARP);
 
