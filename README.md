@@ -29,6 +29,8 @@ The in-game help guide will automatically adapt.
 
 ## Commands
 
+*All displays show the default command names, where <> indicates required parameters and () indicates optional parameters*
+
 | Command                        | Description                                                  |
 |--------------------------------|--------------------------------------------------------------|
 | `/ptp `                        | Get command guide for PayTp                                  |
