@@ -12,29 +12,41 @@ It supports flexible teleportation modes, multi-language localization, and fully
 ---
 
 ## Features
-- Pay-to-teleport system
-- Configurable teleport cost (item type, amount, etc.)
-- Cross-dimension teleport support
-- Support for `/back`, `/home`, and `/tpa`-like commands
-- Multi-language support (English, Simplified Chinese, Traditional Chinese)
-- Full configuration file via Cloth Config and ModMenu
+- Cross-dimension teleport to a specified location
+- Player teleport request system
+- Home and Back
+- Beacon waypoint (Warp) feature
+- Adjustable teleportation cost algorithm
+- Ender Chest / Shulker Box payment support
+- **Cloth Config** API support (client-side)
+- Can be used as a **server-side only** mod
+
+Most features can be **disabled** by setting their corresponding command names to **an empty string**. 
+For example, changing `general.mainCommand` in the config file from `ptp` to **empty** will disable the coordinate teleport function.
+The in-game help guide will automatically adapt.
 
 ---
 
 ## Commands
 
-| Command                        | Description                                                 |
-|--------------------------------|-------------------------------------------------------------|
-| `/ptp `                        | Get command guide for PayTp.                                |
-| `/ptp (dimension) <x> <y> <z>` | Teleport to specified coordinates (in a specific dimension) |
-| `/ptpto <player>`              | Send request to teleport to a player                        |
-| `/ptphere <player>`            | Send request to a player to teleport to you                 |
-| `/ptpaccept (player)`          | Accept a teleport request (from a specific player)          |
-| `/ptpdeny (player)`            | Deny a teleport request (from a specific player)            |
-| `/ptpcancel (player)`          | Cancel a pending teleport request (to a specific player)    |
-| `/ptpback`                     | Return to the previous location                             |
-| `/ptphome`                     | Teleport to your home (if configured)                       |
-| `/ptphome set`                 | Set your home to your current position                      |
+*All displays show the default command names, where <> indicates required parameters and () indicates optional parameters*
+
+| Command                        | Description                                                  |
+|--------------------------------|--------------------------------------------------------------|
+| `/ptp `                        | Get command guide for PayTp                                  |
+| `/ptp (dimension) <x> <y> <z>` | Teleport to specified coordinates (in a specific dimension)  |
+| `/ptpto <player>`              | Send request to teleport to a player                         |
+| `/ptphere <player>`            | Send request to a player to teleport to you                  |
+| `/ptpaccept (player)`          | Accept a teleport request (from a specific player)           |
+| `/ptpdeny (player)`            | Deny a teleport request (from a specific player)             |
+| `/ptpcancel (player)`          | Cancel a pending teleport request (to a specific player)     |
+| `/ptpback`                     | Return to the previous location                              |
+| `/ptphome`                     | Teleport to your home (if configured)                        |
+| `/ptphome set`                 | Set your home to your current position                       |
+| `/ptpwarp <name>`              | Teleport to the specified waypoint                           |
+| `/ptpwarp create <name>`       | Create a new waypoint (must be within an active beacon beam) |
+| `/ptpwarp delete <name>`       | Delete the specified waypoint                                |
+| `/ptpwarp list (page)`         | View all waypoints on the server                             |
 
 ---
 
@@ -74,6 +86,12 @@ It supports flexible teleportation modes, multi-language localization, and fully
     "maxBackStack": 10,
     "backMultiplier": 0.8
   },
+  "warp": {
+    "warpCommand": "ptpwarp",
+    "maxInactiveTicks": 100,
+    "checkPeriodTicks": 20,
+    "warpMultiplier": 0.5
+  },
   "price": {
     "currencyItem": "minecraft:diamond",
     "parameter": {
@@ -85,7 +103,8 @@ It supports flexible teleportation modes, multi-language localization, and fully
   },
   "setting": {
     "effect": {
-      "particleEffect": true
+      "particleEffect": true,
+      "soundEffect": true
     },
     "flag": {
       "allowEnderChest": true,
@@ -165,8 +184,19 @@ It supports flexible teleportation modes, multi-language localization, and fully
 | `minPrice`   | `int`    | Minimum teleport cost.                                     |
 | `maxPrice`   | `int`    | Maximum cost per teleport.                                 |
 | `baseRadius` | `double` | Radius within which teleportation costs the minimum price. |
-| `rate`       | `double` | Distance rate multiplier for cost beyond base radius.      |
+| `rate`       | `double` | Distance increase rate for cost beyond base radius.        |
 
+---
+
+### 传送点系统
+
+| 字段名                | 类型       | 说明                                                                                         |
+|--------------------|----------|--------------------------------------------------------------------------------------------|
+| `warpCommand`      | `string` | Command name to teleport to a waypoint (default `/ptpwarp`).                               |
+| `maxInactiveTicks` | `int`    | The cooldown time before a waypoint is deleted after its associated beacon is deactivated. |
+| `checkPeriodTicks` | `int`    | The interval for checking waypoint-to-beacon matching.                                     |
+| `warpMultiplier`   | `double` | Waypoint teleport multiplier, e.g., 0.5 means half price.                                  |
+ 
 ---
 
 ### Settings
@@ -176,6 +206,7 @@ It supports flexible teleportation modes, multi-language localization, and fully
 | Field            | Type      | Description                                   |
 |------------------|-----------|-----------------------------------------------|
 | `particleEffect` | `boolean` | Enable particle effects during teleportation. |
+| `soundEffect`    | `boolean` | Enable sound effects during teleportation.    |
 
 #### Feature Flags
 
@@ -267,7 +298,7 @@ If the **Cloth Config API** is installed, all settings can be adjusted directly 
 
 ## Credits
 
-This mod is inspired by early economy-style teleport plugins. The request logic references the **Teleport Command** mod.  
+This mod is inspired by early economy-style teleport plugins. The request logic references the **Teleport Command** mod. The waypoint logic references the **Beacon Waypoint** mod.   
 Developed using Fabric API and fully compatible with vanilla saves.  
 Feel free to submit issues or pull requests on GitHub to improve configuration and calculation algorithms.
 

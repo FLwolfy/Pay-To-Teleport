@@ -23,6 +23,10 @@ public class PayTpHomeManager {
     return manager.getOrCreate(PayTpHomeState.TYPE);
   }
 
+  // =================== //
+  // ====== Home ======= //
+  // =================== //
+
   public void setHome(ServerPlayerEntity player) {
     ServerWorld overworld = player.getEntityWorld().getServer().getOverworld();
     getState(overworld).setHome(player.getUuid(), player.getEntityPos(), player.getEntityWorld().getRegistryKey());

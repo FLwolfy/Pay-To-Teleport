@@ -9,6 +9,15 @@
   "paytp.no-home": "您尚未設定家。",
   "paytp.set-home": "成功設定目前位置為您的%s！",
 
+  "paytp.no-warp": "沒有名為%s的傳送點！",
+  "paytp.warp-exist": "名為%s的傳送點已存在！",
+  "paytp.create-warp": "新的傳送點%s已由玩家%s建立！",
+  "paytp.create-warp-failed": "無法建立傳送點%s，請確認您是否位於未綁定的啟動信標光束中！",
+  "paytp.delete-warp": "傳送點%s已由玩家%s刪除！",
+  "paytp.delete-warp-server": "傳送點%s已由%s刪除！",
+  "paytp.empty-warp": "目前沒有可用的傳送點。",
+  "paytp.warp-list": "以下是所有可用的傳送點：",
+
   "paytp.request": "正在提交傳送請求至玩家%s...",
   "paytp.receive": "玩家%s請求%s...請求將於%s秒後過期。\n請選擇：",
   "paytp.receive.to": "傳送至您身旁",
@@ -28,6 +37,8 @@
 
   "paytp.hover.reply": "點擊%s傳送",
   "paytp.hover.command": "點擊將該%s指令填入聊天框",
+  "paytp.hover.page": "點擊前往第%s頁",
+  "paytp.hover.warp": "點擊傳送至傳送點%s",
 
   "paytp.you": "您",
   "paytp.success": "成功",
@@ -35,6 +46,7 @@
   "paytp.accept": "【同意】",
   "paytp.deny": "【拒絕】",
   "paytp.home": "【家】",
+  "paytp.server": "【伺服器】",
 
   "paytp.help.title": "================ PayTp 指令幫助 ================",
   "paytp.help.divider": "=============================================",
@@ -63,19 +75,30 @@
   "paytp.help.home.goto.desc": "回到您設定的家",
   "paytp.help.home.set": "%s",
   "paytp.help.home.set.desc": "將當前位置設為家",
+
+  "paytp.help.section.warp": "[傳送點系統]",
+  "paytp.help.warp.goto": "%s <名稱>",
+  "paytp.help.warp.goto.desc": "前往指定名稱的全服傳送點",
+  "paytp.help.warp.create": "%s <名稱>",
+  "paytp.help.warp.create.desc": "建立新的全服傳送點（需在啟動的信標光束內）",
+  "paytp.help.warp.delete": "%s <名稱>",
+  "paytp.help.warp.delete.desc": "刪除指定名稱的全服傳送點",
+  "paytp.help.warp.list": "%s (頁數)",
+  "paytp.help.warp.list.desc": "查看全服所有的傳送點",
+
   "paytp.help.note": "注意：所有傳送將根據距離及跨維度消耗貨幣。",
 
 
   "paytp.config.title": "PayTp 設定檔",
-  "paytp.config.title.warning": "你需要重新啟動你的存檔以重新載入所有設定！",
+  "paytp.config.title.warning": "⚙ 對於所有指令名稱，您可以透過設置為空字串來禁用它們。\n⚠ 你需要重新啟動你的存檔以重新載入所有設定！",
   "paytp.config.all": "全部",
   "paytp.config.other": "其他",
 
   "paytp.config.general": "一般",
   "paytp.config.general.language": "語言",
   "paytp.config.general.language.tooltip": "設定插件顯示語言",
-  "paytp.config.general.mainCommand": "主指令名稱",
-  "paytp.config.general.mainCommand.tooltip": "設定插件的主要指令名稱",
+  "paytp.config.general.mainCommand": "主傳送指令名稱",
+  "paytp.config.general.mainCommand.tooltip": "設定插件的座標傳送指令名稱",
   "paytp.config.general.crossDimMultiplier": "跨維倍率",
   "paytp.config.general.crossDimMultiplier.tooltip": "跨維度傳送時的價格倍率",
 
@@ -99,6 +122,16 @@
   "paytp.config.home.homeCommand.tooltip": "執行回家傳送的指令名稱",
   "paytp.config.home.homeMultiplier": "回家倍率",
   "paytp.config.home.homeMultiplier.tooltip": "回家傳送時的價格倍率",
+
+  "paytp.config.warp": "傳送點",
+  "paytp.config.warp.warpCommand": "傳送點指令",
+  "paytp.config.warp.warpCommand.tooltip": "用於傳送至傳送點的指令名稱",
+  "paytp.config.warp.maxInactiveTicks": "最大冷卻時間",
+  "paytp.config.warp.maxInactiveTicks.tooltip": "當綁定的傳送點對應信標失效後，該傳送點被刪除前的冷卻時間",
+  "paytp.config.warp.checkPeriodTicks": "檢查週期",
+  "paytp.config.warp.checkPeriodTicks.tooltip": "傳送點與信標匹配檢查的間隔時間",
+  "paytp.config.warp.warpMultiplier": "傳送點價格倍率",
+  "paytp.config.warp.warpMultiplier.tooltip": "傳送至傳送點時的價格倍率",
 
   "paytp.config.back": "回溯",
   "paytp.config.back.backCommand": "回溯指令",
@@ -125,6 +158,8 @@
   "paytp.config.setting.effect": "效果",
   "paytp.config.setting.effect.particleEffect": "啟用粒子特效",
   "paytp.config.setting.effect.particleEffect.tooltip": "是否在傳送時顯示粒子效果",
+  "paytp.config.setting.effect.soundEffect": "啟用聲音效果",
+  "paytp.config.setting.effect.soundEffect.tooltip": "是否在傳送時播放聲音效果",
   "paytp.config.setting.flag": "功能開關",
   "paytp.config.setting.flag.allowEnderChest": "允許使用終界箱支付",
   "paytp.config.setting.flag.allowEnderChest.tooltip": "是否允許從終界箱中扣除傳送貨幣",

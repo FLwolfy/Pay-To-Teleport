@@ -10,6 +10,7 @@ public record PayTpConfigData(
     Request request,
     Home home,
     Back back,
+    Warp warp,
     Price price,
     Setting setting
 ) {
@@ -44,6 +45,13 @@ public record PayTpConfigData(
       double backMultiplier
   ) {}
 
+  public record Warp(
+      String warpCommand,
+      int maxInactiveTicks,
+      int checkPeriodTicks,
+      double warpMultiplier
+  ) {}
+
   public record Price(
       String currencyItem,
       Parameter parameter
@@ -61,7 +69,8 @@ public record PayTpConfigData(
       Flag flag
   ) {
     public record Effect(
-        boolean particleEffect
+        boolean particleEffect,
+        boolean soundEffect
     ) {}
 
     public record Flag(
@@ -97,6 +106,12 @@ public record PayTpConfigData(
           10,
           0.8
       ),
+      new Warp(
+          "ptpwarp",
+          100,
+          20,
+          0.5
+      ),
       new Price(
           "minecraft:diamond",
           new Price.Parameter(
@@ -107,7 +122,10 @@ public record PayTpConfigData(
           )
       ),
       new Setting(
-          new Setting.Effect(true),
+          new Setting.Effect(
+              true,
+              true
+          ),
           new Setting.Flag(
               true,
               true,
@@ -135,6 +153,8 @@ public record PayTpConfigData(
       multiplier *= home.homeMultiplier();
     if (Flags.check(multiplierFlags, PayTpMultiplierFlags.BACK))
       multiplier *= back.backMultiplier();
+    if (Flags.check(multiplierFlags, PayTpMultiplierFlags.WARP))
+      multiplier *= warp.warpMultiplier();
     return multiplier;
   }
 }
