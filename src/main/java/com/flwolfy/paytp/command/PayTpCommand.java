@@ -8,20 +8,20 @@ import com.flwolfy.paytp.data.lang.PayTpLangManager;
 import com.flwolfy.paytp.flag.Flags;
 import com.flwolfy.paytp.flag.PayTpMultiplierFlags;
 import com.flwolfy.paytp.util.PayTpCalculator;
-
 import com.flwolfy.paytp.util.PayTpItemHandler;
 import com.flwolfy.paytp.util.PayTpMessageSender;
+
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+
 import net.minecraft.command.ControlFlowAware.Command;
 import net.minecraft.command.argument.DimensionArgumentType;
 import net.minecraft.command.argument.EntityArgumentType;
@@ -31,6 +31,9 @@ import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.TeleportTarget;
 
@@ -295,6 +298,17 @@ public class PayTpCommand {
         false
     );
 
+    if (configData.setting().effect().soundEffect()) {
+      target.getServerWorld().playSoundFromEntity(
+          null,
+          target,
+          SoundEvents.ENTITY_PLAYER_LEVELUP,
+          SoundCategory.PLAYERS,
+          1.0f,
+          2.0f
+      );
+    }
+
     return Command.SINGLE_SUCCESS;
   }
 
@@ -340,6 +354,17 @@ public class PayTpCommand {
         configData.request().expireTime(),
         true
     );
+
+    if (configData.setting().effect().soundEffect()) {
+      target.getServerWorld().playSoundFromEntity(
+          null,
+          target,
+          SoundEvents.ENTITY_PLAYER_LEVELUP,
+          SoundCategory.PLAYERS,
+          1.0f,
+          2.0f
+      );
+    }
 
     return Command.SINGLE_SUCCESS;
   }
@@ -640,6 +665,7 @@ public class PayTpCommand {
           price,
           balance
       );
+
       return 0;
     }
 
@@ -659,6 +685,30 @@ public class PayTpCommand {
     }
 
     // ---------------------------------
+    // Pre-teleport effect
+    // ---------------------------------
+    // Particles
+    if (configData.setting().effect().particleEffect()) {
+      fromWorld.sendEntityStatus(player, (byte)46);
+    }
+
+    // Sound
+    if (configData.setting().effect().soundEffect()) {
+      fromWorld.playSound(
+          null,
+          new BlockPos(
+              (int) Math.round(fromData.pos().x),
+              (int) Math.round(fromData.pos().y),
+              (int) Math.round(fromData.pos().z)
+          ),
+          SoundEvents.ENTITY_ENDER_EYE_DEATH,
+          SoundCategory.PLAYERS,
+          1.0f,
+          2.0f
+      );
+    }
+
+    // ---------------------------------
     // Execute teleport
     // ---------------------------------
     TeleportTarget teleportTarget = new TeleportTarget(
@@ -668,21 +718,40 @@ public class PayTpCommand {
         player.getYaw(),
         player.getPitch(),
         entity -> {
-          // Effect
+          ServerPlayerEntity playerEntity = (ServerPlayerEntity) entity;
+          ServerWorld toWorld = server.getWorld(targetData.world());
+          if (toWorld == null) {
+            LOGGER.error("No world to teleport player {}.", player.getName());
+            return;
+          }
+
+          // Particles
           if (configData.setting().effect().particleEffect()) {
-            targetWorld.sendEntityStatus(player, (byte)46);
+            toWorld.sendEntityStatus(playerEntity, (byte)46);
+          }
+
+          // Sound
+          if (configData.setting().effect().soundEffect()) {
+            toWorld.playSound(
+                null,
+                playerEntity.getBlockPos(),
+                SoundEvents.ENTITY_PLAYER_TELEPORT,
+                SoundCategory.PLAYERS,
+                1.0f,
+                1.5f
+            );
           }
 
           // Message
           if (Flags.check(multiplierFlags, PayTpMultiplierFlags.BACK)) {
             PayTpMessageSender.msgTpBackSucceeded(
-                player,
+                playerEntity,
                 PayTpItemHandler.getItemByStringId(configData.price().currencyItem()).getName(),
                 price
             );
           } else {
             PayTpMessageSender.msgTpSucceeded(
-                player,
+                playerEntity,
                 PayTpItemHandler.getItemByStringId(configData.price().currencyItem()).getName(),
                 price
             );

@@ -158,6 +158,8 @@
   "paytp.config.setting.effect": "效果",
   "paytp.config.setting.effect.particleEffect": "啟用粒子特效",
   "paytp.config.setting.effect.particleEffect.tooltip": "是否在傳送時顯示粒子效果",
+  "paytp.config.setting.effect.soundEffect": "啟用聲音效果",
+  "paytp.config.setting.effect.soundEffect.tooltip": "是否在傳送時播放聲音效果",
   "paytp.config.setting.flag": "功能開關",
   "paytp.config.setting.flag.allowEnderChest": "允許使用終界箱支付",
   "paytp.config.setting.flag.allowEnderChest.tooltip": "是否允許從終界箱中扣除傳送貨幣",
