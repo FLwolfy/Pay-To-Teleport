@@ -116,12 +116,7 @@ public class PayTpWarpManager {
   }
 
   public boolean createWarp(ServerPlayerEntity player, String name) {
-    MinecraftServer server = player.getServer();
-    if (server == null) {
-      LOGGER.error("Create warp: Server is null.");
-      return false;
-    }
-
+    MinecraftServer server = player.getEntityWorld().getServer();
     ServerWorld world = server.getOverworld();
     BlockPos playerPos = player.getBlockPos();
 
@@ -141,7 +136,7 @@ public class PayTpWarpManager {
       return false;
     }
 
-    PayTpData warpData = new PayTpData(world.getRegistryKey(), player.getPos());
+    PayTpData warpData = new PayTpData(world.getRegistryKey(), player.getEntityPos());
     PayTpData beaconData = new PayTpData(
         world.getRegistryKey(),
         new Vec3d(beaconPos.getX(), beaconPos.getY(), beaconPos.getZ())
@@ -151,46 +146,26 @@ public class PayTpWarpManager {
   }
 
   public boolean hasWarp(ServerPlayerEntity player, String name) {
-    MinecraftServer server = player.getServer();
-    if (server != null) {
-      ServerWorld overworld = server.getOverworld();
-      return getState(overworld).hasWarp(name);
-    } else {
-      LOGGER.warn("Failed to check warp, server is null");
-    }
-    return false;
+    MinecraftServer server = player.getEntityWorld().getServer();
+    ServerWorld overworld = server.getOverworld();
+    return getState(overworld).hasWarp(name);
   }
 
   public boolean deleteWarp(ServerPlayerEntity player, String name) {
-    MinecraftServer server = player.getServer();
-    if (server != null) {
-      ServerWorld overworld = server.getOverworld();
-      return getState(overworld).removeWarp(name);
-    } else {
-      LOGGER.warn("Failed to delete warp, server is null");
-    }
-    return false;
+    MinecraftServer server = player.getEntityWorld().getServer();
+    ServerWorld overworld = server.getOverworld();
+    return getState(overworld).removeWarp(name);
   }
 
   public PayTpData getWarp(ServerPlayerEntity player, String name) {
-    MinecraftServer server = player.getServer();
-    if (server != null) {
-      ServerWorld overworld = server.getOverworld();
-      return getState(overworld).getWarp(name);
-    } else {
-      LOGGER.warn("Failed to get warp, server is null");
-      return null;
-    }
+    MinecraftServer server = player.getEntityWorld().getServer();
+    ServerWorld overworld = server.getOverworld();
+    return getState(overworld).getWarp(name);
   }
 
   public Map<String, PayTpData> getAllWarps(ServerPlayerEntity player) {
-    MinecraftServer server = player.getServer();
-    if (server != null) {
-      ServerWorld overworld = server.getOverworld();
-      return getState(overworld).getAllWarps();
-    } else {
-      LOGGER.warn("Failed to get all warps, server is null");
-      return null;
-    }
+    MinecraftServer server = player.getEntityWorld().getServer();
+    ServerWorld overworld = server.getOverworld();
+    return getState(overworld).getAllWarps();
   }
 }
