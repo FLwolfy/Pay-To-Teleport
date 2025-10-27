@@ -5,16 +5,11 @@ import com.flwolfy.paytp.data.PayTpData;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.PersistentState;
 import net.minecraft.world.PersistentStateType;
-import net.minecraft.world.World;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class PayTpWarpState extends PersistentState {
 
