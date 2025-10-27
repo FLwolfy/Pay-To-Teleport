@@ -16,9 +16,6 @@ import net.minecraft.util.Identifier;
 import net.minecraft.world.PersistentState;
 import net.minecraft.world.World;
 
-/**
- * 世界级 Warp 存储状态（不与玩家绑定）
- */
 public class PayTpWarpState extends PersistentState {
 
   public static final String STATE_ID = "paytp_warp_state";
