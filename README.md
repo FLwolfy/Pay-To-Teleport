@@ -169,6 +169,17 @@ The in-game help guide will automatically adapt.
 
 ---
 
+### Waypoint System
+
+| Field              | Type     | Description                                                                                |
+|--------------------|----------|--------------------------------------------------------------------------------------------|
+| `warpCommand`      | `string` | Command name to teleport to a waypoint (default `/ptpwarp`).                               |
+| `maxInactiveTicks` | `int`    | The cooldown time before a waypoint is deleted after its associated beacon is deactivated. |
+| `checkPeriodTicks` | `int`    | The interval for checking waypoint-to-beacon matching.                                     |
+| `warpMultiplier`   | `double` | Waypoint teleport multiplier, e.g., 0.5 means half price.                                  |
+ 
+---
+
 ### Cost Calculation Settings
 
 #### Currency
@@ -186,17 +197,6 @@ The in-game help guide will automatically adapt.
 | `baseRadius` | `double` | Radius within which teleportation costs the minimum price. |
 | `rate`       | `double` | Distance increase rate for cost beyond base radius.        |
 
----
-
-### 传送点系统
-
-| 字段名                | 类型       | 说明                                                                                         |
-|--------------------|----------|--------------------------------------------------------------------------------------------|
-| `warpCommand`      | `string` | Command name to teleport to a waypoint (default `/ptpwarp`).                               |
-| `maxInactiveTicks` | `int`    | The cooldown time before a waypoint is deleted after its associated beacon is deactivated. |
-| `checkPeriodTicks` | `int`    | The interval for checking waypoint-to-beacon matching.                                     |
-| `warpMultiplier`   | `double` | Waypoint teleport multiplier, e.g., 0.5 means half price.                                  |
- 
 ---
 
 ### Settings
