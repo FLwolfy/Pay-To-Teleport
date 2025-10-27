@@ -299,7 +299,7 @@ public class PayTpCommand {
     );
 
     if (configData.setting().effect().soundEffect()) {
-      target.getServerWorld().playSoundFromEntity(
+      target.getEntityWorld().playSoundFromEntity(
           null,
           target,
           SoundEvents.ENTITY_PLAYER_LEVELUP,
@@ -356,7 +356,7 @@ public class PayTpCommand {
     );
 
     if (configData.setting().effect().soundEffect()) {
-      target.getServerWorld().playSoundFromEntity(
+      target.getEntityWorld().playSoundFromEntity(
           null,
           target,
           SoundEvents.ENTITY_PLAYER_LEVELUP,
