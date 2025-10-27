@@ -122,6 +122,7 @@ public class PayTpConfigManager {
 
   public void update(PayTpConfigData newData) {
     this.data = newData;
+    LOGGER.info("Saving new config: {}", newData);
     saveStatic(newData);
   }
 }
