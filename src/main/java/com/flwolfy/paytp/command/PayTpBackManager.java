@@ -2,7 +2,7 @@ package com.flwolfy.paytp.command;
 
 import com.flwolfy.paytp.data.PayTpData;
 
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -44,19 +44,19 @@ public class PayTpBackManager {
   // ============= Back Stack Method =========== //
   // =========================================== //
 
-  private void pushCachedPair(ServerPlayerEntity player) {
-    PayTpData cached = pairCache.remove(player.getUuid());
+  private void pushCachedPair(ServerPlayer player) {
+    PayTpData cached = pairCache.remove(player.getUUID());
     if (cached == null) return;
 
-    Deque<PayTpData> stack = historyMap.computeIfAbsent(player.getUuid(), k -> new ArrayDeque<>());
+    Deque<PayTpData> stack = historyMap.computeIfAbsent(player.getUUID(), k -> new ArrayDeque<>());
     if (stack.size() >= maxBackStack) stack.removeLast();
     stack.push(cached);
   }
 
-  private void pushIfValid(ServerPlayerEntity player, PayTpData data) {
+  private void pushIfValid(ServerPlayer player, PayTpData data) {
     if (player == null || data == null) return;
 
-    Deque<PayTpData> stack = historyMap.computeIfAbsent(player.getUuid(), k -> new ArrayDeque<>());
+    Deque<PayTpData> stack = historyMap.computeIfAbsent(player.getUUID(), k -> new ArrayDeque<>());
 
     // Skip duplicate
     PayTpData last = stack.peek();
@@ -69,7 +69,7 @@ public class PayTpBackManager {
   /**
    * Push a single teleport point into the stack.
    */
-  public void pushSingle(ServerPlayerEntity player, PayTpData data) {
+  public void pushSingle(ServerPlayer player, PayTpData data) {
     if (player == null || data == null) return;
     pushCachedPair(player);
     pushIfValid(player, data);
@@ -79,21 +79,21 @@ public class PayTpBackManager {
    * Push a pair: from → to.
    * 'from' is immediately pushed, 'to' is cached for next push.
    */
-  public void pushPair(ServerPlayerEntity player, PayTpData from, PayTpData to) {
+  public void pushPair(ServerPlayer player, PayTpData from, PayTpData to) {
     if (player == null || from == null || to == null) return;
     pushCachedPair(player);
     pushIfValid(player, from);
-    pairCache.put(player.getUuid(), to);
+    pairCache.put(player.getUUID(), to);
   }
 
   /**
    * Pop the last teleport point from the stack.
    */
-  public PayTpData popLastTp(ServerPlayerEntity player) {
+  public PayTpData popLastTp(ServerPlayer player) {
     if (player == null) return null;
-    pairCache.remove(player.getUuid());
+    pairCache.remove(player.getUUID());
 
-    Deque<PayTpData> stack = historyMap.get(player.getUuid());
+    Deque<PayTpData> stack = historyMap.get(player.getUUID());
     if (stack == null || stack.isEmpty()) return null;
     return stack.pop();
   }
@@ -101,9 +101,9 @@ public class PayTpBackManager {
   /**
    * Clear all teleport history and cached pair for a player.
    */
-  public void clearHistory(ServerPlayerEntity player) {
+  public void clearHistory(ServerPlayer player) {
     if (player == null) return;
-    historyMap.remove(player.getUuid());
-    pairCache.remove(player.getUuid());
+    historyMap.remove(player.getUUID());
+    pairCache.remove(player.getUUID());
   }
 }

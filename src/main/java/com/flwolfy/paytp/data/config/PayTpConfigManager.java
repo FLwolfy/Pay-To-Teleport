@@ -59,12 +59,16 @@ public class PayTpConfigManager {
   // =================================
 
   private static PayTpConfigManager loadConfig() {
+    return new PayTpConfigManager(loadData());
+  }
+
+  private static PayTpConfigData loadData() {
     PayTpConfigData defaults = PayTpConfigData.DEFAULT;
 
     try {
       if (Files.notExists(CONFIG_PATH)) {
         saveStatic(defaults);
-        return new PayTpConfigManager(defaults);
+        return defaults;
       }
 
       try (FileReader reader = new FileReader(CONFIG_PATH.toFile())) {
@@ -79,12 +83,12 @@ public class PayTpConfigManager {
         PayTpConfigData data = GSON.fromJson(jsonObject, PayTpConfigData.class);
         saveStatic(data);
 
-        return new PayTpConfigManager(data);
+        return data;
       }
     } catch (Exception e) {
       LOGGER.error("Failed to load PayTp config, using defaults", e);
       saveStatic(defaults);
-      return new PayTpConfigManager(defaults);
+      return defaults;
     }
   }
 
@@ -120,9 +124,20 @@ public class PayTpConfigManager {
   // ====== Update Config =======
   // ============================
 
+  /**
+   * Update the config data to the new data given, then write to disk
+   * @param newData the new config data.
+   */
   public void update(PayTpConfigData newData) {
     this.data = newData;
     LOGGER.info("Saving new config: {}", newData);
     saveStatic(newData);
+  }
+
+  /**
+   * Reload the config file from disk.
+   */
+  public void reload() {
+    this.data = loadData();
   }
 }

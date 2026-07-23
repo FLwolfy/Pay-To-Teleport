@@ -5,8 +5,8 @@ import com.flwolfy.paytp.PayTpMod;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
@@ -83,18 +83,18 @@ public class PayTpLangManager {
   /**
    * Get the localized Text based on the given key.
    */
-  public MutableText getText(String key) {
+  public MutableComponent getText(String key) {
     if (languageMap.isEmpty()) {
-      return Text.literal(key);
+      return Component.literal(key);
     }
 
     Map<String, String> map = languageMap.get(language);
     if (map == null) {
-      return Text.literal(key);
+      return Component.literal(key);
     }
 
     String value = map.getOrDefault(key, key);
-    return Text.literal(value);
+    return Component.literal(value);
   }
 
 }

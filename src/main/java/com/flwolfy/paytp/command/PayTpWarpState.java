@@ -5,44 +5,40 @@ import com.flwolfy.paytp.data.PayTpData;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
-import net.minecraft.world.PersistentState;
-import net.minecraft.world.PersistentStateType;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.datafix.DataFixTypes;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class PayTpWarpState extends PersistentState {
+public class PayTpWarpState extends SavedData {
 
   private static final String PERSISTENT_STATE_ID = "paytp_warp_state";
-
-  public static final Codec<PayTpData> WARP_CODEC = RecordCodecBuilder.create(instance ->
-      instance.group(
-          Codec.STRING.fieldOf("dimension").forGetter(pd -> pd.world().getValue().toString()),
-          Codec.DOUBLE.fieldOf("x").forGetter(pd -> pd.pos().x),
-          Codec.DOUBLE.fieldOf("y").forGetter(pd -> pd.pos().y),
-          Codec.DOUBLE.fieldOf("z").forGetter(pd -> pd.pos().z)
-      ).apply(instance, PayTpData::new)
-  );
-
-  public static final Codec<PayTpWarpState> CODEC = RecordCodecBuilder.create(instance ->
+  private static final Codec<PayTpWarpState> WARP_CODEC = RecordCodecBuilder.create(instance ->
       instance.group(
           Codec.unboundedMap(
               Codec.STRING,
-              WARP_CODEC
+              PayTpData.CODEC
           ).fieldOf("warps").forGetter(state ->
               state.warpMap
           ),
           Codec.unboundedMap(
               Codec.STRING,
-              WARP_CODEC
+              PayTpData.CODEC
           ).fieldOf("beacons").forGetter(state ->
               state.beaconMap
           )
       ).apply(instance, PayTpWarpState::new)
   );
 
-  public static final PersistentStateType<PayTpWarpState> TYPE =
-      new PersistentStateType<>(PERSISTENT_STATE_ID, PayTpWarpState::new, CODEC, null);
+  public static final SavedDataType<PayTpWarpState> TYPE = new SavedDataType<>(
+      Identifier.withDefaultNamespace(PERSISTENT_STATE_ID),
+      PayTpWarpState::new,
+      WARP_CODEC,
+      DataFixTypes.LEVEL
+  );
 
   private final Map<String, PayTpData> warpMap;
   private final Map<String, PayTpData> beaconMap;
@@ -68,7 +64,7 @@ public class PayTpWarpState extends PersistentState {
     }
     warpMap.put(name, warpData);
     if (beaconData != null) beaconMap.put(name, beaconData);
-    markDirty();
+    setDirty();
     return true;
   }
 
@@ -76,7 +72,7 @@ public class PayTpWarpState extends PersistentState {
     if (!warpMap.containsKey(name)) return false;
     warpMap.remove(name);
     beaconMap.remove(name);
-    markDirty();
+    setDirty();
     return true;
   }
 

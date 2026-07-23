@@ -12,7 +12,7 @@ import com.terraformersmc.modmenu.api.ModMenuApi;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 import org.slf4j.Logger;
 
@@ -27,7 +27,7 @@ public class PayTpModMenu implements ModMenuApi {
     return parent -> {
       ConfigBuilder builder = ConfigBuilder.create()
           .setParentScreen(parent)
-          .setTitle(Text.translatable("paytp.config.title"));
+          .setTitle(Component.translatable("paytp.config.title"));
       ConfigEntryBuilder entryBuilder = builder.entryBuilder();
       PayTpClothConfigBuilder menuBuilder = new PayTpClothConfigBuilder(builder, entryBuilder);
 
