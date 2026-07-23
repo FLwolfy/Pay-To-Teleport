@@ -9,6 +9,7 @@ import com.flwolfy.paytp.util.PayTpMessageSender;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 
@@ -41,10 +42,9 @@ public class PayTpMod implements ModInitializer {
 	}
 
 	private void registerEvents() {
-		// Called on server start and on every datapack reloads, and picks up config.
-		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
 			PayTpCommand.reload();
-			PayTpCommand.register(dispatcher);
+			PayTpCommand.register(server.getCommands().getDispatcher());
 		});
 
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {

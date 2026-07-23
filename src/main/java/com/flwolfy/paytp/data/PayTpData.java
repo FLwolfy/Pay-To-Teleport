@@ -38,7 +38,11 @@ public record PayTpData(
    * Another constructor support for serialization
    */
   public PayTpData(String dimensionId, double x, double y, double z) {
-    this(ResourceKey.create(Registries.DIMENSION, Identifier.tryParse(dimensionId)), new Vec3(x, y, z));
+    this(ResourceKey.create(
+        Registries.DIMENSION,
+        Objects.requireNonNull(Identifier.tryParse(dimensionId))),
+        new Vec3(x, y, z)
+    );
   }
 
   @Override
