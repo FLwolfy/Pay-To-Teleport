@@ -297,13 +297,13 @@ If the **Cloth Config API** is installed, all settings can be adjusted directly 
 
 ## Compatibility & Deployment
 
-| Type                     | Supported             |
-|--------------------------|-----------------------|
-| Fabric Loader            | ✅                     |
-| Server Only              | ✅                     |
-| Client UI (Cloth Config) | ✅                     |
-| Multi-language Support   | en_us / zh_cn / zh_tw |
-| Minecraft Version        | 1.21.4+               |
+| Type                     | Supported                            |
+|--------------------------|--------------------------------------|
+| Fabric Loader            | ✅                                    |
+| Server Only              | ✅                                    |
+| Client UI (Cloth Config) | ✅                                    |
+| Multi-language Support   | en_us / zh_cn / zh_tw                |
+| Minecraft Version        | 26.1+<br/>1.21.4 ~ 1.21.11 (legacy)  |
 
 ---
 

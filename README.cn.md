@@ -282,13 +282,13 @@ See the English document [here](./README.md).
 
 ## 兼容性与部署
 
-| 类型                    | 支持                     |
-|-----------------------|------------------------|
-| Fabric Loader         | ✅                      |
-| Server Only           | ✅                      |
-| 客户端 UI (Cloth Config) | ✅                      |
-| 多语言支持                 | en_us / zh_cn / zh_tw  |
-| Minecraft 版本          | 1.21.4+                |
+| 类型                    | 支持                               |
+|-----------------------|----------------------------------|
+| Fabric Loader         | ✅                                |
+| Server Only           | ✅                                |
+| 客户端 UI (Cloth Config) | ✅                                |
+| 多语言支持                 | en_us / zh_cn / zh_tw            |
+| Minecraft 版本          | 26.1+<br/>1.21.4 ~ 1.21.11（不再更新） |
 
 ---
 
