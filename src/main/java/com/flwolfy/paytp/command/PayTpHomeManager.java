@@ -2,9 +2,9 @@ package com.flwolfy.paytp.command;
 
 import com.flwolfy.paytp.data.PayTpData;
 
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.PersistentStateManager;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.storage.SavedDataStorage;
 
 public class PayTpHomeManager {
 
@@ -18,27 +18,27 @@ public class PayTpHomeManager {
     return instance;
   }
 
-  private PayTpHomeState getState(ServerWorld world) {
-    PersistentStateManager manager = world.getPersistentStateManager();
-    return manager.getOrCreate(PayTpHomeState.TYPE);
+  private PayTpHomeState getState(ServerLevel world) {
+    SavedDataStorage manager = world.getDataStorage();
+    return manager.computeIfAbsent(PayTpHomeState.TYPE);
   }
 
   // =================== //
   // ====== Home ======= //
   // =================== //
 
-  public void setHome(ServerPlayerEntity player) {
-    ServerWorld overworld = player.getEntityWorld().getServer().getOverworld();
-    getState(overworld).setHome(player.getUuid(), player.getEntityPos(), player.getEntityWorld().getRegistryKey());
+  public void setHome(ServerPlayer player) {
+    ServerLevel overworld = player.level().getServer().overworld();
+    getState(overworld).setHome(player.getUUID(), player.position(), player.level().dimension());
   }
 
-  public PayTpData getHome(ServerPlayerEntity player) {
-    ServerWorld overworld = player.getEntityWorld().getServer().getOverworld();
-    return getState(overworld).getHome(player.getUuid());
+  public PayTpData getHome(ServerPlayer player) {
+    ServerLevel overworld = player.level().getServer().overworld();
+    return getState(overworld).getHome(player.getUUID());
   }
 
-  public boolean hasHome(ServerPlayerEntity player) {
-    ServerWorld overworld = player.getEntityWorld().getServer().getOverworld();
-    return getState(overworld).hasHome(player.getUuid());
+  public boolean hasHome(ServerPlayer player) {
+    ServerLevel overworld = player.level().getServer().overworld();
+    return getState(overworld).hasHome(player.getUUID());
   }
 }

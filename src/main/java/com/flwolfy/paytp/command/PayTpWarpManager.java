@@ -2,19 +2,21 @@ package com.flwolfy.paytp.command;
 
 import com.flwolfy.paytp.PayTpMod;
 import com.flwolfy.paytp.data.PayTpData;
-import java.util.function.Consumer;
-import net.minecraft.block.BeaconBlock;
-import net.minecraft.block.entity.BeaconBlockEntity;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.PersistentStateManager;
-import org.slf4j.Logger;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.BeaconBlock;
+import net.minecraft.world.level.block.entity.BeaconBlockEntity;
+import net.minecraft.world.level.storage.SavedDataStorage;
+import net.minecraft.world.phys.Vec3;
+
+import java.util.function.Consumer;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.slf4j.Logger;
 
 public class PayTpWarpManager {
 
@@ -48,9 +50,9 @@ public class PayTpWarpManager {
     this.maxInactiveTicks = maxInactiveTicks;
   }
 
-  private PayTpWarpState getState(ServerWorld world) {
-    PersistentStateManager manager = world.getPersistentStateManager();
-    return manager.getOrCreate(PayTpWarpState.TYPE);
+  private PayTpWarpState getState(ServerLevel world) {
+    SavedDataStorage manager = world.getDataStorage();
+    return manager.computeIfAbsent(PayTpWarpState.TYPE);
   }
 
   // =================== //
@@ -65,7 +67,7 @@ public class PayTpWarpManager {
       tickCounter = 0;
     }
 
-    ServerWorld storageWorld = server.getOverworld();
+    ServerLevel storageWorld = server.overworld();
     Map<String, PayTpData> warps = new HashMap<>(getState(storageWorld).getAllWarps());
 
     for (Map.Entry<String, PayTpData> entry : warps.entrySet()) {
@@ -73,7 +75,7 @@ public class PayTpWarpManager {
       PayTpData beaconData = getState(storageWorld).getBeacon(name);
       if (beaconData == null) continue;
 
-      ServerWorld warpWorld = storageWorld.getServer().getWorld(beaconData.world());
+      ServerLevel warpWorld = storageWorld.getServer().getLevel(beaconData.world());
       if (warpWorld == null) continue;
 
       BlockPos pos = new BlockPos(
@@ -82,14 +84,14 @@ public class PayTpWarpManager {
           (int) Math.round(beaconData.pos().z)
       );
 
-      if (!warpWorld.isChunkLoaded(pos.getX() >> 4, pos.getZ() >> 4)) {
+      if (!warpWorld.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) {
         continue;
       }
 
       boolean hasBeam = false;
       if (warpWorld.getBlockState(pos).getBlock() instanceof BeaconBlock) {
         BeaconBlockEntity beaconEntity = (BeaconBlockEntity) warpWorld.getBlockEntity(pos);
-        if (beaconEntity != null && !beaconEntity.getBeamSegments().isEmpty()) {
+        if (beaconEntity != null && !beaconEntity.getBeamSections().isEmpty()) {
           hasBeam = true;
         }
       } else {
@@ -115,15 +117,15 @@ public class PayTpWarpManager {
     }
   }
 
-  public boolean createWarp(ServerPlayerEntity player, String name) {
-    MinecraftServer server = player.getEntityWorld().getServer();
-    ServerWorld world = server.getOverworld();
-    BlockPos playerPos = player.getBlockPos();
+  public boolean createWarp(ServerPlayer player, String name) {
+    MinecraftServer server = player.level().getServer();
+    ServerLevel world = server.overworld();
+    BlockPos playerPos = player.blockPosition();
 
     BeaconBlockEntity beaconEntity = null;
     BlockPos beaconPos = null;
 
-    for (int y = playerPos.getY() - 1; y >= world.getBottomY(); y--) {
+    for (int y = playerPos.getY() - 1; y >= world.getMinY(); y--) {
       BlockPos pos = new BlockPos(playerPos.getX(), y, playerPos.getZ());
       if (world.getBlockState(pos).getBlock() instanceof BeaconBlock) {
         beaconEntity = (BeaconBlockEntity) world.getBlockEntity(pos);
@@ -132,40 +134,40 @@ public class PayTpWarpManager {
       }
     }
 
-    if (beaconEntity == null || beaconEntity.getBeamSegments().isEmpty()) {
+    if (beaconEntity == null || beaconEntity.getBeamSections().isEmpty()) {
       return false;
     }
 
-    PayTpData warpData = new PayTpData(world.getRegistryKey(), player.getEntityPos());
+    PayTpData warpData = new PayTpData(world.dimension(), player.position());
     PayTpData beaconData = new PayTpData(
-        world.getRegistryKey(),
-        new Vec3d(beaconPos.getX(), beaconPos.getY(), beaconPos.getZ())
+        world.dimension(),
+        new Vec3(beaconPos.getX(), beaconPos.getY(), beaconPos.getZ())
     );
 
     return getState(world).setWarp(name, warpData, beaconData);
   }
 
-  public boolean hasWarp(ServerPlayerEntity player, String name) {
-    MinecraftServer server = player.getEntityWorld().getServer();
-    ServerWorld overworld = server.getOverworld();
+  public boolean hasWarp(ServerPlayer player, String name) {
+    MinecraftServer server = player.level().getServer();
+    ServerLevel overworld = server.overworld();
     return getState(overworld).hasWarp(name);
   }
 
-  public boolean deleteWarp(ServerPlayerEntity player, String name) {
-    MinecraftServer server = player.getEntityWorld().getServer();
-    ServerWorld overworld = server.getOverworld();
+  public boolean deleteWarp(ServerPlayer player, String name) {
+    MinecraftServer server = player.level().getServer();
+    ServerLevel overworld = server.overworld();
     return getState(overworld).removeWarp(name);
   }
 
-  public PayTpData getWarp(ServerPlayerEntity player, String name) {
-    MinecraftServer server = player.getEntityWorld().getServer();
-    ServerWorld overworld = server.getOverworld();
+  public PayTpData getWarp(ServerPlayer player, String name) {
+    MinecraftServer server = player.level().getServer();
+    ServerLevel overworld = server.overworld();
     return getState(overworld).getWarp(name);
   }
 
-  public Map<String, PayTpData> getAllWarps(ServerPlayerEntity player) {
-    MinecraftServer server = player.getEntityWorld().getServer();
-    ServerWorld overworld = server.getOverworld();
+  public Map<String, PayTpData> getAllWarps(ServerPlayer player) {
+    MinecraftServer server = player.level().getServer();
+    ServerLevel overworld = server.overworld();
     return getState(overworld).getAllWarps();
   }
 }

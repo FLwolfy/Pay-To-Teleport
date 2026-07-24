@@ -5,35 +5,27 @@ import com.flwolfy.paytp.data.PayTpData;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.PersistentState;
-import net.minecraft.world.PersistentStateType;
-import net.minecraft.world.World;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.util.datafix.DataFixTypes;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-public class PayTpHomeState extends PersistentState {
+public class PayTpHomeState extends SavedData {
 
   private static final String PERSISTENT_STATE_ID = "paytp_home_state";
-
-  public static final Codec<PayTpData> HOME_CODEC = RecordCodecBuilder.create(instance ->
-      instance.group(
-          Codec.STRING.fieldOf("dimension").forGetter(pd -> pd.world().getValue().toString()),
-          Codec.DOUBLE.fieldOf("x").forGetter(pd -> pd.pos().x),
-          Codec.DOUBLE.fieldOf("y").forGetter(pd -> pd.pos().y),
-          Codec.DOUBLE.fieldOf("z").forGetter(pd -> pd.pos().z)
-      ).apply(instance, PayTpData::new)
-  );
-
-  public static final Codec<PayTpHomeState> CODEC = RecordCodecBuilder.create(instance ->
+  private static final Codec<PayTpHomeState> HOME_CODEC = RecordCodecBuilder.create(instance ->
       instance.group(
           Codec.unboundedMap(
               Codec.STRING,   // UUID as string
-              HOME_CODEC
+              PayTpData.CODEC
           ).fieldOf("homes").forGetter(state ->
               state.homeMap.entrySet().stream()
                   .collect(Collectors.toMap(e -> e.getKey().toString(), Map.Entry::getValue))
@@ -41,9 +33,12 @@ public class PayTpHomeState extends PersistentState {
       ).apply(instance, PayTpHomeState::new)
   );
 
-  public static final PersistentStateType<PayTpHomeState> TYPE =
-      new PersistentStateType<>(PERSISTENT_STATE_ID, PayTpHomeState::new, CODEC, null);
-
+  public static final SavedDataType<PayTpHomeState> TYPE = new SavedDataType<>(
+      Identifier.withDefaultNamespace(PERSISTENT_STATE_ID),
+      PayTpHomeState::new,
+      HOME_CODEC,
+      DataFixTypes.PLAYER
+  );
 
   private final Map<UUID, PayTpData> homeMap;
 
@@ -59,9 +54,9 @@ public class PayTpHomeState extends PersistentState {
   // ====================================== //
   // ============= Home Setting =========== //
   // ====================================== //
-  public void setHome(UUID player, Vec3d pos, RegistryKey<World> dimension) {
+  public void setHome(UUID player, Vec3 pos, ResourceKey<Level> dimension) {
     homeMap.put(player, new PayTpData(dimension, pos));
-    markDirty();
+    setDirty();
   }
 
   public PayTpData getHome(UUID player) {

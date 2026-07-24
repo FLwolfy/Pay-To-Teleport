@@ -90,7 +90,7 @@
 
 
   "paytp.config.title": "PayTp Configuration",
-  "paytp.config.title.warning": "⚙ For all command names, you can disable them by setting them to an empty string.\n⚠ You need to relaunch your world to get all settings reloaded!",
+  "paytp.config.title.warning": " ✦ For all command names, you can disable them by setting them to an empty string.\n⚠ You need to §c§l§o§nRELAUNCH§r your world to get all settings reloaded!",
   "paytp.config.all": "All",
   "paytp.config.other": "Others",
 

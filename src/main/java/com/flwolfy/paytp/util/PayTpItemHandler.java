@@ -1,20 +1,20 @@
 package com.flwolfy.paytp.util;
 
-import java.util.stream.StreamSupport;
-
-import net.minecraft.block.ShulkerBoxBlock;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ContainerComponent;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
+import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.level.block.ShulkerBoxBlock;
 
 public class PayTpItemHandler {
 
   private PayTpItemHandler() {}
+
 
   /**
    * Get an item object from the full item string ID.
@@ -27,32 +27,32 @@ public class PayTpItemHandler {
   public static Item getItemByStringId(String fullId) {
     String namespace = fullId.contains(":") ? fullId.substring(0, fullId.lastIndexOf(':')) : "minecraft";
     String id        = fullId.contains(":") ? fullId.substring(fullId.lastIndexOf(':') + 1) : fullId;
-    Identifier currencyID = Identifier.of(namespace, id);
-    return Registries.ITEM.get(currencyID);
+    Identifier currencyID = Identifier.fromNamespaceAndPath(namespace, id);
+    return BuiltInRegistries.ITEM.getValue(currencyID);
   }
 
   /**
    * Get item count in an inventory.
    * @param allowShulkerBox whether to allow counting items in shulker boxes in this inventory or not.
    */
-  public static int getInventoryCount(Inventory inventory, Item target, boolean allowShulkerBox) {
+  public static int getInventoryCount(Container inventory, Item target, boolean allowShulkerBox) {
     int count = 0;
 
-    for (int i = 0; i < inventory.size(); i++) {
-      ItemStack stack = inventory.getStack(i);
+    for (int i = 0; i < inventory.getContainerSize(); i++) {
+      ItemStack stack = inventory.getItem(i);
 
-      if (stack.isOf(target)) {
+      if (stack.is(target)) {
         count += stack.getCount();
       }
 
       if (allowShulkerBox && stack.getItem() instanceof BlockItem blockItem
           && blockItem.getBlock() instanceof ShulkerBoxBlock) {
 
-        ContainerComponent container = stack.get(DataComponentTypes.CONTAINER);
+        ItemContainerContents container = stack.get(DataComponents.CONTAINER);
         if (container != null) {
-          for (ItemStack inner : container.iterateNonEmpty()) {
-            if (inner.isOf(target)) {
-              count += inner.getCount();
+          for (ItemStackTemplate inner : container.nonEmptyItems()) {
+            if (inner.is(target)) {
+              count += inner.count();
             }
           }
         }
@@ -65,52 +65,52 @@ public class PayTpItemHandler {
   /**
    * Remove target item in the given inventory with maximum amount.
    */
-  public static int removeInventoryItems(Inventory inventory, Item target, int amount) {
+  public static int removeInventoryItems(Container inventory, Item target, int amount) {
     int remaining = amount;
 
-    for (int i = 0; i < inventory.size() && remaining > 0; i++) {
-      ItemStack stack = inventory.getStack(i);
-      if (stack.isOf(target)) {
+    for (int i = 0; i < inventory.getContainerSize() && remaining > 0; i++) {
+      ItemStack stack = inventory.getItem(i);
+      if (stack.is(target)) {
         int removed = Math.min(stack.getCount(), remaining);
-        stack.decrement(removed);
+        stack.shrink(removed);
         remaining -= removed;
       }
     }
 
-    inventory.markDirty();
+    inventory.setChanged();
     return remaining;
   }
 
   /**
    * Remove target item in the shulker boxes in the given inventory with maximum amount.
    */
-  public static int removeShulkerItems(Inventory inventory, Item targetItem, int amount) {
+  public static int removeShulkerItems(Container inventory, Item targetItem, int amount) {
     final int[] remaining = {amount};
 
-    for (int i = 0; i < inventory.size() && remaining[0] > 0; i++) {
-      ItemStack stack = inventory.getStack(i);
+    for (int i = 0; i < inventory.getContainerSize() && remaining[0] > 0; i++) {
+      ItemStack stack = inventory.getItem(i);
       if (!(stack.getItem() instanceof BlockItem blockItem) ||
           !(blockItem.getBlock() instanceof ShulkerBoxBlock)) continue;
 
-      ContainerComponent oldContainer = stack.get(DataComponentTypes.CONTAINER);
+      ItemContainerContents oldContainer = stack.get(DataComponents.CONTAINER);
       if (oldContainer == null) continue;
 
-      ContainerComponent newContainer = ContainerComponent.fromStacks(
-          StreamSupport.stream(oldContainer.stream().spliterator(), false)
+      ItemContainerContents newContainer = ItemContainerContents.fromItems(
+          oldContainer.allItemsCopyStream()
               .peek(inner -> {
-                if (inner.isOf(targetItem) && remaining[0] > 0) {
+                if (inner.is(targetItem) && remaining[0] > 0) {
                   int take = Math.min(inner.getCount(), remaining[0]);
-                  inner.decrement(take);
+                  inner.shrink(take);
                   remaining[0] -= take;
                 }
               })
               .toList()
       );
 
-      stack.set(DataComponentTypes.CONTAINER, newContainer);
+      stack.set(DataComponents.CONTAINER, newContainer);
     }
 
-    inventory.markDirty();
+    inventory.setChanged();
     return remaining[0];
   }
 }

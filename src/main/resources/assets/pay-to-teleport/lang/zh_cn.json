@@ -90,7 +90,7 @@
 
 
   "paytp.config.title": "PayTp 配置文件",
-  "paytp.config.title.warning": "⚙ 对于所有指令名称，您可以通过设置为空字符串来禁用它们。\n⚠ 您需要重启我的世界存档来应用所有设置!",
+  "paytp.config.title.warning": " ✦ 对于所有指令名称，您可以通过设置为空字符串来禁用它们。\n⚠ 您需要§c§l§o【§n重启§r§c§l§o】§r我的世界存档来应用所有设置!",
   "paytp.config.all": "全部",
   "paytp.config.other": "其他",
 

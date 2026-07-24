@@ -8,10 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.server.level.ServerPlayer;
 
 public class PayTpMessageSender {
 
@@ -23,23 +22,23 @@ public class PayTpMessageSender {
   // ============= Message Sending =========== //
   // ========================================= //
 
-  public static void msgRequesterNotEnough(ServerPlayerEntity player) {
-    Text msg = Text.empty()
+  public static void msgRequesterNotEnough(ServerPlayer player) {
+    Component msg = Component.empty()
         .append(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.teleport"),
             PayTpTextBuilder.DEFAULT_TEXT_COLOR,
             PayTpTextBuilder.DEFAULT_WARN_COLOR,
             LANG_LOADER.getText("paytp.failed")))
         .append(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.requester-not-enough")));
 
-    player.sendMessage(msg, false);
+    player.sendSystemMessage(msg);
   }
 
   public static void msgTpSucceeded(
-      ServerPlayerEntity player,
-      Text currencyItemText,
+      ServerPlayer player,
+      Component currencyItemText,
       int price
   ) {
-    MutableText msg = Text.empty()
+    MutableComponent msg = Component.empty()
         .append(PayTpTextBuilder.format(
             LANG_LOADER.getText("paytp.teleport"),
             LANG_LOADER.getText("paytp.success")
@@ -47,7 +46,7 @@ public class PayTpMessageSender {
 
     if (price > 0) {
       msg = msg
-          .append(Text.literal("\n"))
+          .append(Component.literal("\n"))
           .append(PayTpTextBuilder.format(
               LANG_LOADER.getText("paytp.consume"),
               price,
@@ -55,15 +54,15 @@ public class PayTpMessageSender {
           ));
     }
 
-    player.sendMessage(msg, false);
+    player.sendSystemMessage(msg);
   }
 
   public static void msgTpBackSucceeded(
-      ServerPlayerEntity player,
-      Text currencyItemText,
+      ServerPlayer player,
+      Component currencyItemText,
       int price
   ) {
-    MutableText msg = Text.empty()
+    MutableComponent msg = Component.empty()
         .append(PayTpTextBuilder.format(
             LANG_LOADER.getText("paytp.tp-back"),
             LANG_LOADER.getText("paytp.success")
@@ -71,7 +70,7 @@ public class PayTpMessageSender {
 
     if (price > 0) {
       msg = msg
-          .append(Text.literal("\n"))
+          .append(Component.literal("\n"))
           .append(PayTpTextBuilder.format(
               LANG_LOADER.getText("paytp.consume"),
               price,
@@ -79,22 +78,22 @@ public class PayTpMessageSender {
           ));
     }
 
-    player.sendMessage(msg, false);
+    player.sendSystemMessage(msg);
   }
 
   public static void msgTpFailed(
-      ServerPlayerEntity player,
-      Text currencyItemText,
+      ServerPlayer player,
+      Component currencyItemText,
       int price,
       int balance
   ) {
-    Text msg = Text.empty()
+    Component msg = Component.empty()
         .append(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.teleport"),
             PayTpTextBuilder.DEFAULT_TEXT_COLOR,
             PayTpTextBuilder.DEFAULT_WARN_COLOR,
             LANG_LOADER.getText("paytp.failed")
         ))
-        .append(Text.literal("\n"))
+        .append(Component.literal("\n"))
         .append(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.not-enough"),
             PayTpTextBuilder.DEFAULT_TEXT_COLOR,
             PayTpTextBuilder.DEFAULT_WARN_COLOR,
@@ -104,55 +103,55 @@ public class PayTpMessageSender {
             balance
         ));
 
-    player.sendMessage(msg, false);
+    player.sendSystemMessage(msg);
   }
 
-  public static void msgTpAccepted(ServerPlayerEntity player, Text senderText) {
-    player.sendMessage(PayTpTextBuilder.format(
+  public static void msgTpAccepted(ServerPlayer player, Component senderText) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
         LANG_LOADER.getText("paytp.request.accept"),
         senderText
-    ), false);
+    ));
   }
 
-  public static void msgTpCanceled(ServerPlayerEntity player, Text targetText) {
-    player.sendMessage(PayTpTextBuilder.format(
+  public static void msgTpCanceled(ServerPlayer player, Component targetText) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
         LANG_LOADER.getText("paytp.request.cancel.sender"),
         PayTpTextBuilder.DEFAULT_TEXT_COLOR,
         PayTpTextBuilder.DEFAULT_WARN_COLOR,
         targetText
-    ), false);
+    ));
   }
 
-  public static void msgCancelTp(ServerPlayerEntity player, Text senderText) {
-    player.sendMessage(PayTpTextBuilder.format(
+  public static void msgCancelTp(ServerPlayer player, Component senderText) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
         LANG_LOADER.getText("paytp.request.cancel.receiver"),
         PayTpTextBuilder.DEFAULT_TEXT_COLOR,
         PayTpTextBuilder.DEFAULT_WARN_COLOR,
         senderText
-    ), false);
+    ));
   }
 
   public static void msgTpRequestSent(
-      ServerPlayerEntity player,
-      Text targetText
+      ServerPlayer player,
+      Component targetText
   ) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.request"), targetText), false);
+    player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.request"), targetText));
   }
 
   public static void msgTpRequestReceived(
-      ServerPlayerEntity player,
-      Text senderText,
+      ServerPlayer player,
+      Component senderText,
       String acceptCommandName,
       String denyCommandName,
       int expireTime,
       boolean here
   ) {
-    MutableText msg = Text.empty();
+    MutableComponent msg = Component.empty();
 
     if (here) {
       msg.append(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.receive"),
           senderText,
-          LANG_LOADER.getText("paytp.receive.here").formatted(PayTpTextBuilder.DEFAULT_WARN_COLOR),
+          LANG_LOADER.getText("paytp.receive.here").withStyle(PayTpTextBuilder.DEFAULT_WARN_COLOR),
           expireTime
       ));
     } else {
@@ -164,7 +163,7 @@ public class PayTpMessageSender {
     }
 
     msg.append(PayTpTextBuilder.commandText(
-        LANG_LOADER.getText("paytp.accept").formatted(
+        LANG_LOADER.getText("paytp.accept").withStyle(
             PayTpTextBuilder.DEFAULT_HIGHLIGHT_COLOR
         ),
         PayTpTextBuilder.format(
@@ -174,7 +173,7 @@ public class PayTpMessageSender {
         "/" + acceptCommandName
     ));
     msg.append(PayTpTextBuilder.commandText(
-        LANG_LOADER.getText("paytp.deny").formatted(
+        LANG_LOADER.getText("paytp.deny").withStyle(
             PayTpTextBuilder.DEFAULT_WARN_COLOR
         ),
         PayTpTextBuilder.format(
@@ -186,104 +185,104 @@ public class PayTpMessageSender {
         "/" + denyCommandName
     ));
 
-    player.sendMessage(msg, false);
+    player.sendSystemMessage(msg);
   }
 
-  public static void msgSelfTp(ServerPlayerEntity player) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.self-tp")), false);
+  public static void msgSelfTp(ServerPlayer player) {
+    player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.self-tp")));
   }
 
-  public static void msgNoTargetFound(ServerPlayerEntity player) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-target")), false);
+  public static void msgNoTargetFound(ServerPlayer player) {
+    player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-target")));
   }
 
-  public static void msgNoAcceptRequest(ServerPlayerEntity player) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-accept")), false);
+  public static void msgNoAcceptRequest(ServerPlayer player) {
+    player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-accept")));
   }
 
-  public static void msgNoDenyRequest(ServerPlayerEntity player) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-deny")), false);
+  public static void msgNoDenyRequest(ServerPlayer player) {
+    player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-deny")));
   }
 
-  public static void msgNoCancelRequest(ServerPlayerEntity player) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-cancel")), false);
+  public static void msgNoCancelRequest(ServerPlayer player) {
+    player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-cancel")));
   }
 
-  public static void msgNoBack(ServerPlayerEntity player) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-back")), false);
+  public static void msgNoBack(ServerPlayer player) {
+    player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-back")));
   }
 
-  public static void msgNoWarp(ServerPlayerEntity player, String warpName) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-warp"),
+  public static void msgNoWarp(ServerPlayer player, String warpName) {
+    player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-warp"),
         PayTpTextBuilder.DEFAULT_TEXT_COLOR,
         PayTpTextBuilder.DEFAULT_WARN_COLOR
         , warpName
-    ), false);
+    ));
   }
 
-  public static void msgTpHome(ServerPlayerEntity player) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.tp-home")), false);
+  public static void msgTpHome(ServerPlayer player) {
+    player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.tp-home")));
   }
 
-  public static void msgHomeSet(ServerPlayerEntity player) {
-    Text msg = Text.empty()
+  public static void msgHomeSet(ServerPlayer player) {
+    Component msg = Component.empty()
         .append(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.set-home"),
             LANG_LOADER.getText("paytp.home")
         ));
-    player.sendMessage(msg, false);
+    player.sendSystemMessage(msg);
   }
 
-  public static void msgHomeNotSet(ServerPlayerEntity player) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-home")), false);
+  public static void msgHomeNotSet(ServerPlayer player) {
+    player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-home")));
   }
 
-  public static void msgWarpCreated(ServerPlayerEntity player, ServerPlayerEntity createPlayer, String name) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.create-warp"),
+  public static void msgWarpCreated(ServerPlayer player, ServerPlayer createPlayer, String name) {
+    player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.create-warp"),
         name,
         createPlayer.getName()
-    ), false);
+    ));
   }
 
-  public static void msgWarpExist(ServerPlayerEntity player, String name) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.warp-exist"),
+  public static void msgWarpExist(ServerPlayer player, String name) {
+    player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.warp-exist"),
         PayTpTextBuilder.DEFAULT_TEXT_COLOR,
         PayTpTextBuilder.DEFAULT_WARN_COLOR,
         name
-    ), false);
+    ));
   }
 
-  public static void msgWarpCreateFailed(ServerPlayerEntity player, String name) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.create-warp-failed"),
+  public static void msgWarpCreateFailed(ServerPlayer player, String name) {
+    player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.create-warp-failed"),
         PayTpTextBuilder.DEFAULT_TEXT_COLOR,
         PayTpTextBuilder.DEFAULT_WARN_COLOR,
         name
-    ), false);
+    ));
   }
 
-  public static void msgWarpDeleted(ServerPlayerEntity player, ServerPlayerEntity deletePlayer, String name) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.delete-warp"),
+  public static void msgWarpDeleted(ServerPlayer player, ServerPlayer deletePlayer, String name) {
+    player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.delete-warp"),
         PayTpTextBuilder.DEFAULT_TEXT_COLOR,
         PayTpTextBuilder.DEFAULT_WARN_COLOR,
         name,
         deletePlayer.getName()
-    ), false);
+    ));
   }
 
-  public static void msgWarpDeletedServer(ServerPlayerEntity player, String name) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.delete-warp-server"),
+  public static void msgWarpDeletedServer(ServerPlayer player, String name) {
+    player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.delete-warp-server"),
         PayTpTextBuilder.DEFAULT_TEXT_COLOR,
         PayTpTextBuilder.DEFAULT_WARN_COLOR,
         name,
         LANG_LOADER.getText("paytp.server")
-    ), false);
+    ));
   }
 
-  public static void msgEmptyWarp(ServerPlayerEntity player) {
-    player.sendMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.empty-warp")), false);
+  public static void msgEmptyWarp(ServerPlayer player) {
+    player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.empty-warp")));
   }
 
   public static void msgWarpList(
-      ServerPlayerEntity player,
+      ServerPlayer player,
       Map<String, PayTpData> warpList,
       String warpCommandName,
       String warpListCommandName,
@@ -297,7 +296,7 @@ public class PayTpMessageSender {
     int totalPages = Math.max(1, (int) Math.ceil(entries.size() / (double) PAGE_SIZE));
     page = Math.max(1, Math.min(page, totalPages));
 
-    MutableText msg = Text.empty();
+    MutableComponent msg = Component.empty();
     msg.append(newline);
     msg.append(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.help.divider")));
     msg.append(newline);
@@ -310,52 +309,52 @@ public class PayTpMessageSender {
       Map.Entry<String, PayTpData> entry = entries.get(i);
       msg.append(newline);
       msg.append(PayTpTextBuilder.commandText(
-          Text.literal(entry.getKey()).formatted(PayTpTextBuilder.DEFAULT_HIGHLIGHT_COLOR),
+          Component.literal(entry.getKey()).withStyle(PayTpTextBuilder.DEFAULT_HIGHLIGHT_COLOR),
           PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.warp"), entry.getKey()),
           "/" + warpCommandName + " " + entry.getKey()
       ));
-      msg.append(Text.literal(" "));
-      msg.append(Text.literal(entry.getValue().toString()).formatted(PayTpTextBuilder.DEFAULT_SHADE_COLOR));
+      msg.append(Component.literal(" "));
+      msg.append(Component.literal(entry.getValue().toString()).withStyle(PayTpTextBuilder.DEFAULT_SHADE_COLOR));
     }
 
     msg.append(newline);
     msg.append(newline);
 
-    MutableText pageButtons = Text.empty();
+    MutableComponent pageButtons = Component.empty();
 
     if (page > 1) {
       pageButtons.append(PayTpTextBuilder.commandText(
-          Text.literal("⏪").formatted(PayTpTextBuilder.DEFAULT_TEXT_COLOR),
+          Component.literal("⏪").withStyle(PayTpTextBuilder.DEFAULT_TEXT_COLOR),
           PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.page"), (page - 1)),
           "/" + warpListCommandName + " " + (page - 1)
       ));
     } else {
-      pageButtons.append(Text.literal("⏪").formatted(PayTpTextBuilder.DEFAULT_SHADE_COLOR));
+      pageButtons.append(Component.literal("⏪").withStyle(PayTpTextBuilder.DEFAULT_SHADE_COLOR));
     }
 
-    pageButtons.append(Text.literal(" | ").formatted(PayTpTextBuilder.DEFAULT_TEXT_COLOR));
-    pageButtons.append(Text.literal("[" + page + "]").formatted(PayTpTextBuilder.DEFAULT_HIGHLIGHT_COLOR));
-    pageButtons.append(Text.literal(" / " + totalPages + " | ").formatted(PayTpTextBuilder.DEFAULT_TEXT_COLOR));
+    pageButtons.append(Component.literal(" | ").withStyle(PayTpTextBuilder.DEFAULT_TEXT_COLOR));
+    pageButtons.append(Component.literal("[" + page + "]").withStyle(PayTpTextBuilder.DEFAULT_HIGHLIGHT_COLOR));
+    pageButtons.append(Component.literal(" / " + totalPages + " | ").withStyle(PayTpTextBuilder.DEFAULT_TEXT_COLOR));
 
     if (page < totalPages) {
       pageButtons.append(PayTpTextBuilder.commandText(
-          Text.literal("⏩").formatted(PayTpTextBuilder.DEFAULT_TEXT_COLOR),
+          Component.literal("⏩").withStyle(PayTpTextBuilder.DEFAULT_TEXT_COLOR),
           PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.page"), (page + 1)),
           "/" + warpListCommandName + " " + (page + 1)
       ));
     } else {
-      pageButtons.append(Text.literal("⏩").formatted(PayTpTextBuilder.DEFAULT_SHADE_COLOR));
+      pageButtons.append(Component.literal("⏩").withStyle(PayTpTextBuilder.DEFAULT_SHADE_COLOR));
     }
 
     msg.append(pageButtons);
     msg.append(newline);
     msg.append(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.help.divider")));
 
-    player.sendMessage(msg, false);
+    player.sendSystemMessage(msg);
   }
 
   public static void msgHelp(
-      ServerPlayerEntity player,
+      ServerPlayer player,
       String tpCommandName,
       String backCommandName,
       String tpPlayerCommandName,
@@ -380,13 +379,13 @@ public class PayTpMessageSender {
     // -------------------
     // Header
     // -------------------
-    MutableText title = LANG_LOADER.getText("paytp.help.title");
-    MutableText divider = LANG_LOADER.getText("paytp.help.divider");
+    MutableComponent title = LANG_LOADER.getText("paytp.help.title");
+    MutableComponent divider = LANG_LOADER.getText("paytp.help.divider");
 
     // -------------------
     // Msg Holder
     // -------------------
-    MutableText[] msgHolder = new MutableText[]{ Text.empty()
+    MutableComponent[] msgHolder = new MutableComponent[]{ Component.empty()
         .append("\n")
         .append(divider).append("\n")
         .append(title).append("\n")
@@ -399,16 +398,16 @@ public class PayTpMessageSender {
     // -------------------
     BiConsumer<String, String> appendCmdText = (key, cmd) -> {
       if (!cmd.isEmpty()) {
-        msgHolder[0] = msgHolder[0].append(Text.literal(indentCmd)
+        msgHolder[0] = msgHolder[0].append(Component.literal(indentCmd)
             .append(LANG_LOADER.getText(key)).append("\n")
-            .append(Text.literal(indentDesc + "- ")
+            .append(Component.literal(indentDesc + "- ")
                 .append(LANG_LOADER.getText(key + ".desc")).append("\n")));
       }
     };
 
     BiConsumer<String, Runnable> appendSectionIfNotEmpty = (sectionKey, appendCmds) -> {
-      MutableText temp = Text.empty();
-      MutableText oldMsg = msgHolder[0];
+      MutableComponent temp = Component.empty();
+      MutableComponent oldMsg = msgHolder[0];
       msgHolder[0] = temp;
       appendCmds.run();
       if (!msgHolder[0].getString().isEmpty()) {
@@ -457,12 +456,12 @@ public class PayTpMessageSender {
     // -------------------
     // Text formatting
     // -------------------
-    List<Text> formattedTexts = new ArrayList<>();
+    List<Component> formattedTexts = new ArrayList<>();
 
     BiFunction<String, String, Void> suggestIfNotEmpty = (cmd, placeholder) -> {
       if (!cmd.isEmpty()) {
         formattedTexts.add(PayTpTextBuilder.suggestCommandText(
-            Text.literal("/" + cmd),
+            Component.literal("/" + cmd),
             PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + cmd),
             placeholder
         ));
@@ -494,8 +493,8 @@ public class PayTpMessageSender {
     // -------------------
     // Msg Send
     // -------------------
-    msgHolder[0] = Text.empty().append(PayTpTextBuilder.format(msgHolder[0], formattedTexts.toArray()));
-    player.sendMessage(msgHolder[0], false);
+    msgHolder[0] = Component.empty().append(PayTpTextBuilder.format(msgHolder[0], formattedTexts.toArray()));
+    player.sendSystemMessage(msgHolder[0]);
   }
 
 }

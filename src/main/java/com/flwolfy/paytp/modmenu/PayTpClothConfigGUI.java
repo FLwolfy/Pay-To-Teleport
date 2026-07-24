@@ -12,8 +12,8 @@ import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import me.shedaniel.clothconfig2.impl.builders.AbstractFieldBuilder;
 
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 
 import org.slf4j.Logger;
 
@@ -47,8 +47,8 @@ public class PayTpClothConfigGUI {
       Object defaultValue,
       String fieldPath,
       Consumer<Object> fieldSetter,
-      Text label,
-      Text... tooltip
+      Component label,
+      Component... tooltip
   ) {
     if (value == null) return null;
     if (ENTRY_MAP.containsKey(fieldPath)) return ENTRY_MAP.get(fieldPath);
@@ -56,7 +56,7 @@ public class PayTpClothConfigGUI {
     try {
       @SuppressWarnings("all")
       Method createFieldMethod = PayTpClothConfigGUI.class
-          .getDeclaredMethod(ENTRY_FACTORY_METHOD_NAME, ConfigEntryBuilder.class, value.getClass(), Text.class);
+          .getDeclaredMethod(ENTRY_FACTORY_METHOD_NAME, ConfigEntryBuilder.class, value.getClass(), Component.class);
       createFieldMethod.setAccessible(true);
 
       @SuppressWarnings("unchecked")
@@ -78,34 +78,34 @@ public class PayTpClothConfigGUI {
     }
 
     // fallback
-    return builder.startTextDescription(Text.literal("ERROR").formatted(Formatting.RED)).build();
+    return builder.startTextDescription(Component.literal("ERROR").withStyle(ChatFormatting.RED)).build();
   }
 
   // ======== concrete createField methods ========
   // These return builder objects but NOT build()
   // ==============================================
   @SuppressWarnings("unused")
-  private static AbstractFieldBuilder<?, ?, ?> createField(ConfigEntryBuilder builder, Integer value, Text label) {
+  private static AbstractFieldBuilder<?, ?, ?> createField(ConfigEntryBuilder builder, Integer value, Component label) {
     return builder.startIntField(label, value);
   }
 
   @SuppressWarnings("unused")
-  private static AbstractFieldBuilder<?, ?, ?> createField(ConfigEntryBuilder builder, Double value, Text label) {
+  private static AbstractFieldBuilder<?, ?, ?> createField(ConfigEntryBuilder builder, Double value, Component label) {
     return builder.startDoubleField(label, value);
   }
 
   @SuppressWarnings("unused")
-  private static AbstractFieldBuilder<?, ?, ?> createField(ConfigEntryBuilder builder, Boolean value, Text label) {
+  private static AbstractFieldBuilder<?, ?, ?> createField(ConfigEntryBuilder builder, Boolean value, Component label) {
     return builder.startBooleanToggle(label, value);
   }
 
   @SuppressWarnings("unused")
-  private static AbstractFieldBuilder<?, ?, ?> createField(ConfigEntryBuilder builder, String value, Text label) {
+  private static AbstractFieldBuilder<?, ?, ?> createField(ConfigEntryBuilder builder, String value, Component label) {
     return builder.startStrField(label, value);
   }
 
   @SuppressWarnings("unused")
-  private static AbstractFieldBuilder<?, ?, ?> createField(ConfigEntryBuilder builder, PayTpLang value, Text label) {
+  private static AbstractFieldBuilder<?, ?, ?> createField(ConfigEntryBuilder builder, PayTpLang value, Component label) {
     return builder.startEnumSelector(label, PayTpLang.class, value);
   }
 }

@@ -4,15 +4,15 @@ import com.flwolfy.paytp.PayTpMod;
 import com.flwolfy.paytp.data.config.PayTpConfigData;
 import com.flwolfy.paytp.data.config.PayTpConfigManager;
 
-import java.util.function.Supplier;
-
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
+
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 
@@ -20,32 +20,40 @@ public class PayTpModMenu implements ModMenuApi {
 
   private static final Logger LOGGER = PayTpMod.LOGGER;
 
-  private Supplier<PayTpConfigData> dataSupplier;
-
   @Override
   public ConfigScreenFactory<?> getModConfigScreenFactory() {
     return parent -> {
       ConfigBuilder builder = ConfigBuilder.create()
           .setParentScreen(parent)
-          .setTitle(Text.translatable("paytp.config.title"));
+          .setTitle(Component.translatable("paytp.config.title"));
+
       ConfigEntryBuilder entryBuilder = builder.entryBuilder();
       PayTpClothConfigBuilder menuBuilder = new PayTpClothConfigBuilder(builder, entryBuilder);
 
-      PayTpConfigData data = PayTpConfigManager.getInstance().data();
+      PayTpConfigData currentData = PayTpConfigManager.getInstance().data();
       PayTpConfigData defaultData = PayTpConfigData.DEFAULT;
-
-      dataSupplier = menuBuilder.buildConfigUI(data, defaultData);
+      Supplier<PayTpConfigData> dataSupplier = menuBuilder.buildConfigUI(currentData, defaultData);
 
       builder.setDoesConfirmSave(true);
-      builder.setSavingRunnable(this::saveConfig);
+      builder.setSavingRunnable(() -> {
+        try {
+          PayTpConfigData newData = dataSupplier.get();
+          if (newData != null) {
+            boolean result = PayTpConfigManager.getInstance().update(newData);
+            if (result) {
+              LOGGER.info("Config saved successfully with changes");
+            } else {
+              LOGGER.info("Failed to save changes to disk.");
+            }
+          } else {
+            LOGGER.error("Failed to get config data from UI - dataSupplier returned null");
+          }
+        } catch (Exception e) {
+          LOGGER.error("Error occurred while saving config", e);
+        }
+      });
 
       return builder.build();
     };
-  }
-
-  private void saveConfig() {
-    LOGGER.info("Saving PayTpConfig...");
-    PayTpConfigData data = dataSupplier.get();
-    PayTpConfigManager.getInstance().update(data);
   }
 }

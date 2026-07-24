@@ -17,18 +17,18 @@ import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import me.shedaniel.clothconfig2.impl.builders.SubCategoryBuilder;
 
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
 
 import org.slf4j.Logger;
 
 public class PayTpClothConfigBuilder {
 
   private static final Logger LOGGER = PayTpMod.LOGGER;
-  private static final Style DEFAULT_TITLE_STYLE = Style.EMPTY.withColor(Formatting.YELLOW).withBold(true);
-  private static final Style DEFAULT_WARN_STYLE = Style.EMPTY.withColor(Formatting.GOLD).withItalic(true);
+  private static final Style DEFAULT_TITLE_STYLE = Style.EMPTY.withColor(ChatFormatting.YELLOW).withBold(true);
+  private static final Style DEFAULT_WARN_STYLE = Style.EMPTY.withColor(ChatFormatting.GOLD).withItalic(true);
   private static final String BASE_KEY = "paytp.config.";
 
   private final ConfigBuilder builder;
@@ -50,10 +50,10 @@ public class PayTpClothConfigBuilder {
 
     Class<?> clazz = data.getClass();
     List<AbstractConfigListEntry<?>> otherEntries = new ArrayList<>();
-    ConfigCategory allCategory = builder.getOrCreateCategory(Text.translatable(BASE_KEY + "all"));
+    ConfigCategory allCategory = builder.getOrCreateCategory(Component.translatable(BASE_KEY + "all"));
 
     String warningKey = BASE_KEY + "title.warning";
-    MutableText warningText = Text.translatable(warningKey).setStyle(DEFAULT_WARN_STYLE);
+    MutableComponent warningText = Component.translatable(warningKey).setStyle(DEFAULT_WARN_STYLE);
     if (!warningText.getString().equals(warningKey)) {
       allCategory.addEntry(entryBuilder.startTextDescription(warningText).build());
     }
@@ -63,16 +63,16 @@ public class PayTpClothConfigBuilder {
     }
 
     if (!otherEntries.isEmpty()) {
-      ConfigCategory otherCategory = builder.getOrCreateCategory(Text.translatable(BASE_KEY + "other"));
+      ConfigCategory otherCategory = builder.getOrCreateCategory(Component.translatable(BASE_KEY + "other"));
       otherEntries.forEach(otherCategory::addEntry);
 
       String otherWarningKey = BASE_KEY + "other.warning";
-      MutableText otherWarningText = Text.translatable(otherWarningKey).setStyle(DEFAULT_WARN_STYLE);
+      MutableComponent otherWarningText = Component.translatable(otherWarningKey).setStyle(DEFAULT_WARN_STYLE);
       if (!otherWarningText.getString().equals(otherWarningKey)) {
         otherCategory.addEntry(entryBuilder.startTextDescription(otherWarningText).build());
       }
 
-      SubCategoryBuilder otherSubCat = entryBuilder.startSubCategory(Text.translatable(BASE_KEY + "other"))
+      SubCategoryBuilder otherSubCat = entryBuilder.startSubCategory(Component.translatable(BASE_KEY + "other"))
           .setExpanded(true);
       otherSubCat.addAll(otherEntries);
       allCategory.addEntry(otherSubCat.build());
@@ -108,10 +108,10 @@ public class PayTpClothConfigBuilder {
       ConfigCategory allCategory
   ) {
     String key = component.getName();
-    ConfigCategory category = builder.getOrCreateCategory(Text.translatable(BASE_KEY + key));
+    ConfigCategory category = builder.getOrCreateCategory(Component.translatable(BASE_KEY + key));
 
     String warningKey = BASE_KEY + key + ".warning";
-    MutableText warningText = Text.translatable(warningKey).setStyle(DEFAULT_WARN_STYLE);
+    MutableComponent warningText = Component.translatable(warningKey).setStyle(DEFAULT_WARN_STYLE);
     if (!warningText.getString().equals(warningKey)) {
       category.addEntry(entryBuilder.startTextDescription(warningText).build());
     }
@@ -119,7 +119,7 @@ public class PayTpClothConfigBuilder {
     processCategory(category, (Record) value, (Record) defaultValue, key + ".");
 
     SubCategoryBuilder subCatInAllCategory = entryBuilder
-        .startSubCategory(Text.translatable(BASE_KEY + key))
+        .startSubCategory(Component.translatable(BASE_KEY + key))
         .setExpanded(true);
     processSubCategory(subCatInAllCategory, (Record) value, (Record) defaultValue, key + ".");
     allCategory.addEntry(subCatInAllCategory.build());
@@ -134,7 +134,7 @@ public class PayTpClothConfigBuilder {
 
         if (value != null && value.getClass().isRecord()) {
           SubCategoryBuilder subCategory = entryBuilder
-              .startSubCategory(Text.translatable(BASE_KEY + prefix + component.getName()))
+              .startSubCategory(Component.translatable(BASE_KEY + prefix + component.getName()))
               .setExpanded(true);
           processSubCategory(subCategory, (Record) value, (Record) defaultValue, prefix + component.getName() + ".");
           category.addEntry(subCategory.build());
@@ -156,7 +156,7 @@ public class PayTpClothConfigBuilder {
 
         if (value != null && value.getClass().isRecord()) {
           subCatBuilder.add(entryBuilder.startTextDescription(
-              Text.translatable(BASE_KEY + prefix + component.getName()).setStyle(DEFAULT_TITLE_STYLE)).build()
+              Component.translatable(BASE_KEY + prefix + component.getName()).setStyle(DEFAULT_TITLE_STYLE)).build()
           );
           List<AbstractConfigListEntry<?>> sectionEntries = new ArrayList<>();
           processSection(sectionEntries, (Record) value, (Record) defaultValue, prefix + component.getName() + ".");
@@ -200,8 +200,8 @@ public class PayTpClothConfigBuilder {
         defaultValue,
         prefix + component.getName(),
         newValue -> currentFlattenedData.put(prefix + component.getName(), newValue),
-        Text.translatable(BASE_KEY + prefix + component.getName()),
-        Text.translatable(BASE_KEY + prefix + component.getName() + ".tooltip")
+        Component.translatable(BASE_KEY + prefix + component.getName()),
+        Component.translatable(BASE_KEY + prefix + component.getName() + ".tooltip")
     );
   }
 }
