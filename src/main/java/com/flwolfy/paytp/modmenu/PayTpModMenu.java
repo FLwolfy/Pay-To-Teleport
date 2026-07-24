@@ -39,8 +39,12 @@ public class PayTpModMenu implements ModMenuApi {
         try {
           PayTpConfigData newData = dataSupplier.get();
           if (newData != null) {
-            PayTpConfigManager.getInstance().update(newData);
-            LOGGER.info("Config saved successfully with changes");
+            boolean result = PayTpConfigManager.getInstance().update(newData);
+            if (result) {
+              LOGGER.info("Config saved successfully with changes");
+            } else {
+              LOGGER.info("Failed to save changes to disk.");
+            }
           } else {
             LOGGER.error("Failed to get config data from UI - dataSupplier returned null");
           }

@@ -1,9 +1,9 @@
 package com.flwolfy.paytp.data.config;
 
 import com.flwolfy.paytp.PayTpMod;
-
 import com.flwolfy.paytp.data.lang.PayTpLang;
 import com.flwolfy.paytp.data.lang.PayTpLangAdapter;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -14,17 +14,16 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.slf4j.Logger;
 
-/**
- * PayTpConfigManager handles loading and saving configuration for the Pay-to-Teleport mod.
- */
 public class PayTpConfigManager {
 
   private static final Logger LOGGER = PayTpMod.LOGGER;
   private static final Path CONFIG_PATH = Path.of("config", "paytp.json");
   private static final Gson GSON;
+
   static {
     GsonBuilder gsonBuilder = new GsonBuilder();
 
@@ -37,72 +36,91 @@ public class PayTpConfigManager {
     GSON = gsonBuilder.setPrettyPrinting().create();
   }
 
+  private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+  private static PayTpConfigManager instance;
+  private volatile PayTpConfigData data;
+
   private PayTpConfigManager(PayTpConfigData data) {
     this.data = data;
   }
 
-  private static PayTpConfigManager instance;
   public static PayTpConfigManager getInstance() {
     if (instance == null) {
-      instance = loadConfig();
+      instance = new PayTpConfigManager(loadData());
     }
     return instance;
   }
 
-  private PayTpConfigData data;
   public PayTpConfigData data() {
-    return data;
+    lock.readLock().lock();
+    try {
+      return data;
+    } finally {
+      lock.readLock().unlock();
+    }
   }
 
   // =================================
   // ====== Load & Save Config =======
   // =================================
 
-  private static PayTpConfigManager loadConfig() {
-    return new PayTpConfigManager(loadData());
-  }
-
   private static PayTpConfigData loadData() {
     PayTpConfigData defaults = PayTpConfigData.DEFAULT;
 
-    try {
-      if (Files.notExists(CONFIG_PATH)) {
+    if (Files.notExists(CONFIG_PATH)) {
+      LOGGER.info("Config file not found, creating default config at {}", CONFIG_PATH);
+      saveStatic(defaults);
+      return defaults;
+    }
+
+    try (FileReader reader = new FileReader(CONFIG_PATH.toFile())) {
+      JsonElement element = GSON.fromJson(reader, JsonElement.class);
+      JsonObject jsonObject = element != null && element.isJsonObject()
+          ? element.getAsJsonObject()
+          : new JsonObject();
+
+      if (jsonObject.entrySet().isEmpty()) {
+        LOGGER.warn("Config file is empty, filling with defaults");
         saveStatic(defaults);
         return defaults;
       }
 
-      try (FileReader reader = new FileReader(CONFIG_PATH.toFile())) {
-        JsonElement element = GSON.fromJson(reader, JsonElement.class);
-        JsonObject jsonObject = element != null && element.isJsonObject()
-            ? element.getAsJsonObject()
-            : new JsonObject();
+      JsonObject defaultJson = GSON.toJsonTree(defaults).getAsJsonObject();
+      boolean hasMissing = mergeDefaults(jsonObject, defaultJson);
 
-        JsonObject defaultJson = GSON.toJsonTree(defaults).getAsJsonObject();
-        mergeDefaults(jsonObject, defaultJson);
+      PayTpConfigData data = GSON.fromJson(jsonObject, PayTpConfigData.class);
 
-        PayTpConfigData data = GSON.fromJson(jsonObject, PayTpConfigData.class);
+      if (hasMissing) {
+        LOGGER.info("Config missing some fields, repairing file at {}", CONFIG_PATH);
         saveStatic(data);
-
-        return data;
       }
+
+      LOGGER.info("Loaded PayTp config from {}", CONFIG_PATH);
+      return data;
+
     } catch (Exception e) {
-      LOGGER.error("Failed to load PayTp config, using defaults", e);
+      LOGGER.error("Failed to load PayTp config from {}, using defaults", CONFIG_PATH, e);
       saveStatic(defaults);
       return defaults;
     }
   }
 
-  private static void mergeDefaults(JsonObject target, JsonObject defaults) {
+  private static boolean mergeDefaults(JsonObject target, JsonObject defaults) {
+    boolean hasMissing = false;
     for (var entry : defaults.entrySet()) {
       String key = entry.getKey();
       JsonElement defaultValue = entry.getValue();
 
       if (!target.has(key) || target.get(key).isJsonNull()) {
         target.add(key, defaultValue);
+        hasMissing = true;
       } else if (defaultValue.isJsonObject() && target.get(key).isJsonObject()) {
-        mergeDefaults(target.getAsJsonObject(key), defaultValue.getAsJsonObject());
+        if (mergeDefaults(target.getAsJsonObject(key), defaultValue.getAsJsonObject())) {
+          hasMissing = true;
+        }
       }
     }
+    return hasMissing;
   }
 
   private static void saveStatic(PayTpConfigData data) {
@@ -110,10 +128,12 @@ public class PayTpConfigManager {
       Files.createDirectories(CONFIG_PATH.getParent());
     } catch (IOException e) {
       LOGGER.error("Failed to create config directory", e);
+      return;
     }
 
     try (FileWriter writer = new FileWriter(CONFIG_PATH.toFile())) {
       GSON.toJson(data, writer);
+      writer.flush();
       LOGGER.info("Saved PayTp config to {}", CONFIG_PATH);
     } catch (IOException e) {
       LOGGER.error("Failed to save PayTp config", e);
@@ -124,20 +144,37 @@ public class PayTpConfigManager {
   // ====== Update Config =======
   // ============================
 
-  /**
-   * Update the config data to the new data given, then write to disk
-   * @param newData the new config data.
-   */
-  public void update(PayTpConfigData newData) {
-    this.data = newData;
-    LOGGER.info("Saving new config: {}", newData);
-    saveStatic(newData);
+  public boolean update(PayTpConfigData newData) {
+    if (newData == null) {
+      LOGGER.warn("Attempted to update with null data, ignoring");
+      return false;
+    }
+
+    lock.writeLock().lock();
+    try {
+      saveStatic(newData);
+      this.data = newData;
+      LOGGER.info("Config updated successfully");
+      return true;
+    } catch (Exception e) {
+      LOGGER.error("Failed to update config", e);
+      return false;
+    } finally {
+      lock.writeLock().unlock();
+    }
   }
 
-  /**
-   * Reload the config file from disk.
-   */
-  public void reload() {
-    this.data = loadData();
+  public boolean reload() {
+    lock.writeLock().lock();
+    try {
+      this.data = loadData();
+      LOGGER.info("Config reloaded successfully");
+      return true;
+    } catch (Exception e) {
+      LOGGER.error("Failed to reload config", e);
+      return false;
+    } finally {
+      lock.writeLock().unlock();
+    }
   }
 }
