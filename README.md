@@ -199,9 +199,9 @@ The in-game help guide will automatically adapt.
 
 ---
 
-### 传送点系统
+### Waypoint System
 
-| 字段名                | 类型       | 说明                                                                                         |
+| Field              | Type     | Description                                                                                |
 |--------------------|----------|--------------------------------------------------------------------------------------------|
 | `warpCommand`      | `string` | Command name to teleport to a waypoint (default `/ptpwarp`).                               |
 | `maxInactiveTicks` | `int`    | The cooldown time before a waypoint is deleted after its associated beacon is deactivated. |
