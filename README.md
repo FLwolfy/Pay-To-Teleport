@@ -1,17 +1,18 @@
 # PayTp Mod Documentation
 
+**PayTp** is a lightweight Fabric mod for Minecraft that allows players to teleport by paying a certain amount of in-game currency (such as items or balance). It supports flexible teleportation modes, multi-language localization, and fully customizable cost rules.
+
 中文文档请看[这里](./README.cn.md)
 
----
-
-## Overview
-
-**PayTp** is a lightweight Fabric mod for Minecraft that allows players to teleport by paying a certain amount of in-game currency (such as items or balance).  
-It supports flexible teleportation modes, multi-language localization, and fully customizable cost rules.
+> [!WARNING]
+> - *Due to huge API changes in 26.1+ and the fact that Minecraft is no longer using **obfuscation** for source codes, patches later than **v1.2.0** will NOT support versions below **26.1**.*
+> - *For **data migration**, please check [here](./docs/MIGRATION.md).*
 
 ---
 
 ## Features
+
+- **Editable command names**
 - Cross-dimension teleport to a specified location
 - Player teleport request system
 - Home and Back
