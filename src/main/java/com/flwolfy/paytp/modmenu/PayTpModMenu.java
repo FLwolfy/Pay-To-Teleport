@@ -3,7 +3,6 @@ package com.flwolfy.paytp.modmenu;
 import com.flwolfy.paytp.PayTpMod;
 import com.flwolfy.paytp.data.config.PayTpConfigData;
 import com.flwolfy.paytp.data.config.PayTpConfigManager;
-import com.flwolfy.paytp.util.PayTpCalculator;
 
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
@@ -44,7 +43,6 @@ public class PayTpModMenu implements ModMenuApi {
         try {
           PayTpConfigData newData = dataSupplier.get();
           if (newData != null) {
-            PayTpCalculator.validatePriceAlgorithm(newData.price().algorithm());
             boolean result = PayTpConfigManager.getInstance().update(newData);
             if (result) {
               LOGGER.info("Config saved successfully with changes");

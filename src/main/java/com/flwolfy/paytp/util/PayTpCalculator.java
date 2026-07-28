@@ -104,31 +104,6 @@ public class PayTpCalculator {
   }
 
   /**
-   * Compiles and test-executes a price algorithm with representative arguments.
-   *
-   * <p>This validation performs real script execution, including any shell commands contained in
-   * the script.</p>
-   *
-   * @param algorithm the algorithm to validate
-   * @throws RuntimeException if compilation, execution, or result type validation fails
-   */
-  public static void validatePriceAlgorithm(PayTpScript algorithm) {
-    PayTpScriptManager.getInstance().evaluate(
-        algorithm,
-        Integer.class,
-        Map.entry("from", new PayTpScriptPosition(
-            0.0, 64.0, 0.0, "minecraft:overworld"
-        )),
-        Map.entry("to", new PayTpScriptPosition(
-            100.0, 64.0, 100.0, "minecraft:overworld"
-        )),
-        Map.entry("teleportType", PayTpTeleportType.COORDINATE.toString()),
-        Map.entry("player", "Player"),
-        Map.entry("otherPlayer", "")
-    );
-  }
-
-  /**
    * Counts all available currency permitted by the configured storage flags.
    *
    * @param currencyItemFullId the namespaced currency item identifier

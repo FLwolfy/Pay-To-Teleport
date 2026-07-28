@@ -8,6 +8,7 @@ import java.lang.reflect.RecordComponent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -15,6 +16,7 @@ import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
+import me.shedaniel.clothconfig2.gui.entries.SubCategoryListEntry;
 import me.shedaniel.clothconfig2.impl.builders.SubCategoryBuilder;
 
 import net.minecraft.ChatFormatting;
@@ -62,6 +64,7 @@ public class PayTpClothConfigBuilder {
   public <T extends Record> Supplier<T> buildConfigUI(T data, T defaultData) {
     if (data == null) return null;
 
+    PayTpClothConfigGUI.clearCache();
     currentFlattenedData.clear();
     currentFlattenedData.putAll(PayTpConfigMapper.flattenData(data));
 
@@ -92,7 +95,10 @@ public class PayTpClothConfigBuilder {
       SubCategoryBuilder otherSubCat = entryBuilder.startSubCategory(Component.translatable(BASE_KEY + "other"))
           .setExpanded(true);
       otherSubCat.addAll(otherEntries);
-      allCategory.addEntry(otherSubCat.build());
+      allCategory.addEntry(new AllCategoryEntry(
+          Component.translatable(BASE_KEY + "other"),
+          otherSubCat
+      ));
     }
 
     return () -> {
@@ -139,7 +145,10 @@ public class PayTpClothConfigBuilder {
         .startSubCategory(Component.translatable(BASE_KEY + key))
         .setExpanded(true);
     processSubCategory(subCatInAllCategory, (Record) value, (Record) defaultValue, key + ".");
-    allCategory.addEntry(subCatInAllCategory.build());
+    allCategory.addEntry(new AllCategoryEntry(
+        Component.translatable(BASE_KEY + key),
+        subCatInAllCategory
+    ));
   }
 
   private void processCategory(ConfigCategory category, Record record, Record defaultRecord, String prefix) {
@@ -220,5 +229,23 @@ public class PayTpClothConfigBuilder {
         Component.translatable(BASE_KEY + prefix + component.getName()),
         Component.translatable(BASE_KEY + prefix + component.getName() + ".tooltip")
     );
+  }
+
+  /**
+   * Prevents the All category from reporting errors already reported by each field's own category.
+   */
+  private static class AllCategoryEntry extends SubCategoryListEntry {
+
+    private AllCategoryEntry(
+        Component label,
+        List<AbstractConfigListEntry> entries
+    ) {
+      super(label, entries, true);
+    }
+
+    @Override
+    public Optional<Component> getError() {
+      return Optional.empty();
+    }
   }
 }

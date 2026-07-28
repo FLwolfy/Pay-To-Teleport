@@ -1,7 +1,6 @@
 package com.flwolfy.paytp.modmenu.entrybuilder;
 
 import com.flwolfy.paytp.data.script.PayTpScript;
-import com.flwolfy.paytp.util.PayTpCalculator;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -82,8 +81,6 @@ public class PayTpScriptEntryBuilder {
 
     private final Button editButton;
     private final Button importButton;
-    private Optional<Component> validationError = Optional.empty();
-    private String validatedSource;
 
     private ScriptEntry(
         Component fieldName,
@@ -126,16 +123,6 @@ public class PayTpScriptEntryBuilder {
       textFieldWidget.visible = false;
       widgets.add(0, editButton);
       widgets.add(0, importButton);
-      setErrorSupplier(() -> validationError);
-      validate();
-    }
-
-    @Override
-    public Optional<Component> getError() {
-      if (!getValue().equals(validatedSource)) {
-        validate();
-      }
-      return super.getError();
     }
 
     @Override
@@ -191,7 +178,6 @@ public class PayTpScriptEntryBuilder {
       Minecraft.getInstance().setScreenAndShow(
           new ScriptEditor(getConfigScreen(), getValue(), source -> {
             setValue(source);
-            validate();
           })
       );
     }
@@ -214,7 +200,6 @@ public class PayTpScriptEntryBuilder {
 
       try {
         setValue(Files.readString(Path.of(path)));
-        validate();
       } catch (Exception e) {
         TinyFileDialogs.tinyfd_messageBox(
             "PayTp",
@@ -226,22 +211,6 @@ public class PayTpScriptEntryBuilder {
       }
     }
 
-    private void validate() {
-      PayTpScript script = new PayTpScript(getValue());
-      try {
-        PayTpCalculator.validatePriceAlgorithm(script);
-        validationError = Optional.empty();
-      } catch (Exception e) {
-        String error = e.getMessage() == null
-            ? e.getClass().getSimpleName()
-            : e.getMessage();
-        validationError = Optional.of(Component.translatable(
-            "paytp.config.price.algorithm.invalid",
-            error
-        ));
-      }
-      validatedSource = script.source();
-    }
   }
 
   private static class ScriptEditor extends Screen {

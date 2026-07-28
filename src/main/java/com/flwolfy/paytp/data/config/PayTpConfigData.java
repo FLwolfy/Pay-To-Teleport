@@ -1,9 +1,18 @@
 package com.flwolfy.paytp.data.config;
 
 import com.flwolfy.paytp.data.lang.PayTpLang;
+import com.flwolfy.paytp.data.PayTpTeleportType;
 import com.flwolfy.paytp.data.script.PayTpScript;
+import com.flwolfy.paytp.data.script.PayTpScriptManager;
+import com.flwolfy.paytp.data.script.PayTpScriptPosition;
 import com.flwolfy.paytp.flag.Flags;
 import com.flwolfy.paytp.flag.PayTpSettingFlags;
+import com.flwolfy.paytp.util.PayTpItemHandler;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public record PayTpConfigData(
     General general,
@@ -120,22 +129,6 @@ public record PayTpConfigData(
         math:round((basePrice + distanceBeyondBase * pricePerBlock) * multiplier).intValue();
         """.stripTrailing());
 
-    public Price {
-      if (currencyItem == null) {
-        throw new IllegalArgumentException("currencyItem must not be null");
-      }
-      if (algorithm == null) {
-        throw new IllegalArgumentException("algorithm must not be null");
-      }
-      if (minPrice < 0) {
-        throw new IllegalArgumentException("minPrice must not be negative");
-      }
-      if (maxPrice < minPrice) {
-        throw new IllegalArgumentException(
-            "maxPrice must be greater than or equal to minPrice"
-        );
-      }
-    }
   }
 
   public record Setting(
@@ -219,6 +212,89 @@ public record PayTpConfigData(
         flag.allowShulkerBox() ? PayTpSettingFlags.ALLOW_SHULKER_BOX : null,
         flag.prioritizeShulkerBox() ? PayTpSettingFlags.PRIORITIZE_SHULKER_BOX : null
     );
+  }
+
+  /**
+   * Validates the complete configuration and returns every invalid field path.
+   *
+   * @return field paths whose current values are invalid
+   */
+  public List<String> validate() {
+    List<String> invalidFields = new ArrayList<>();
+
+    // Price Range
+    if (price.minPrice() < 0 || price.minPrice() > price.maxPrice()) {
+      invalidFields.add("price.minPrice");
+    }
+    if (price.maxPrice() < 0 || price.maxPrice() < price.minPrice()) {
+      invalidFields.add("price.maxPrice");
+    }
+
+    // Time and Capacity
+    if (request.expireTime() < 0) {
+      invalidFields.add("request.expireTime");
+    }
+    if (back.maxBackStack() <= 0) {
+      invalidFields.add("back.maxBackStack");
+    }
+    if (warp.maxInactiveTicks() < 0) {
+      invalidFields.add("warp.maxInactiveTicks");
+    }
+    if (warp.checkPeriodTicks() <= 0) {
+      invalidFields.add("warp.checkPeriodTicks");
+    }
+
+    // Currency Item
+    try {
+      PayTpItemHandler.getItemByStringId(price.currencyItem());
+    } catch (RuntimeException e) {
+      invalidFields.add("price.currencyItem");
+    }
+
+    // Price Algorithm
+    try {
+      PayTpScriptManager.getInstance().evaluate(
+          price.algorithm(), Integer.class,
+          Map.entry("from", new PayTpScriptPosition(0.0, 64.0, 0.0, "minecraft:overworld")),
+          Map.entry("to", new PayTpScriptPosition(100.0, 64.0, 100.0, "minecraft:overworld")),
+          Map.entry("teleportType", PayTpTeleportType.COORDINATE.toString()),
+          Map.entry("player", "Player"), Map.entry("otherPlayer", "")
+      );
+    } catch (RuntimeException e) {
+      invalidFields.add("price.algorithm");
+    }
+
+    // Command Names
+    Map<String, String> commands = new HashMap<>();
+    Map.ofEntries(
+        Map.entry("general.helpCommand", general.helpCommand()),
+        Map.entry("teleport.coordinateCommand", teleport.coordinateCommand()),
+        Map.entry("request.requestCommand.toCommand", request.requestCommand().toCommand()),
+        Map.entry("request.requestCommand.hereCommand", request.requestCommand().hereCommand()),
+        Map.entry("request.requestCommand.acceptCommand", request.requestCommand().acceptCommand()),
+        Map.entry("request.requestCommand.denyCommand", request.requestCommand().denyCommand()),
+        Map.entry("request.requestCommand.cancelCommand", request.requestCommand().cancelCommand()),
+        Map.entry("home.homeCommand", home.homeCommand()),
+        Map.entry("back.backCommand", back.backCommand()),
+        Map.entry("warp.warpCommand", warp.warpCommand())
+    ).forEach((fieldPath, command) -> {
+      if (command.isEmpty()) return;
+      String duplicate = commands.putIfAbsent(command, fieldPath);
+      if (duplicate != null) {
+        if (!invalidFields.contains(duplicate)) invalidFields.add(duplicate);
+        if (!invalidFields.contains(fieldPath)) invalidFields.add(fieldPath);
+      }
+    });
+
+    // Payment Priorities
+    if (setting.flag().prioritizeEnderChest() && !setting.flag().allowEnderChest()) {
+      invalidFields.add("setting.flag.prioritizeEnderChest");
+    }
+    if (setting.flag().prioritizeShulkerBox() && !setting.flag().allowShulkerBox()) {
+      invalidFields.add("setting.flag.prioritizeShulkerBox");
+    }
+
+    return List.copyOf(invalidFields);
   }
 
 }
