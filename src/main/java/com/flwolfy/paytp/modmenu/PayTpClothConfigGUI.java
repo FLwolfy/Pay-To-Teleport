@@ -2,7 +2,9 @@ package com.flwolfy.paytp.modmenu;
 
 import com.flwolfy.paytp.PayTpMod;
 import com.flwolfy.paytp.data.lang.PayTpLang;
+import com.flwolfy.paytp.data.script.PayTpScript;
 
+import com.flwolfy.paytp.modmenu.entrybuilder.PayTpScriptEntryBuilder;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,6 +24,7 @@ public class PayTpClothConfigGUI {
   private static final Logger LOGGER = PayTpMod.LOGGER;
   private static final String ENTRY_FACTORY_METHOD_NAME = "createField";
   private static final Map<String, AbstractConfigListEntry<?>> ENTRY_MAP = new HashMap<>();
+  private static final PayTpScriptEntryBuilder SCRIPT_ENTRY_BUILDER = new PayTpScriptEntryBuilder();
 
   /**
    * Clear all the registered entries in the cached ENTRY_MAP.
@@ -37,7 +40,7 @@ public class PayTpClothConfigGUI {
    * @param value         current value
    * @param defaultValue  default value
    * @param fieldPath     field path in the record
-   * @param label         label text
+   * @param label         label component
    * @param tooltip       optional tooltip
    * @return AbstractConfigListEntry
    */
@@ -51,17 +54,28 @@ public class PayTpClothConfigGUI {
       Component... tooltip
   ) {
     if (value == null) return null;
+
     if (ENTRY_MAP.containsKey(fieldPath)) return ENTRY_MAP.get(fieldPath);
 
     try {
       @SuppressWarnings("all")
       Method createFieldMethod = PayTpClothConfigGUI.class
-          .getDeclaredMethod(ENTRY_FACTORY_METHOD_NAME, ConfigEntryBuilder.class, value.getClass(), Component.class);
+          .getDeclaredMethod(
+              ENTRY_FACTORY_METHOD_NAME,
+              ConfigEntryBuilder.class,
+              value.getClass(),
+              Component.class
+          );
       createFieldMethod.setAccessible(true);
 
       @SuppressWarnings("unchecked")
-      AbstractFieldBuilder<Object, ?, ?> builderObj = (AbstractFieldBuilder<Object, ?, ?>)
-          createFieldMethod.invoke(null, builder, value, label);
+      AbstractFieldBuilder<Object, ?, ?> builderObj =
+          (AbstractFieldBuilder<Object, ?, ?>) createFieldMethod.invoke(
+              null,
+              builder,
+              value,
+              label
+          );
 
       builderObj.setDefaultValue(defaultValue);
       builderObj.setTooltip(tooltip);
@@ -72,40 +86,75 @@ public class PayTpClothConfigGUI {
       return entry;
 
     } catch (NoSuchMethodException e) {
-      LOGGER.error("No GUI field for type: {}", value.getClass().getSimpleName(), e);
+      LOGGER.error(
+          "No GUI field for type: {}",
+          value.getClass().getSimpleName(),
+          e
+      );
     } catch (Exception e) {
-      LOGGER.error("Error creating GUI entry for type: {}", value.getClass().getSimpleName(), e);
+      LOGGER.error(
+          "Error creating GUI entry for type: {}",
+          value.getClass().getSimpleName(),
+          e
+      );
     }
 
-    // fallback
-    return builder.startTextDescription(Component.literal("ERROR").withStyle(ChatFormatting.RED)).build();
+    return builder.startTextDescription(
+        Component.literal("ERROR").withStyle(ChatFormatting.RED)
+    ).build();
   }
 
-  // ======== concrete createField methods ========
-  // These return builder objects but NOT build()
-  // ==============================================
   @SuppressWarnings("unused")
-  private static AbstractFieldBuilder<?, ?, ?> createField(ConfigEntryBuilder builder, Integer value, Component label) {
+  private static AbstractFieldBuilder<?, ?, ?> createField(
+      ConfigEntryBuilder builder,
+      Integer value,
+      Component label
+  ) {
     return builder.startIntField(label, value);
   }
 
   @SuppressWarnings("unused")
-  private static AbstractFieldBuilder<?, ?, ?> createField(ConfigEntryBuilder builder, Double value, Component label) {
+  private static AbstractFieldBuilder<?, ?, ?> createField(
+      ConfigEntryBuilder builder,
+      Double value,
+      Component label
+  ) {
     return builder.startDoubleField(label, value);
   }
 
   @SuppressWarnings("unused")
-  private static AbstractFieldBuilder<?, ?, ?> createField(ConfigEntryBuilder builder, Boolean value, Component label) {
+  private static AbstractFieldBuilder<?, ?, ?> createField(
+      ConfigEntryBuilder builder,
+      Boolean value,
+      Component label
+  ) {
     return builder.startBooleanToggle(label, value);
   }
 
   @SuppressWarnings("unused")
-  private static AbstractFieldBuilder<?, ?, ?> createField(ConfigEntryBuilder builder, String value, Component label) {
+  private static AbstractFieldBuilder<?, ?, ?> createField(
+      ConfigEntryBuilder builder,
+      String value,
+      Component label
+  ) {
     return builder.startStrField(label, value);
   }
 
   @SuppressWarnings("unused")
-  private static AbstractFieldBuilder<?, ?, ?> createField(ConfigEntryBuilder builder, PayTpLang value, Component label) {
+  private static AbstractFieldBuilder<?, ?, ?> createField(
+      ConfigEntryBuilder builder,
+      PayTpLang value,
+      Component label
+  ) {
     return builder.startEnumSelector(label, PayTpLang.class, value);
+  }
+
+  @SuppressWarnings("unused")
+  private static AbstractFieldBuilder<?, ?, ?> createField(
+      ConfigEntryBuilder builder,
+      PayTpScript value,
+      Component label
+  ) {
+    return SCRIPT_ENTRY_BUILDER.create(builder, value, label);
   }
 }

@@ -3,6 +3,9 @@ package com.flwolfy.paytp.data.config;
 import com.flwolfy.paytp.PayTpMod;
 import com.flwolfy.paytp.data.lang.PayTpLang;
 import com.flwolfy.paytp.data.lang.PayTpLangAdapter;
+import com.flwolfy.paytp.data.script.PayTpScript;
+import com.flwolfy.paytp.data.script.PayTpScriptAdapter;
+import com.flwolfy.paytp.util.PayTpCalculator;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -31,6 +34,7 @@ public class PayTpConfigManager {
     // Register customized adapter here
     // ================================
     gsonBuilder.registerTypeAdapter(PayTpLang.class, new PayTpLangAdapter());
+    gsonBuilder.registerTypeAdapter(PayTpScript.class, new PayTpScriptAdapter());
     // ================================
 
     GSON = gsonBuilder.setPrettyPrinting().create();
@@ -89,9 +93,11 @@ public class PayTpConfigManager {
       boolean hasMissing = mergeDefaults(jsonObject, defaultJson);
 
       PayTpConfigData data = GSON.fromJson(jsonObject, PayTpConfigData.class);
+      validate(data);
+      JsonObject normalizedJson = GSON.toJsonTree(data).getAsJsonObject();
 
-      if (hasMissing) {
-        LOGGER.info("Config missing some fields, repairing file at {}", CONFIG_PATH);
+      if (hasMissing || !jsonObject.equals(normalizedJson)) {
+        LOGGER.info("Normalizing config file at {}", CONFIG_PATH);
         saveStatic(data);
       }
 
@@ -152,6 +158,7 @@ public class PayTpConfigManager {
 
     lock.writeLock().lock();
     try {
+      validate(newData);
       saveStatic(newData);
       this.data = newData;
       LOGGER.info("Config updated successfully");
@@ -162,6 +169,10 @@ public class PayTpConfigManager {
     } finally {
       lock.writeLock().unlock();
     }
+  }
+
+  private static void validate(PayTpConfigData data) {
+    PayTpCalculator.validatePriceAlgorithm(data.price().algorithm());
   }
 
   public boolean reload() {

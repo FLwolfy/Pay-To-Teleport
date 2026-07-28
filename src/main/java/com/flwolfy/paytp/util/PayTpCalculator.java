@@ -1,63 +1,111 @@
 package com.flwolfy.paytp.util;
 
+import com.flwolfy.paytp.PayTpMod;
+import com.flwolfy.paytp.data.PayTpData;
+import com.flwolfy.paytp.data.PayTpTeleportType;
+import com.flwolfy.paytp.data.config.PayTpConfigData;
+import com.flwolfy.paytp.data.script.PayTpScript;
+import com.flwolfy.paytp.data.script.PayTpScriptManager;
 import com.flwolfy.paytp.flag.Flags;
 import com.flwolfy.paytp.flag.PayTpSettingFlags;
-import com.flwolfy.paytp.data.PayTpData;
 
-import net.minecraft.resources.ResourceKey;
+import java.util.Map;
+
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.PlayerEnderChestContainer;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
+
+import org.slf4j.Logger;
 
 public class PayTpCalculator {
 
+  private static final Logger LOGGER = PayTpMod.LOGGER;
+
   private PayTpCalculator() {}
 
-  public static double calculateDistance(
+  public static int calculatePrice(
       PayTpData from,
-      PayTpData to
+      PayTpData to,
+      PayTpTeleportType teleportType,
+      String player,
+      String otherPlayer,
+      PayTpConfigData.Price priceConfig
   ) {
-    Vec3 fromPos = from.pos();
-    Vec3 toPos = to.pos();
+    int minPrice = priceConfig.minPrice();
+    int maxPrice = priceConfig.maxPrice();
 
-    ResourceKey<Level> fromWorld = from.world();
-    ResourceKey<Level> toWorld = to.world();
+    if (maxPrice == 0) return 0;
 
-    double distance;
-    if (fromWorld == toWorld) {
-      distance = fromPos.distanceTo(toPos);
-    } else if (fromWorld == Level.END) {
-      distance = fromPos.distanceTo(Vec3.ZERO);
-    } else if (toWorld == Level.END) {
-      distance = Vec3.ZERO.distanceTo(toPos);
-    } else if (fromWorld == Level.NETHER) {
-      distance = (fromPos.scale(8)).distanceTo(toPos);
-    } else if (toWorld == Level.NETHER) {
-      distance = fromPos.distanceTo(toPos.scale(0.125));
-    } else {
-      // Note: If you have other worlds, customize your distance calculation here.
-      //       Default distance -> Euclidean distance
-      distance = fromPos.distanceTo(toPos);
+    try {
+      int price = evaluatePrice(
+          priceConfig.algorithm(),
+          from,
+          to,
+          teleportType,
+          player,
+          otherPlayer
+      );
+      return Math.clamp(price, minPrice, maxPrice);
+    } catch (Exception e) {
+      if (priceConfig.algorithm().equals(PayTpConfigData.Price.DEFAULT_ALGORITHM)) {
+        throw new IllegalStateException("Default PayTp price algorithm failed", e);
+      }
+
+      LOGGER.error("Custom PayTp price algorithm failed, using default", e);
+      int fallbackPrice = evaluatePrice(
+          PayTpConfigData.Price.DEFAULT_ALGORITHM,
+          from,
+          to,
+          teleportType,
+          player,
+          otherPlayer
+      );
+      return Math.clamp(fallbackPrice, minPrice, maxPrice);
     }
-
-    return distance;
   }
 
-  public static int calculatePrice(
-      double distance,
-      double baseRadius,
-      double increaseRate,
-      double externalMultiplier,
-      int minPrice,
-      int maxPrice
+  private static int evaluatePrice(
+      PayTpScript algorithm,
+      PayTpData from,
+      PayTpData to,
+      PayTpTeleportType teleportType,
+      String player,
+      String otherPlayer
   ) {
-    double distanceBeyondBase = Math.max(0, distance - baseRadius);
-    int calculatedPrice = (int) Math.round((minPrice + distanceBeyondBase * increaseRate) * externalMultiplier);
+    return PayTpScriptManager.getInstance().evaluate(
+        algorithm,
+        Integer.class,
+        Map.entry("fromX", from.pos().x),
+        Map.entry("fromY", from.pos().y),
+        Map.entry("fromZ", from.pos().z),
+        Map.entry("fromDimension", from.world().identifier().toString()),
+        Map.entry("toX", to.pos().x),
+        Map.entry("toY", to.pos().y),
+        Map.entry("toZ", to.pos().z),
+        Map.entry("toDimension", to.world().identifier().toString()),
+        Map.entry("teleportType", teleportType.toString()),
+        Map.entry("player", player),
+        Map.entry("otherPlayer", otherPlayer)
+    );
+  }
 
-    return Math.min(calculatedPrice, maxPrice);
+  public static void validatePriceAlgorithm(PayTpScript algorithm) {
+    PayTpScriptManager.getInstance().evaluate(
+        algorithm,
+        Integer.class,
+        Map.entry("fromX", 0.0),
+        Map.entry("fromY", 64.0),
+        Map.entry("fromZ", 0.0),
+        Map.entry("fromDimension", "minecraft:overworld"),
+        Map.entry("toX", 100.0),
+        Map.entry("toY", 64.0),
+        Map.entry("toZ", 100.0),
+        Map.entry("toDimension", "minecraft:overworld"),
+        Map.entry("teleportType", PayTpTeleportType.COORDINATE.toString()),
+        Map.entry("player", "Player"),
+        Map.entry("otherPlayer", "")
+    );
   }
 
   public static int checkBalance(

@@ -69,7 +69,7 @@ public class PayTpLangManager {
   }
 
   /**
-   * Set the language for the loader to output text.
+   * Sets the language used when creating localized components.
    */
   public void setLanguage(PayTpLang lang) {
     if (languageMap.containsKey(lang.getLangKey())) {
@@ -81,7 +81,7 @@ public class PayTpLangManager {
   }
 
   /**
-   * Get the localized Text based on the given key.
+   * Returns a localized {@link Component} for the given key.
    */
   public MutableComponent getText(String key) {
     if (languageMap.isEmpty()) {

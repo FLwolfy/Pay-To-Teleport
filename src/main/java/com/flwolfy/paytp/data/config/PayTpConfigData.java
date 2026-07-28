@@ -1,12 +1,13 @@
 package com.flwolfy.paytp.data.config;
 
 import com.flwolfy.paytp.data.lang.PayTpLang;
+import com.flwolfy.paytp.data.script.PayTpScript;
 import com.flwolfy.paytp.flag.Flags;
-import com.flwolfy.paytp.flag.PayTpMultiplierFlags;
 import com.flwolfy.paytp.flag.PayTpSettingFlags;
 
 public record PayTpConfigData(
     General general,
+    Teleport teleport,
     Request request,
     Home home,
     Back back,
@@ -17,8 +18,12 @@ public record PayTpConfigData(
 
   public record General(
       PayTpLang language,
-      String mainCommand,
-      double crossDimMultiplier
+      String helpCommand
+  ) {}
+
+  public record Teleport(
+      String coordinateCommand,
+      boolean allowCrossDim
   ) {}
 
   public record Request(
@@ -35,33 +40,102 @@ public record PayTpConfigData(
   }
 
   public record Home(
-      String homeCommand,
-      double homeMultiplier
+      String homeCommand
   ) {}
 
   public record Back(
       String backCommand,
-      int maxBackStack,
-      double backMultiplier
+      int maxBackStack
   ) {}
 
   public record Warp(
       String warpCommand,
       int maxInactiveTicks,
-      int checkPeriodTicks,
-      double warpMultiplier
+      int checkPeriodTicks
   ) {}
 
   public record Price(
       String currencyItem,
-      Parameter parameter
+      int minPrice,
+      int maxPrice,
+      PayTpScript algorithm
   ) {
-    public record Parameter(
-        int minPrice,
-        int maxPrice,
-        double baseRadius,
-        double rate
-    ) {}
+    public static final PayTpScript DEFAULT_ALGORITHM = new PayTpScript("""
+        // Available variables:
+        // fromX, fromY, fromZ, fromDimension
+        // toX, toY, toZ, toDimension
+        // teleportType: "coordinate", "request", "home", "back", or "warp"
+        // player: name of the player being teleported
+        // otherPlayer: name of the other request player, or an empty string
+        //
+        // Java's built-in Math methods are available through the "math" namespace.
+
+        var basePrice = 1;
+        var baseRadius = 10.0;
+        var pricePerBlock = 0.01;
+        var crossDimensionMultiplier = 1.5;
+        var homeMultiplier = 0.5;
+        var backMultiplier = 0.8;
+        var warpMultiplier = 0.5;
+        var netherCoordinateScale = 8.0;
+
+        var crossDimension = fromDimension != toDimension;
+        var deltaX = fromX - toX;
+        var deltaY = fromY - toY;
+        var deltaZ = fromZ - toZ;
+
+        if (crossDimension) {
+          if (fromDimension == "minecraft:the_end") {
+            deltaX = fromX;
+            deltaY = fromY;
+            deltaZ = fromZ;
+          } else if (toDimension == "minecraft:the_end") {
+            deltaX = toX;
+            deltaY = toY;
+            deltaZ = toZ;
+          } else if (fromDimension == "minecraft:the_nether") {
+            deltaX = fromX * netherCoordinateScale - toX;
+            deltaY = fromY * netherCoordinateScale - toY;
+            deltaZ = fromZ * netherCoordinateScale - toZ;
+          } else if (toDimension == "minecraft:the_nether") {
+            deltaX = fromX - toX / netherCoordinateScale;
+            deltaY = fromY - toY / netherCoordinateScale;
+            deltaZ = fromZ - toZ / netherCoordinateScale;
+          }
+        }
+
+        var distance = math:sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+        var multiplier = crossDimension ? crossDimensionMultiplier : 1.0;
+
+        if (teleportType == "home") {
+          multiplier = multiplier * homeMultiplier;
+        } else if (teleportType == "back") {
+          multiplier = multiplier * backMultiplier;
+        } else if (teleportType == "warp") {
+          multiplier = multiplier * warpMultiplier;
+        }
+
+        var distanceBeyondBase = distance > baseRadius ? distance - baseRadius : 0;
+
+        math:round((basePrice + distanceBeyondBase * pricePerBlock) * multiplier).intValue();
+        """.stripTrailing());
+
+    public Price {
+      if (currencyItem == null) {
+        throw new IllegalArgumentException("currencyItem must not be null");
+      }
+      if (algorithm == null) {
+        throw new IllegalArgumentException("algorithm must not be null");
+      }
+      if (minPrice < 0) {
+        throw new IllegalArgumentException("minPrice must not be negative");
+      }
+      if (maxPrice < minPrice) {
+        throw new IllegalArgumentException(
+            "maxPrice must be greater than or equal to minPrice"
+        );
+      }
+    }
   }
 
   public record Setting(
@@ -84,8 +158,11 @@ public record PayTpConfigData(
   public static final PayTpConfigData DEFAULT = new PayTpConfigData(
       new General(
           PayTpLang.ENGLISH,
+          "ptphelp"
+      ),
+      new Teleport(
           "ptp",
-          1.5
+          true
       ),
       new Request(
           new Request.RequestCommand(
@@ -98,28 +175,22 @@ public record PayTpConfigData(
           10
       ),
       new Home(
-          "ptphome",
-          0.5
+          "ptphome"
       ),
       new Back(
           "ptpback",
-          10,
-          0.8
+          10
       ),
       new Warp(
           "ptpwarp",
           100,
-          20,
-          0.5
+          20
       ),
       new Price(
           "minecraft:diamond",
-          new Price.Parameter(
-              1,
-              64,
-              10.0,
-              0.01
-          )
+          1,
+          64,
+          Price.DEFAULT_ALGORITHM
       ),
       new Setting(
           new Setting.Effect(
@@ -145,16 +216,4 @@ public record PayTpConfigData(
     );
   }
 
-  public double calculateMultiplier(int multiplierFlags) {
-    double multiplier = 1.0;
-    if (Flags.check(multiplierFlags, PayTpMultiplierFlags.CROSS_DIMENSION))
-      multiplier *= general.crossDimMultiplier();
-    if (Flags.check(multiplierFlags, PayTpMultiplierFlags.HOME))
-      multiplier *= home.homeMultiplier();
-    if (Flags.check(multiplierFlags, PayTpMultiplierFlags.BACK))
-      multiplier *= back.backMultiplier();
-    if (Flags.check(multiplierFlags, PayTpMultiplierFlags.WARP))
-      multiplier *= warp.warpMultiplier();
-    return multiplier;
-  }
 }

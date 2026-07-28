@@ -3,14 +3,15 @@ package com.flwolfy.paytp.util;
 import com.flwolfy.paytp.data.PayTpData;
 import com.flwolfy.paytp.data.lang.PayTpLangManager;
 
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.server.level.ServerPlayer;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.server.level.ServerPlayer;
 
 public class PayTpMessageSender {
 
@@ -101,6 +102,24 @@ public class PayTpMessageSender {
             price,
             currencyItemText,
             balance
+        ));
+
+    player.sendSystemMessage(msg);
+  }
+
+  public static void msgCrossDimensionDisabled(ServerPlayer player) {
+    Component msg = Component.empty()
+        .append(PayTpTextBuilder.format(
+            LANG_LOADER.getText("paytp.teleport"),
+            PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+            PayTpTextBuilder.DEFAULT_WARN_COLOR,
+            LANG_LOADER.getText("paytp.failed")
+        ))
+        .append(Component.literal("\n"))
+        .append(PayTpTextBuilder.format(
+            LANG_LOADER.getText("paytp.cross-dimension-disabled"),
+            PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+            PayTpTextBuilder.DEFAULT_WARN_COLOR
         ));
 
     player.sendSystemMessage(msg);
@@ -356,6 +375,7 @@ public class PayTpMessageSender {
   public static void msgHelp(
       ServerPlayer player,
       String tpCommandName,
+      boolean allowCrossDim,
       String backCommandName,
       String tpPlayerCommandName,
       String tpPlayerHereCommandName,
@@ -370,7 +390,7 @@ public class PayTpMessageSender {
       String warpListCommandName
   ) {
     // -------------------
-    // Reuse texts
+    // Reuse components
     // -------------------
     String newline = "\n";
     String indentCmd = " ".repeat(4);
@@ -394,7 +414,7 @@ public class PayTpMessageSender {
     };
 
     // -------------------
-    // Text combinations
+    // Component combinations
     // -------------------
     BiConsumer<String, String> appendCmdText = (key, cmd) -> {
       if (!cmd.isEmpty()) {
@@ -420,7 +440,10 @@ public class PayTpMessageSender {
 
     // Teleport
     appendSectionIfNotEmpty.accept("paytp.help.section.tp", () -> {
-      appendCmdText.accept("paytp.help.tp.coord", tpCommandName);
+      appendCmdText.accept(
+          allowCrossDim ? "paytp.help.tp.coord.cross-dim" : "paytp.help.tp.coord",
+          tpCommandName
+      );
       appendCmdText.accept("paytp.help.tp.back", backCommandName);
     });
 
@@ -450,11 +473,10 @@ public class PayTpMessageSender {
     // -------------------
     // Footer
     // -------------------
-    msgHolder[0].append(newline).append(LANG_LOADER.getText("paytp.help.note")).append(newline)
-        .append(divider);
+    msgHolder[0].append(newline).append(divider);
 
     // -------------------
-    // Text formatting
+    // Component formatting
     // -------------------
     List<Component> formattedTexts = new ArrayList<>();
 
@@ -470,7 +492,10 @@ public class PayTpMessageSender {
     };
 
     // Teleport
-    suggestIfNotEmpty.apply(tpCommandName, "/" + tpCommandName + " (dim) <x> <y> <z>");
+    String coordinatePlaceholder = "/" + tpCommandName
+        + (allowCrossDim ? " (dim)" : "")
+        + " <x> <y> <z>";
+    suggestIfNotEmpty.apply(tpCommandName, coordinatePlaceholder);
     suggestIfNotEmpty.apply(backCommandName, "/" + backCommandName);
 
     // Request

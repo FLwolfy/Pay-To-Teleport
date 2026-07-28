@@ -15,20 +15,20 @@ public class PayTpItemHandler {
 
   private PayTpItemHandler() {}
 
-
   /**
-   * Get an item object from the full item string ID.
-   * <p>
-   * Example:
-   * <pre>
-   *   minecraft:diamond -> Items.DIAMOND
-   * </pre>
+   * Gets an item from its full registry ID.
+   *
+   * @param fullId item ID, such as {@code minecraft:diamond}
    */
   public static Item getItemByStringId(String fullId) {
-    String namespace = fullId.contains(":") ? fullId.substring(0, fullId.lastIndexOf(':')) : "minecraft";
-    String id        = fullId.contains(":") ? fullId.substring(fullId.lastIndexOf(':') + 1) : fullId;
-    Identifier currencyID = Identifier.fromNamespaceAndPath(namespace, id);
-    return BuiltInRegistries.ITEM.getValue(currencyID);
+    Identifier identifier = Identifier.tryParse(fullId);
+    if (identifier == null) {
+      throw new IllegalArgumentException("Invalid item ID: " + fullId);
+    }
+    return BuiltInRegistries.ITEM.getOptional(identifier)
+        .orElseThrow(() -> new IllegalArgumentException(
+            "Unknown item: " + identifier
+        ));
   }
 
   /**
