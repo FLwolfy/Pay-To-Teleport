@@ -36,6 +36,11 @@ public class PayTpBackManager {
     return instance;
   }
 
+  /**
+   * Sets the maximum number of historical locations retained per player.
+   *
+   * @param max the maximum stack size
+   */
   public void setMaxBackStack(int max) {
     maxBackStack = max;
   }
@@ -67,7 +72,10 @@ public class PayTpBackManager {
   }
 
   /**
-   * Push a single teleport point into the stack.
+   * Pushes one teleport location after flushing any cached destination from a previous pair.
+   *
+   * @param player the player whose history is updated
+   * @param data the location to store
    */
   public void pushSingle(ServerPlayer player, PayTpData data) {
     if (player == null || data == null) return;
@@ -76,8 +84,14 @@ public class PayTpBackManager {
   }
 
   /**
-   * Push a pair: from → to.
-   * 'from' is immediately pushed, 'to' is cached for next push.
+   * Records a teleport pair.
+   *
+   * <p>The source is pushed immediately and the destination is cached until the player's next
+   * history update, preventing duplicate back-stack entries.</p>
+   *
+   * @param player the player whose history is updated
+   * @param from the teleport source
+   * @param to the teleport destination
    */
   public void pushPair(ServerPlayer player, PayTpData from, PayTpData to) {
     if (player == null || from == null || to == null) return;
@@ -87,7 +101,10 @@ public class PayTpBackManager {
   }
 
   /**
-   * Pop the last teleport point from the stack.
+   * Removes and returns the most recent teleport location.
+   *
+   * @param player the player whose history is queried
+   * @return the most recent location, or {@code null} when no history exists
    */
   public PayTpData popLastTp(ServerPlayer player) {
     if (player == null) return null;
@@ -99,7 +116,9 @@ public class PayTpBackManager {
   }
 
   /**
-   * Clear all teleport history and cached pair for a player.
+   * Clears all stored and cached teleport history for a player.
+   *
+   * @param player the player whose history is removed
    */
   public void clearHistory(ServerPlayer player) {
     if (player == null) return;

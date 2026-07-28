@@ -97,7 +97,7 @@ The in-game help guide will automatically adapt.
     "currencyItem": "minecraft:diamond",
     "minPrice": 1,
     "maxPrice": 64,
-    "algorithm": "10"
+    "algorithm": "// Available variables:\n// from, to: positions with .x, .y, .z, and .dimension\n// teleportType: \"coordinate\", \"request\", \"home\", \"back\", or \"warp\"\n// player: name of the player being teleported\n// otherPlayer: name of the other request player, or an empty string\n//\n// Java\u0027s built-in Math methods are available through the \"math\" namespace.\n// Full system shell access is available through the \"shell\" namespace.\n\nvar basePrice \u003d 1;\nvar baseRadius \u003d 10.0;\nvar pricePerBlock \u003d 0.01;\nvar crossDimensionMultiplier \u003d 1.5;\nvar homeMultiplier \u003d 0.5;\nvar backMultiplier \u003d 0.8;\nvar warpMultiplier \u003d 0.5;\nvar netherCoordinateScale \u003d 8.0;\n\nvar crossDimension \u003d from.dimension !\u003d to.dimension;\nvar deltaX \u003d from.x - to.x;\nvar deltaY \u003d from.y - to.y;\nvar deltaZ \u003d from.z - to.z;\n\nif (crossDimension) {\n  if (from.dimension \u003d\u003d \"minecraft:the_end\") {\n    deltaX \u003d from.x;\n    deltaY \u003d from.y;\n    deltaZ \u003d from.z;\n  } else if (to.dimension \u003d\u003d \"minecraft:the_end\") {\n    deltaX \u003d to.x;\n    deltaY \u003d to.y;\n    deltaZ \u003d to.z;\n  } else if (from.dimension \u003d\u003d \"minecraft:the_nether\") {\n    deltaX \u003d from.x * netherCoordinateScale - to.x;\n    deltaY \u003d from.y * netherCoordinateScale - to.y;\n    deltaZ \u003d from.z * netherCoordinateScale - to.z;\n  } else if (to.dimension \u003d\u003d \"minecraft:the_nether\") {\n    deltaX \u003d from.x - to.x / netherCoordinateScale;\n    deltaY \u003d from.y - to.y / netherCoordinateScale;\n    deltaZ \u003d from.z - to.z / netherCoordinateScale;\n  }\n}\n\nvar distance \u003d math:sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);\nvar multiplier \u003d crossDimension ? crossDimensionMultiplier : 1.0;\n\nif (teleportType \u003d\u003d \"home\") {\n  multiplier \u003d multiplier * homeMultiplier;\n} else if (teleportType \u003d\u003d \"back\") {\n  multiplier \u003d multiplier * backMultiplier;\n} else if (teleportType \u003d\u003d \"warp\") {\n  multiplier \u003d multiplier * warpMultiplier;\n}\n\nvar distanceBeyondBase \u003d distance \u003e baseRadius ? distance - baseRadius : 0;\n\nmath:round((basePrice + distanceBeyondBase * pricePerBlock) * multiplier).intValue();"
   },
   "setting": {
     "effect": {
@@ -131,7 +131,7 @@ The in-game help guide will automatically adapt.
 
 | Field               | Type      | Description                                                                                                             |
 |---------------------|-----------|-------------------------------------------------------------------------------------------------------------------------|
-| `coordinateCommand` | `string`  | Coordinate teleport command (default `/ptp`).                                                                          |
+| `coordinateCommand` | `string`  | Coordinate teleport command (default `/ptp`).                                                                           |
 | `allowCrossDim`     | `boolean` | Whether any teleport method may cross dimensions. When disabled, the dimension argument is not registered or displayed. |
 
 ---
@@ -193,11 +193,11 @@ The in-game help guide will automatically adapt.
 
 #### Price Range and Algorithm
 
-| Field       | Type     | Description                                                                                         |
-|-------------|----------|-----------------------------------------------------------------------------------------------------|
+| Field       | Type     | Description                                                                                          |
+|-------------|----------|------------------------------------------------------------------------------------------------------|
 | `minPrice`  | `int`    | Forced final lower bound. Must be non-negative.                                                      |
 | `maxPrice`  | `int`    | Forced final upper bound. Must be at least `minPrice`. Setting it to `0` disables price calculation. |
-| `algorithm` | `string` | A JEXL script that calculates distance and raw price and must return an `int`.                        |
+| `algorithm` | `string` | A JEXL script that calculates distance and raw price and must return an `int`.                       |
  
 ---
 
@@ -227,30 +227,25 @@ The `price.algorithm` string contains both the distance calculation and the pric
 
 ### Available Variables
 
-| Variable        | Type     | Description                                                                 |
-|-----------------|----------|-----------------------------------------------------------------------------|
-| `fromX`         | `double` | X coordinate before teleportation.                                          |
-| `fromY`         | `double` | Y coordinate before teleportation.                                          |
-| `fromZ`         | `double` | Z coordinate before teleportation.                                          |
-| `fromDimension` | `string` | Source dimension ID, e.g., `minecraft:overworld`.                           |
-| `toX`           | `double` | Destination X coordinate.                                                   |
-| `toY`           | `double` | Destination Y coordinate.                                                   |
-| `toZ`           | `double` | Destination Z coordinate.                                                   |
-| `toDimension`   | `string` | Destination dimension ID.                                                   |
-| `teleportType`  | `string` | One of `coordinate`, `request`, `home`, `back`, or `warp`.                  |
-| `player`        | `string` | Name of the player being teleported.                                        |
-| `otherPlayer`   | `string` | Name of the other player involved in a request, or an empty string if none. |
+| Variable       | Type       | Description                                                                 |
+|----------------|------------|-----------------------------------------------------------------------------|
+| `from`         | `position` | Source position with `.x`, `.y`, `.z`, and `.dimension` properties.         |
+| `to`           | `position` | Destination position with `.x`, `.y`, `.z`, and `.dimension` properties.    |
+| `teleportType` | `string`   | One of `coordinate`, `request`, `home`, `back`, or `warp`.                  |
+| `player`       | `string`   | Name of the player being teleported.                                        |
+| `otherPlayer`  | `string`   | Name of the other player involved in a request, or an empty string if none. |
 
 `crossDimension` is intentionally not provided. Determine it inside the script:
 
 ```jexl
-var crossDimension = fromDimension != toDimension;
+var crossDimension = from.dimension != to.dimension;
 ```
 
 ### Return Value and Built-in Methods
 
 - The last expression must return an `int`. Integer literals such as `10` already satisfy this requirement.
 - Java's built-in `Math` methods are available through the `math` namespace, for example `math:sqrt(...)`, `math:max(...)`, and `math:round(...)`.
+- Full system shell access is available through the `shell` namespace.
 - JEXL runs in strict mode, so undefined variables and invalid expressions are treated as errors.
 - Some methods return another numeric type. Convert it explicitly when necessary:
 
@@ -258,9 +253,42 @@ var crossDimension = fromDimension != toDimension;
 math:round(rawPrice).intValue();
 ```
 
+### Shell Commands
+
+> [!CAUTION]
+> The `shell` namespace executes arbitrary commands with the same operating-system permissions as the Minecraft server. Only use algorithms from fully trusted sources. Shell commands are synchronous and therefore block the server thread until they finish. They are also executed during algorithm validation, including config loading, editing, and importing.
+
+| Method                   | Return type   | Description                                                                    |
+|--------------------------|---------------|--------------------------------------------------------------------------------|
+| `shell:execute(command)` | `ShellResult` | Executes through `/bin/sh -c` on Unix-like systems or `cmd.exe /c` on Windows. |
+| `shell:run(command)`     | `string`      | Returns standard output, or throws an error when the exit code is non-zero.    |
+| `shell:runInt(command)`  | `int`         | Requires standard output to contain exactly one valid integer.                 |
+
+`ShellResult` exposes `exitCode`, `stdout`, and `stderr`:
+
+```jexl
+var result = shell:execute("python3 /opt/paytp/price.py");
+result.exitCode == 0 ? result.stdoutInt() : 0;
+```
+
+For a price algorithm, `runInt` is usually the simplest form:
+
+```jexl
+shell:runInt("python3 /opt/paytp/price.py '" + player + "'");
+```
+
 ### Example Algorithm
 
 ```jexl
+// Available variables:
+// from, to: positions with .x, .y, .z, and .dimension
+// teleportType: "coordinate", "request", "home", "back", or "warp"
+// player: name of the player being teleported
+// otherPlayer: name of the other request player, or an empty string
+//
+// Java's built-in Math methods are available through the "math" namespace.
+// Full system shell access is available through the "shell" namespace.
+
 var basePrice = 1;
 var baseRadius = 10.0;
 var pricePerBlock = 0.01;
@@ -269,11 +297,11 @@ var homeMultiplier = 0.5;
 var backMultiplier = 0.8;
 var warpMultiplier = 0.5;
 
-var deltaX = fromX - toX;
-var deltaY = fromY - toY;
-var deltaZ = fromZ - toZ;
+var deltaX = from.x - to.x;
+var deltaY = from.y - to.y;
+var deltaZ = from.z - to.z;
 var distance = math:sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
-var multiplier = fromDimension != toDimension ? crossDimensionMultiplier : 1.0;
+var multiplier = from.dimension != to.dimension ? crossDimensionMultiplier : 1.0;
 
 if (teleportType == "home") {
   multiplier = multiplier * homeMultiplier;
@@ -306,13 +334,13 @@ If the **Cloth Config API** is installed, all settings can be adjusted directly 
 
 ## Compatibility & Deployment
 
-| Type                     | Supported                            |
-|--------------------------|--------------------------------------|
-| Fabric Loader            | ✅                                    |
-| Server Only              | ✅                                    |
-| Client UI (Cloth Config) | ✅                                    |
-| Multi-language Support   | en_us / zh_cn / zh_tw                |
-| Minecraft Version        | 26.1+<br/>1.21.4 ~ 1.21.11 (legacy)  |
+| Type                     | Supported                           |
+|--------------------------|-------------------------------------|
+| Fabric Loader            | ✅                                  |
+| Server Only              | ✅                                  |
+| Client UI (Cloth Config) | ✅                                  |
+| Multi-language Support   | en_us / zh_cn / zh_tw               |
+| Minecraft Version        | 26.1+<br/>1.21.4 ~ 1.21.11 (legacy) |
 
 ---
 

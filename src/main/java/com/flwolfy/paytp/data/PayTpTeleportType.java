@@ -1,5 +1,11 @@
 package com.flwolfy.paytp.data;
 
+/**
+ * Identifies the operation that initiated a priced teleport.
+ *
+ * <p>The serialized names returned by {@link #toString()} are exposed to JEXL as
+ * {@code teleportType}.</p>
+ */
 public enum PayTpTeleportType {
   COORDINATE("coordinate"),
   REQUEST("request"),
@@ -13,6 +19,11 @@ public enum PayTpTeleportType {
     this.name = name;
   }
 
+  /**
+   * Returns the stable lowercase name exposed to scripts.
+   *
+   * @return the script-facing teleport type name
+   */
   @Override
   public String toString() {
     return name;

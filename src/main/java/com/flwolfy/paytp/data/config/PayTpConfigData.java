@@ -62,13 +62,13 @@ public record PayTpConfigData(
   ) {
     public static final PayTpScript DEFAULT_ALGORITHM = new PayTpScript("""
         // Available variables:
-        // fromX, fromY, fromZ, fromDimension
-        // toX, toY, toZ, toDimension
+        // from, to: positions with .x, .y, .z, and .dimension
         // teleportType: "coordinate", "request", "home", "back", or "warp"
         // player: name of the player being teleported
         // otherPlayer: name of the other request player, or an empty string
         //
         // Java's built-in Math methods are available through the "math" namespace.
+        // Full system shell access is available through the "shell" namespace.
 
         var basePrice = 1;
         var baseRadius = 10.0;
@@ -79,28 +79,28 @@ public record PayTpConfigData(
         var warpMultiplier = 0.5;
         var netherCoordinateScale = 8.0;
 
-        var crossDimension = fromDimension != toDimension;
-        var deltaX = fromX - toX;
-        var deltaY = fromY - toY;
-        var deltaZ = fromZ - toZ;
+        var crossDimension = from.dimension != to.dimension;
+        var deltaX = from.x - to.x;
+        var deltaY = from.y - to.y;
+        var deltaZ = from.z - to.z;
 
         if (crossDimension) {
-          if (fromDimension == "minecraft:the_end") {
-            deltaX = fromX;
-            deltaY = fromY;
-            deltaZ = fromZ;
-          } else if (toDimension == "minecraft:the_end") {
-            deltaX = toX;
-            deltaY = toY;
-            deltaZ = toZ;
-          } else if (fromDimension == "minecraft:the_nether") {
-            deltaX = fromX * netherCoordinateScale - toX;
-            deltaY = fromY * netherCoordinateScale - toY;
-            deltaZ = fromZ * netherCoordinateScale - toZ;
-          } else if (toDimension == "minecraft:the_nether") {
-            deltaX = fromX - toX / netherCoordinateScale;
-            deltaY = fromY - toY / netherCoordinateScale;
-            deltaZ = fromZ - toZ / netherCoordinateScale;
+          if (from.dimension == "minecraft:the_end") {
+            deltaX = from.x;
+            deltaY = from.y;
+            deltaZ = from.z;
+          } else if (to.dimension == "minecraft:the_end") {
+            deltaX = to.x;
+            deltaY = to.y;
+            deltaZ = to.z;
+          } else if (from.dimension == "minecraft:the_nether") {
+            deltaX = from.x * netherCoordinateScale - to.x;
+            deltaY = from.y * netherCoordinateScale - to.y;
+            deltaZ = from.z * netherCoordinateScale - to.z;
+          } else if (to.dimension == "minecraft:the_nether") {
+            deltaX = from.x - to.x / netherCoordinateScale;
+            deltaY = from.y - to.y / netherCoordinateScale;
+            deltaZ = from.z - to.z / netherCoordinateScale;
           }
         }
 
@@ -206,6 +206,11 @@ public record PayTpConfigData(
       )
   );
 
+  /**
+   * Encodes the configured payment-storage options as a bit mask.
+   *
+   * @return the combined {@link PayTpSettingFlags} mask
+   */
   public int combineSettingFlags() {
     Setting.Flag flag = setting.flag();
     return Flags.combine(

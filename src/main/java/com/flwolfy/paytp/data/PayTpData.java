@@ -16,6 +16,9 @@ import java.util.Locale;
 /**
  * Represents a teleport point: (world, position).
  * Two PayTpData are equal if they point to the same world and have nearly identical coordinates.
+ *
+ * @param world the dimension containing the point
+ * @param pos the position within the dimension
  */
 public record PayTpData(
     ResourceKey<Level> world,
@@ -35,7 +38,12 @@ public record PayTpData(
   );
 
   /**
-   * Another constructor support for serialization
+   * Creates a teleport point from its serialized dimension identifier and coordinates.
+   *
+   * @param dimensionId the namespaced dimension identifier
+   * @param x the X coordinate
+   * @param y the Y coordinate
+   * @param z the Z coordinate
    */
   public PayTpData(String dimensionId, double x, double y, double z) {
     this(ResourceKey.create(
@@ -71,4 +79,3 @@ public record PayTpData(
     );
   }
 }
-

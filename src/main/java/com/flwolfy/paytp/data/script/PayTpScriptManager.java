@@ -9,7 +9,15 @@ import org.apache.commons.jexl3.JexlContext;
 import org.apache.commons.jexl3.JexlEngine;
 import org.apache.commons.jexl3.JexlScript;
 import org.apache.commons.jexl3.MapContext;
+import org.apache.commons.jexl3.introspection.JexlPermissions;
 
+/**
+ * Compiles and evaluates PayTp JEXL scripts.
+ *
+ * <p>The manager uses strict evaluation, caches compiled scripts by source, and exposes the
+ * {@code math} and {@code shell} namespaces. Compiled scripts are thread-safe to retrieve from
+ * the cache, while callers remain responsible for supplying appropriate argument values.</p>
+ */
 public class PayTpScriptManager {
 
   private static final PayTpScriptManager INSTANCE = new PayTpScriptManager();
@@ -21,7 +29,16 @@ public class PayTpScriptManager {
     engine = new JexlBuilder()
         .strict(true)
         .silent(false)
-        .namespaces(Map.of("math", Math.class))
+        .permissions(new JexlPermissions.ClassPermissions(
+            JexlPermissions.SECURE,
+            PayTpScriptPosition.class,
+            PayTpShellExecutor.class,
+            PayTpShellExecutor.ShellResult.class
+        ))
+        .namespaces(Map.of(
+            "math", Math.class,
+            "shell", PayTpShellExecutor.class
+        ))
         .create();
     scriptCache = new ConcurrentHashMap<>();
   }
@@ -30,6 +47,17 @@ public class PayTpScriptManager {
     return INSTANCE;
   }
 
+  /**
+   * Evaluates a script with the supplied named arguments and verifies its result type.
+   *
+   * @param script the script to compile and execute
+   * @param resultType the exact reference type expected from the script
+   * @param arguments key-value pairs exposed as variables in the JEXL context
+   * @param <T> the expected result type
+   * @return the evaluated result cast to {@code resultType}
+   * @throws IllegalArgumentException if the result is null or has a different type
+   * @throws org.apache.commons.jexl3.JexlException if compilation or execution fails
+   */
   @SafeVarargs
   public final <T> T evaluate(
       PayTpScript script,
@@ -52,24 +80,6 @@ public class PayTpScriptManager {
       );
     }
     return resultType.cast(result);
-  }
-
-  public void validate(PayTpScript script) {
-    compile(script);
-  }
-
-  public Optional<String> validationError(PayTpScript script) {
-    try {
-      validate(script);
-      return Optional.empty();
-    } catch (Exception e) {
-      String message = e.getMessage();
-      return Optional.of(
-          message == null || message.isBlank()
-              ? e.getClass().getSimpleName()
-              : message
-      );
-    }
   }
 
   private JexlScript compile(PayTpScript script) {

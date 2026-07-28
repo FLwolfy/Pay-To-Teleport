@@ -21,6 +21,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.slf4j.Logger;
 
+/**
+ * Loads, validates, normalizes, updates, and persists the PayTp configuration.
+ *
+ * <p>Reads and writes are guarded by a shared lock. Missing fields are recursively populated from
+ * {@link PayTpConfigData#DEFAULT}, and invalid files are replaced with the default configuration.</p>
+ */
 public class PayTpConfigManager {
 
   private static final Logger LOGGER = PayTpMod.LOGGER;
@@ -55,6 +61,11 @@ public class PayTpConfigManager {
     return instance;
   }
 
+  /**
+   * Returns the current immutable configuration snapshot under the read lock.
+   *
+   * @return the active configuration
+   */
   public PayTpConfigData data() {
     lock.readLock().lock();
     try {
@@ -150,6 +161,12 @@ public class PayTpConfigManager {
   // ====== Update Config =======
   // ============================
 
+  /**
+   * Validates, persists, and activates a replacement configuration.
+   *
+   * @param newData the complete replacement configuration
+   * @return {@code true} if validation and persistence succeeded; otherwise {@code false}
+   */
   public boolean update(PayTpConfigData newData) {
     if (newData == null) {
       LOGGER.warn("Attempted to update with null data, ignoring");
@@ -175,6 +192,11 @@ public class PayTpConfigManager {
     PayTpCalculator.validatePriceAlgorithm(data.price().algorithm());
   }
 
+  /**
+   * Reloads the configuration from disk and replaces the active snapshot.
+   *
+   * @return {@code true} if the reload completed; otherwise {@code false}
+   */
   public boolean reload() {
     lock.writeLock().lock();
     try {

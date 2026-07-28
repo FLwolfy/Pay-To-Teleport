@@ -32,22 +32,22 @@ See the English document [here](./README.md).
 
 *显示均为默认配置下指令名，其中<>表示必填参数，()表示可选参数*
 
-| 命令                      | 功能                   |
-|-------------------------|----------------------|
-| `/ptphelp`              | 指令指南。                |
-| `/ptp (维度) <x> <y> <z>` | 传送到（指定维度的）指定坐标。      |
-| `/ptpto <玩家>`           | 请求传送到指定玩家。           |
-| `/ptphere <玩家>`         | 请求对方传送至自己当前位置。       |
-| `/ptpaccept (玩家)`       | 接受（指定玩家的）传送请求。       |
-| `/ptpdeny (玩家)`         | 拒绝（指定玩家的）传送请求。       |
-| `/ptpcancel (玩家)`       | 取消（指定玩家的）传送请求。       |
-| `/ptpback`              | 回到上一次传送点。            |
-| `/ptphome`              | 回家。                  |
-| `/ptphome set`          | 设置家为当前位置。            |
-| `/ptpwarp <名称>`         | 前往指定名称的全服传送点。        |
+| 命令                      | 功能                                     |
+|---------------------------|------------------------------------------|
+| `/ptphelp`                | 指令指南。                               |
+| `/ptp (维度) <x> <y> <z>` | 传送到（指定维度的）指定坐标。           |
+| `/ptpto <玩家>`           | 请求传送到指定玩家。                     |
+| `/ptphere <玩家>`         | 请求对方传送至自己当前位置。             |
+| `/ptpaccept (玩家)`       | 接受（指定玩家的）传送请求。             |
+| `/ptpdeny (玩家)`         | 拒绝（指定玩家的）传送请求。             |
+| `/ptpcancel (玩家)`       | 取消（指定玩家的）传送请求。             |
+| `/ptpback`                | 回到上一次传送点。                       |
+| `/ptphome`                | 回家。                                   |
+| `/ptphome set`            | 设置家为当前位置。                       |
+| `/ptpwarp <名称>`         | 前往指定名称的全服传送点。               |
 | `/ptpwarp create <名称>`  | 创建新的全服传送点（需在激活信标光束内） |
-| `/ptpwarp delete <名称>`  | 删除指定名称的全服传送点         |
-| `/ptpwarp list (页数)`    | 查看全服所有的传送点           |
+| `/ptpwarp delete <名称>`  | 删除指定名称的全服传送点                 |
+| `/ptpwarp list (页数)`    | 查看全服所有的传送点                     |
 
 ---
 
@@ -97,7 +97,7 @@ See the English document [here](./README.md).
     "currencyItem": "minecraft:diamond",
     "minPrice": 1,
     "maxPrice": 64,
-    "algorithm": "10"
+    "algorithm": "// Available variables:\n// from, to: positions with .x, .y, .z, and .dimension\n// teleportType: \"coordinate\", \"request\", \"home\", \"back\", or \"warp\"\n// player: name of the player being teleported\n// otherPlayer: name of the other request player, or an empty string\n//\n// Java\u0027s built-in Math methods are available through the \"math\" namespace.\n// Full system shell access is available through the \"shell\" namespace.\n\nvar basePrice \u003d 1;\nvar baseRadius \u003d 10.0;\nvar pricePerBlock \u003d 0.01;\nvar crossDimensionMultiplier \u003d 1.5;\nvar homeMultiplier \u003d 0.5;\nvar backMultiplier \u003d 0.8;\nvar warpMultiplier \u003d 0.5;\nvar netherCoordinateScale \u003d 8.0;\n\nvar crossDimension \u003d from.dimension !\u003d to.dimension;\nvar deltaX \u003d from.x - to.x;\nvar deltaY \u003d from.y - to.y;\nvar deltaZ \u003d from.z - to.z;\n\nif (crossDimension) {\n  if (from.dimension \u003d\u003d \"minecraft:the_end\") {\n    deltaX \u003d from.x;\n    deltaY \u003d from.y;\n    deltaZ \u003d from.z;\n  } else if (to.dimension \u003d\u003d \"minecraft:the_end\") {\n    deltaX \u003d to.x;\n    deltaY \u003d to.y;\n    deltaZ \u003d to.z;\n  } else if (from.dimension \u003d\u003d \"minecraft:the_nether\") {\n    deltaX \u003d from.x * netherCoordinateScale - to.x;\n    deltaY \u003d from.y * netherCoordinateScale - to.y;\n    deltaZ \u003d from.z * netherCoordinateScale - to.z;\n  } else if (to.dimension \u003d\u003d \"minecraft:the_nether\") {\n    deltaX \u003d from.x - to.x / netherCoordinateScale;\n    deltaY \u003d from.y - to.y / netherCoordinateScale;\n    deltaZ \u003d from.z - to.z / netherCoordinateScale;\n  }\n}\n\nvar distance \u003d math:sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);\nvar multiplier \u003d crossDimension ? crossDimensionMultiplier : 1.0;\n\nif (teleportType \u003d\u003d \"home\") {\n  multiplier \u003d multiplier * homeMultiplier;\n} else if (teleportType \u003d\u003d \"back\") {\n  multiplier \u003d multiplier * backMultiplier;\n} else if (teleportType \u003d\u003d \"warp\") {\n  multiplier \u003d multiplier * warpMultiplier;\n}\n\nvar distanceBeyondBase \u003d distance \u003e baseRadius ? distance - baseRadius : 0;\n\nmath:round((basePrice + distanceBeyondBase * pricePerBlock) * multiplier).intValue();"
   },
   "setting": {
     "effect": {
@@ -120,19 +120,19 @@ See the English document [here](./README.md).
 
 ### 通用设置
 
-| 字段名          | 类型       | 说明                                           |
-|--------------|----------|----------------------------------------------|
-| `language`   | `string` | 语言文件（如 `zh_cn`, `en_us`, `zh_tw`），影响提示与帮助信息。 |
-| `helpCommand` | `string` | 显示 PayTp 指令指南的命令（默认 `/ptphelp`）。              |
+| 字段名          | 类型     | 说明                                                            |
+|-----------------|----------|-----------------------------------------------------------------|
+| `language`      | `string` | 语言文件 （如 `zh_cn`, `en_us`, `zh_tw`），影响提示与帮助信息。 |
+| `helpCommand`   | `string` | 显示 PayTp 指令指南的命令（默认 `/ptphelp`）。                  |
 
 ---
 
 ### 坐标传送
 
-| 字段名                 | 类型        | 说明                                             |
-|---------------------|-----------|------------------------------------------------|
-| `coordinateCommand` | `string`  | 坐标传送命令（默认 `/ptp`）。                            |
-| `allowCrossDim`     | `boolean` | 是否允许所有传送方式跨越维度。关闭时不会注册或显示坐标命令的维度参数。         |
+| 字段名              | 类型      | 说明                                                                   |
+|---------------------|-----------|------------------------------------------------------------------------|
+| `coordinateCommand` | `string`  | 坐标传送命令（默认 `/ptp`）。                                          |
+| `allowCrossDim`     | `boolean` | 是否允许所有传送方式跨越维度。关闭时不会注册或显示坐标命令的维度参数。 |
 
 ---
 
@@ -140,46 +140,46 @@ See the English document [here](./README.md).
 
 #### 请求命令
 
-| 字段名             | 类型       | 说明                                 |
-|-----------------|----------|------------------------------------|
-| `toCommand`     | `string` | 请求传送至对方的命令（默认 `/ptpto`）。          |
+| 字段名          | 类型     | 说明                                                  |
+|-----------------|----------|-------------------------------------------------------|
+| `toCommand`     | `string` | 请求传送至对方的命令（默认 `/ptpto`）。               |
 | `hereCommand`   | `string` | 请求对方传送至自己当前位置的命令（默认 `/ptphere`）。 |
-| `acceptCommand` | `string` | 接受请求的命令（默认 `/ptpaccept`）           |
-| `denyCommand`   | `string` | 拒绝请求的命令（默认 `/ptpdeny`）             |
-| `cancelCommand` | `string` | 取消自己发出的请求（默认 `/ptpcancel`）         |
+| `acceptCommand` | `string` | 接受请求的命令（默认 `/ptpaccept`）                   |
+| `denyCommand`   | `string` | 拒绝请求的命令（默认 `/ptpdeny`）                     |
+| `cancelCommand` | `string` | 取消自己发出的请求（默认 `/ptpcancel`）               |
 
 #### 配置
 
-| 字段名          | 类型    | 说明          |
-|--------------|-------|-------------|
-| `expireTime` | `int` | 传送请求超时时间（秒） |
+| 字段名         | 类型    | 说明                   |
+|----------------|---------|------------------------|
+| `expireTime`   | `int`   | 传送请求超时时间（秒） |
 
 ---
 
 ### 家系统
 
-| 字段名           | 类型       | 说明                  |
-|---------------|----------|---------------------|
-| `homeCommand` | `string` | 回家命令（默认 `/ptphome`）。 |
+| 字段名           | 类型     | 说明                          |
+|------------------|----------|-------------------------------|
+| `homeCommand`    | `string` | 回家命令（默认 `/ptphome`）。 |
 
 ---
 
 ### 回溯系统
 
-| 字段名            | 类型       | 说明                        |
-|----------------|----------|---------------------------|
-| `backCommand`  | `string` | 回到上一个位置的命令（默认 `/ptpback`）。 |
-| `maxBackStack` | `int`    | 最多可保存的历史位置数量。             |
+| 字段名         | 类型       | 说明                                      |
+|----------------|------------|-------------------------------------------|
+| `backCommand`  | `string`   | 回到上一个位置的命令（默认 `/ptpback`）。 |
+| `maxBackStack` | `int`      | 最多可保存的历史位置数量。                |
 
 ---
 
 ### 传送点系统
 
-| 字段名                | 类型       | 说明                            |
-|--------------------|----------|-------------------------------|
-| `warpCommand`      | `string` | 前往传送点的命令（默认 `/ptpwarp`）       |
-| `maxInactiveTicks` | `int`    | 当绑定的传送点对应信标失效后，该传送点被删除前的冷却时间。 |
-| `checkPeriodTicks` | `int`    | 传送点与信标的匹配检查间隔时间。              |
+| 字段名             | 类型      | 说明                                                       |
+|--------------------|-----------|------------------------------------------------------------|
+| `warpCommand`      | `string`  | 前往传送点的命令（默认 `/ptpwarp`）                        |
+| `maxInactiveTicks` | `int`     | 当绑定的传送点对应信标失效后，该传送点被删除前的冷却时间。 |
+| `checkPeriodTicks` | `int`     | 传送点与信标的匹配检查间隔时间。                           |
 
 ---
 
@@ -188,17 +188,17 @@ See the English document [here](./README.md).
 
 #### 货币
 
-| 字段名            | 类型       | 说明                                 |
-|----------------|----------|------------------------------------|
-| `currencyItem` | `string` | 支付货币的物品 ID，例如 `minecraft:diamond`。 |
+| 字段名           | 类型      | 说明                                          |
+|------------------|-----------|-----------------------------------------------|
+| `currencyItem`   | `string ` | 支付货币的物品 ID，例如 `minecraft:diamond`。 |
 
 #### 价格范围与算法
 
-| 字段名          | 类型       | 说明                                      |
-|--------------|----------|-----------------------------------------|
-| `minPrice`   | `int`    | 强制控制的最终价格下限，必须为非负整数。                   |
-| `maxPrice`   | `int`    | 强制控制的最终价格上限，必须不小于 `minPrice`；设为 `0` 禁用价格计算。 |
-| `algorithm`  | `string` | 同时计算距离和原始价格的 JEXL 脚本，必须返回 `int`。        |
+| 字段名         | 类型     | 说明                                                                   |
+|----------------|----------|------------------------------------------------------------------------|
+| `minPrice`     | `int`    | 强制控制的最终价格下限，必须为非负整数。                               |
+| `maxPrice`     | `int`    | 强制控制的最终价格上限，必须不小于 `minPrice`；设为 `0` 禁用价格计算。 |
+| `algorithm`    | `string` | 同时计算距离和原始价格的 JEXL 脚本，必须返回 `int`。                   |
 
 ---
 
@@ -206,19 +206,19 @@ See the English document [here](./README.md).
 
 #### 效果
 
-| 字段名              | 类型        | 说明            |
-|------------------|-----------|---------------|
+| 字段名           | 类型      | 说明                       |
+|------------------|-----------|----------------------------|
 | `particleEffect` | `boolean` | 是否启用传送时的粒子效果。 |
 | `soundEffect`    | `boolean` | 是否启用传送时的声音效果。 |
 
 #### 特性开关
 
-| 字段名                    | 类型        | 说明             |
-|------------------------|-----------|----------------|
+| 字段名                 | 类型      | 说明                         |
+|------------------------|-----------|------------------------------|
 | `allowEnderChest`      | `boolean` | 是否允许使用末影箱中的货币。 |
-| `prioritizeEnderChest` | `boolean` | 是否优先从末影箱扣款。    |
+| `prioritizeEnderChest` | `boolean` | 是否优先从末影箱扣款。       |
 | `allowShulkerBox`      | `boolean` | 是否允许使用潜影盒中的货币。 |
-| `prioritizeShulkerBox` | `boolean` | 是否优先从潜影盒扣款。    |
+| `prioritizeShulkerBox` | `boolean` | 是否优先从潜影盒扣款。       |
 
 ---
 
@@ -228,30 +228,25 @@ See the English document [here](./README.md).
 
 ### 可用参数
 
-| 参数名             | 类型       | 说明                                                   |
-|-----------------|----------|------------------------------------------------------|
-| `fromX`         | `double` | 传送前的 X 坐标。                                           |
-| `fromY`         | `double` | 传送前的 Y 坐标。                                           |
-| `fromZ`         | `double` | 传送前的 Z 坐标。                                           |
-| `fromDimension` | `string` | 起点维度 ID，例如 `minecraft:overworld`。                    |
-| `toX`           | `double` | 目标 X 坐标。                                             |
-| `toY`           | `double` | 目标 Y 坐标。                                             |
-| `toZ`           | `double` | 目标 Z 坐标。                                             |
-| `toDimension`   | `string` | 目标维度 ID。                                             |
-| `teleportType`  | `string` | `coordinate`、`request`、`home`、`back` 或 `warp`。       |
-| `player`        | `string` | 被传送玩家的名称。                                           |
-| `otherPlayer`   | `string` | 请求中另一位玩家的名称；不存在时为空字符串。                              |
+| 参数名         | 类型       | 说明                                                        |
+|----------------|------------|-------------------------------------------------------------|
+| `from`         | `position` | 传送起点，包含 `.x`、`.y`、`.z` 和 `.dimension` 属性。      |
+| `to`           | `position` | 传送终点，包含 `.x`、`.y`、`.z` 和 `.dimension` 属性。      |
+| `teleportType` | `string`   | `coordinate`、`request`、`home`、`back` 或 `warp`。         |
+| `player`       | `string`   | 被传送玩家的名称。                                          |
+| `otherPlayer`  | `string`   | 请求中另一位玩家的名称；不存在时为空字符串。                |
 
 脚本不会收到 `crossDimension` 参数，需要现场判断：
 
 ```jexl
-var crossDimension = fromDimension != toDimension;
+var crossDimension = from.dimension != to.dimension;
 ```
 
 ### 返回值与内置方法
 
 - 最后一个表达式必须返回 `int`。整数常量（例如 `10`）本身就是有效返回值。
 - 可以通过 `math` 命名空间直接使用 Java 内置 `Math` 方法，例如 `math:sqrt(...)`、`math:max(...)` 和 `math:round(...)`。
+- 可以通过 `shell` 命名空间使用完整的系统 Shell。
 - JEXL 使用严格模式，未定义变量和无效表达式都会被视为错误。
 - 某些方法会返回其他数值类型，必要时需要显式转换：
 
@@ -259,9 +254,42 @@ var crossDimension = fromDimension != toDimension;
 math:round(rawPrice).intValue();
 ```
 
+### Shell 命令
+
+> [!CAUTION]
+> `shell` 命名空间会以 Minecraft 服务端进程所拥有的操作系统权限执行任意命令。请只使用完全可信的算法。Shell 命令为同步执行，在结束前会阻塞服务端线程；算法校验时也会执行命令，包括加载配置、编辑和导入算法时。
+
+| 方法                     | 返回类型      | 说明                                                                 |
+|--------------------------|---------------|----------------------------------------------------------------------|
+| `shell:execute(command)` | `ShellResult` | 类 Unix 系统通过 `/bin/sh -c` 执行，Windows 通过 `cmd.exe /c` 执行。 |
+| `shell:run(command)`     | `string`      | 返回标准输出；退出码不为 0 时抛出错误。                              |
+| `shell:runInt(command)`  | `int`         | 要求标准输出只包含一个有效整数。                                     |
+
+`ShellResult` 提供 `exitCode`、`stdout` 和 `stderr`：
+
+```jexl
+var result = shell:execute("python3 /opt/paytp/price.py");
+result.exitCode == 0 ? result.stdoutInt() : 0;
+```
+
+价格算法通常可以直接使用 `runInt`：
+
+```jexl
+shell:runInt("python3 /opt/paytp/price.py '" + player + "'");
+```
+
 ### 算法示例
 
 ```jexl
+// Available variables:
+// from, to: positions with .x, .y, .z, and .dimension
+// teleportType: "coordinate", "request", "home", "back", or "warp"
+// player: name of the player being teleported
+// otherPlayer: name of the other request player, or an empty string
+//
+// Java's built-in Math methods are available through the "math" namespace.
+// Full system shell access is available through the "shell" namespace.
+
 var basePrice = 1;
 var baseRadius = 10.0;
 var pricePerBlock = 0.01;
@@ -270,11 +298,11 @@ var homeMultiplier = 0.5;
 var backMultiplier = 0.8;
 var warpMultiplier = 0.5;
 
-var deltaX = fromX - toX;
-var deltaY = fromY - toY;
-var deltaZ = fromZ - toZ;
+var deltaX = from.x - to.x;
+var deltaY = from.y - to.y;
+var deltaZ = from.z - to.z;
 var distance = math:sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
-var multiplier = fromDimension != toDimension ? crossDimensionMultiplier : 1.0;
+var multiplier = from.dimension != to.dimension ? crossDimensionMultiplier : 1.0;
 
 if (teleportType == "home") {
   multiplier = multiplier * homeMultiplier;
@@ -307,13 +335,13 @@ math:round((basePrice + distanceBeyondBase * pricePerBlock) * multiplier).intVal
 
 ## 兼容性与部署
 
-| 类型                    | 支持                               |
-|-----------------------|----------------------------------|
-| Fabric Loader         | ✅                                |
-| Server Only           | ✅                                |
-| 客户端 UI (Cloth Config) | ✅                                |
-| 多语言支持                 | en_us / zh_cn / zh_tw            |
-| Minecraft 版本          | 26.1+<br/>1.21.4 ~ 1.21.11（不再更新） |
+| 类型                     | 支持                                   |
+|--------------------------|----------------------------------------|
+| Fabric Loader            | ✅                                     |
+| Server Only              | ✅                                     |
+| 客户端 UI (Cloth Config) | ✅                                     |
+| 多语言支持               | en_us / zh_cn / zh_tw                  |
+| Minecraft 版本           | 26.1+<br/>1.21.4 ~ 1.21.11（不再更新） |
 
 ---
 

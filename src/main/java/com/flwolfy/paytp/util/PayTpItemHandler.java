@@ -11,6 +11,9 @@ import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
 
+/**
+ * Resolves currency items and counts or removes them from Minecraft containers.
+ */
 public class PayTpItemHandler {
 
   private PayTpItemHandler() {}
@@ -19,6 +22,8 @@ public class PayTpItemHandler {
    * Gets an item from its full registry ID.
    *
    * @param fullId item ID, such as {@code minecraft:diamond}
+   * @return the registered item
+   * @throws IllegalArgumentException if the identifier is invalid or unknown
    */
   public static Item getItemByStringId(String fullId) {
     Identifier identifier = Identifier.tryParse(fullId);
@@ -32,8 +37,12 @@ public class PayTpItemHandler {
   }
 
   /**
-   * Get item count in an inventory.
-   * @param allowShulkerBox whether to allow counting items in shulker boxes in this inventory or not.
+   * Counts matching items in a container and, optionally, its shulker boxes.
+   *
+   * @param inventory the container to inspect
+   * @param target the item to count
+   * @param allowShulkerBox whether nested shulker contents are included
+   * @return the total matching item count
    */
   public static int getInventoryCount(Container inventory, Item target, boolean allowShulkerBox) {
     int count = 0;
@@ -63,7 +72,12 @@ public class PayTpItemHandler {
   }
 
   /**
-   * Remove target item in the given inventory with maximum amount.
+   * Removes up to a requested amount directly from a container.
+   *
+   * @param inventory the container to modify
+   * @param target the item to remove
+   * @param amount the maximum number of items to remove
+   * @return the amount that could not be removed
    */
   public static int removeInventoryItems(Container inventory, Item target, int amount) {
     int remaining = amount;
@@ -82,7 +96,12 @@ public class PayTpItemHandler {
   }
 
   /**
-   * Remove target item in the shulker boxes in the given inventory with maximum amount.
+   * Removes up to a requested amount from shulker boxes inside a container.
+   *
+   * @param inventory the outer container to modify
+   * @param targetItem the item to remove from nested shulker boxes
+   * @param amount the maximum number of items to remove
+   * @return the amount that could not be removed
    */
   public static int removeShulkerItems(Container inventory, Item targetItem, int amount) {
     final int[] remaining = {amount};

@@ -24,6 +24,9 @@ import net.minecraft.network.chat.Style;
 
 import org.slf4j.Logger;
 
+/**
+ * Reflectively converts the nested PayTp configuration records into Cloth Config categories.
+ */
 public class PayTpClothConfigBuilder {
 
   private static final Logger LOGGER = PayTpMod.LOGGER;
@@ -35,12 +38,26 @@ public class PayTpClothConfigBuilder {
   private final ConfigEntryBuilder entryBuilder;
   private final Map<String, Object> currentFlattenedData;
 
+  /**
+   * Creates a configuration UI builder bound to the supplied Cloth Config objects.
+   *
+   * @param builder the owning config screen builder
+   * @param entryBuilder the factory used to create individual entries
+   */
   public PayTpClothConfigBuilder(ConfigBuilder builder, ConfigEntryBuilder entryBuilder) {
     this.builder = builder;
     this.entryBuilder = entryBuilder;
     this.currentFlattenedData = new ConcurrentHashMap<>();
   }
 
+  /**
+   * Populates the configuration screen and returns a supplier for the edited record.
+   *
+   * @param data the current configuration record
+   * @param defaultData the matching default configuration record
+   * @param <T> the root record type
+   * @return a supplier that reconstructs the edited record, or {@code null} when data is null
+   */
   @SuppressWarnings("unchecked")
   public <T extends Record> Supplier<T> buildConfigUI(T data, T defaultData) {
     if (data == null) return null;

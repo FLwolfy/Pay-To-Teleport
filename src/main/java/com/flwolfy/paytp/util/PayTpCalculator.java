@@ -6,6 +6,7 @@ import com.flwolfy.paytp.data.PayTpTeleportType;
 import com.flwolfy.paytp.data.config.PayTpConfigData;
 import com.flwolfy.paytp.data.script.PayTpScript;
 import com.flwolfy.paytp.data.script.PayTpScriptManager;
+import com.flwolfy.paytp.data.script.PayTpScriptPosition;
 import com.flwolfy.paytp.flag.Flags;
 import com.flwolfy.paytp.flag.PayTpSettingFlags;
 
@@ -18,12 +19,30 @@ import net.minecraft.world.item.Item;
 
 import org.slf4j.Logger;
 
+/**
+ * Calculates teleport prices and manages currency balance and payment operations.
+ */
 public class PayTpCalculator {
 
   private static final Logger LOGGER = PayTpMod.LOGGER;
 
   private PayTpCalculator() {}
 
+  /**
+   * Evaluates and clamps the configured price algorithm for one teleport.
+   *
+   * <p>A zero maximum price bypasses script execution. If a custom algorithm fails, the default
+   * algorithm is evaluated with the same arguments before the result is clamped.</p>
+   *
+   * @param from the player's current location
+   * @param to the teleport destination
+   * @param teleportType the operation that initiated the teleport
+   * @param player the name of the player being teleported
+   * @param otherPlayer the other request participant, or an empty string
+   * @param priceConfig the price range, currency, and algorithm configuration
+   * @return the final price within the configured inclusive range
+   * @throws IllegalStateException if the default algorithm fails
+   */
   public static int calculatePrice(
       PayTpData from,
       PayTpData to,
@@ -76,38 +95,47 @@ public class PayTpCalculator {
     return PayTpScriptManager.getInstance().evaluate(
         algorithm,
         Integer.class,
-        Map.entry("fromX", from.pos().x),
-        Map.entry("fromY", from.pos().y),
-        Map.entry("fromZ", from.pos().z),
-        Map.entry("fromDimension", from.world().identifier().toString()),
-        Map.entry("toX", to.pos().x),
-        Map.entry("toY", to.pos().y),
-        Map.entry("toZ", to.pos().z),
-        Map.entry("toDimension", to.world().identifier().toString()),
+        Map.entry("from", PayTpScriptPosition.from(from)),
+        Map.entry("to", PayTpScriptPosition.from(to)),
         Map.entry("teleportType", teleportType.toString()),
         Map.entry("player", player),
         Map.entry("otherPlayer", otherPlayer)
     );
   }
 
+  /**
+   * Compiles and test-executes a price algorithm with representative arguments.
+   *
+   * <p>This validation performs real script execution, including any shell commands contained in
+   * the script.</p>
+   *
+   * @param algorithm the algorithm to validate
+   * @throws RuntimeException if compilation, execution, or result type validation fails
+   */
   public static void validatePriceAlgorithm(PayTpScript algorithm) {
     PayTpScriptManager.getInstance().evaluate(
         algorithm,
         Integer.class,
-        Map.entry("fromX", 0.0),
-        Map.entry("fromY", 64.0),
-        Map.entry("fromZ", 0.0),
-        Map.entry("fromDimension", "minecraft:overworld"),
-        Map.entry("toX", 100.0),
-        Map.entry("toY", 64.0),
-        Map.entry("toZ", 100.0),
-        Map.entry("toDimension", "minecraft:overworld"),
+        Map.entry("from", new PayTpScriptPosition(
+            0.0, 64.0, 0.0, "minecraft:overworld"
+        )),
+        Map.entry("to", new PayTpScriptPosition(
+            100.0, 64.0, 100.0, "minecraft:overworld"
+        )),
         Map.entry("teleportType", PayTpTeleportType.COORDINATE.toString()),
         Map.entry("player", "Player"),
         Map.entry("otherPlayer", "")
     );
   }
 
+  /**
+   * Counts all available currency permitted by the configured storage flags.
+   *
+   * @param currencyItemFullId the namespaced currency item identifier
+   * @param player the player whose accessible storage is inspected
+   * @param settingFlags combined {@link PayTpSettingFlags} values
+   * @return the total number of matching currency items
+   */
   public static int checkBalance(
       String currencyItemFullId,
       Player player,
@@ -123,6 +151,15 @@ public class PayTpCalculator {
     return totalCount;
   }
 
+  /**
+   * Removes a price from the player's permitted storage in configured priority order.
+   *
+   * @param currencyItemFullId the namespaced currency item identifier
+   * @param player the player being charged
+   * @param price the number of items to remove
+   * @param configFlags combined {@link PayTpSettingFlags} values
+   * @return {@code true} when the requested amount was removed; otherwise {@code false}
+   */
   public static boolean proceedPayment(
       String currencyItemFullId,
       Player player,

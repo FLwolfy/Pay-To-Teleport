@@ -18,6 +18,9 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 
+/**
+ * Manages persistent server warps and monitors their associated beacon beams.
+ */
 public class PayTpWarpManager {
 
   private static final Logger LOGGER = PayTpMod.LOGGER;
@@ -42,12 +45,30 @@ public class PayTpWarpManager {
     return instance;
   }
 
+  /**
+   * Sets how often beacon-backed warps are checked.
+   *
+   * @param checkPeriodTicks the interval in server ticks
+   */
   public void setCheckPeriodTicks(int checkPeriodTicks) {
     this.checkPeriodTicks = checkPeriodTicks;
   }
 
+  /**
+   * Sets how long an inactive beacon may remain before its warp is removed.
+   *
+   * @param maxInactiveTicks the inactivity limit in server ticks
+   */
   public void setMaxInactiveTicks(int maxInactiveTicks) {
     this.maxInactiveTicks = maxInactiveTicks;
+  }
+
+  /**
+   * Clears the beacon check interval and all accumulated inactivity durations.
+   */
+  public void resetTimers() {
+    tickCounter = 0;
+    warpTimers.clear();
   }
 
   private PayTpWarpState getState(ServerLevel world) {
@@ -59,6 +80,12 @@ public class PayTpWarpManager {
   // ====== Warp ======= //
   // =================== //
 
+  /**
+   * Advances beacon monitoring and removes warps whose beacon is missing or inactive too long.
+   *
+   * @param server the active Minecraft server
+   * @param onRemove callback invoked with each removed warp name
+   */
   public void checkWarpState(MinecraftServer server, Consumer<String> onRemove) {
     tickCounter++;
     if (tickCounter % checkPeriodTicks != 0) {
@@ -117,6 +144,13 @@ public class PayTpWarpManager {
     }
   }
 
+  /**
+   * Creates a warp at the player's position when the player stands in an active beacon beam.
+   *
+   * @param player the player creating the warp
+   * @param name the globally unique warp name
+   * @return {@code true} if the warp was created
+   */
   public boolean createWarp(ServerPlayer player, String name) {
     MinecraftServer server = player.level().getServer();
     ServerLevel world = server.overworld();
@@ -147,24 +181,51 @@ public class PayTpWarpManager {
     return getState(world).setWarp(name, warpData, beaconData);
   }
 
+  /**
+   * Checks whether a named global warp exists.
+   *
+   * @param player a player used to resolve the current server
+   * @param name the warp name
+   * @return {@code true} when the warp exists
+   */
   public boolean hasWarp(ServerPlayer player, String name) {
     MinecraftServer server = player.level().getServer();
     ServerLevel overworld = server.overworld();
     return getState(overworld).hasWarp(name);
   }
 
+  /**
+   * Deletes a named global warp.
+   *
+   * @param player a player used to resolve the current server
+   * @param name the warp name
+   * @return {@code true} if an existing warp was removed
+   */
   public boolean deleteWarp(ServerPlayer player, String name) {
     MinecraftServer server = player.level().getServer();
     ServerLevel overworld = server.overworld();
     return getState(overworld).removeWarp(name);
   }
 
+  /**
+   * Retrieves a named global warp destination.
+   *
+   * @param player a player used to resolve the current server
+   * @param name the warp name
+   * @return the warp destination, or {@code null} when it does not exist
+   */
   public PayTpData getWarp(ServerPlayer player, String name) {
     MinecraftServer server = player.level().getServer();
     ServerLevel overworld = server.overworld();
     return getState(overworld).getWarp(name);
   }
 
+  /**
+   * Returns all global warp destinations.
+   *
+   * @param player a player used to resolve the current server
+   * @return the stored warp map
+   */
   public Map<String, PayTpData> getAllWarps(ServerPlayer player) {
     MinecraftServer server = player.level().getServer();
     ServerLevel overworld = server.overworld();

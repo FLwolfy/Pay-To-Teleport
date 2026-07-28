@@ -25,8 +25,19 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
+/**
+ * Builds the Cloth Config entry used to edit, import, and validate PayTp scripts.
+ */
 public class PayTpScriptEntryBuilder {
 
+  /**
+   * Creates a script field builder compatible with Cloth Config's generic entry pipeline.
+   *
+   * @param builder the Cloth Config entry builder
+   * @param value the current script value
+   * @param label the localized field label
+   * @return a builder for the custom script entry
+   */
   public AbstractFieldBuilder<?, ?, ?> create(
       ConfigEntryBuilder builder,
       PayTpScript value,

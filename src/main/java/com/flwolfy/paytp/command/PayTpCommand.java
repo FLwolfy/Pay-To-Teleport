@@ -53,7 +53,10 @@ public class PayTpCommand {
   private static PayTpConfigData configData;
 
   private PayTpCommand() {}
-  
+
+  /**
+   * Resolves and stores the managers required by command handlers.
+   */
   public static void init() {
     // Init manager singletons
     configManager = PayTpConfigManager.getInstance();
@@ -64,6 +67,9 @@ public class PayTpCommand {
     warpManager = PayTpWarpManager.getInstance();
   }
 
+  /**
+   * Reloads configuration and propagates configurable values to dependent managers.
+   */
   public static void reload() {
     configManager.reload();
 
@@ -73,10 +79,16 @@ public class PayTpCommand {
     // Config content
     langManager.setLanguage(configData.general().language());
     backManager.setMaxBackStack(configData.back().maxBackStack());
+    warpManager.resetTimers();
     warpManager.setMaxInactiveTicks(configData.warp().maxInactiveTicks());
     warpManager.setCheckPeriodTicks(configData.warp().checkPeriodTicks());
   }
 
+  /**
+   * Registers every enabled PayTp command with Brigadier.
+   *
+   * @param dispatcher the server command dispatcher
+   */
   public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
     // ===== /ptphelp =====
     String helpCmd = configData.general().helpCommand();
