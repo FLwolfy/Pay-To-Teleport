@@ -17,13 +17,13 @@
 - Player teleport request system
 - Home and Back
 - Beacon waypoint (Warp) feature
-- Adjustable teleportation cost algorithm
+- Fully customizable JEXL teleportation price and distance algorithm
 - Ender Chest / Shulker Box payment support
 - **Cloth Config** API support (client-side)
 - Can be used as a **server-side only** mod
 
 Most features can be **disabled** by setting their corresponding command names to **an empty string**. 
-For example, changing `general.mainCommand` in the config file from `ptp` to **empty** will disable the coordinate teleport function.
+For example, changing `teleport.coordinateCommand` in the config file from `ptp` to **empty** will disable the coordinate teleport function.
 The in-game help guide will automatically adapt.
 
 ---
@@ -34,7 +34,7 @@ The in-game help guide will automatically adapt.
 
 | Command                        | Description                                                  |
 |--------------------------------|--------------------------------------------------------------|
-| `/ptp `                        | Get command guide for PayTp                                  |
+| `/ptphelp`                     | Get command guide for PayTp                                  |
 | `/ptp (dimension) <x> <y> <z>` | Teleport to specified coordinates (in a specific dimension)  |
 | `/ptpto <player>`              | Send request to teleport to a player                         |
 | `/ptphere <player>`            | Send request to a player to teleport to you                  |
@@ -65,13 +65,16 @@ The in-game help guide will automatically adapt.
 {
   "general": {
     "language": "en_us",
-    "mainCommand": "ptp",
-    "crossDimMultiplier": 1.5
+    "helpCommand": "ptphelp"
+  },
+  "teleport": {
+    "coordinateCommand": "ptp",
+    "allowCrossDim": true
   },
   "request": {
     "requestCommand": {
       "toCommand": "ptpto",
-      "here": "ptphere",
+      "hereCommand": "ptphere",
       "acceptCommand": "ptpaccept",
       "denyCommand": "ptpdeny",
       "cancelCommand": "ptpcancel"
@@ -79,28 +82,22 @@ The in-game help guide will automatically adapt.
     "expireTime": 10
   },
   "home": {
-    "homeCommand": "ptphome",
-    "homeMultiplier": 0.5
+    "homeCommand": "ptphome"
   },
   "back": {
     "backCommand": "ptpback",
-    "maxBackStack": 10,
-    "backMultiplier": 0.8
+    "maxBackStack": 10
   },
   "warp": {
     "warpCommand": "ptpwarp",
     "maxInactiveTicks": 100,
-    "checkPeriodTicks": 20,
-    "warpMultiplier": 0.5
+    "checkPeriodTicks": 20
   },
   "price": {
     "currencyItem": "minecraft:diamond",
-    "parameter": {
-      "minPrice": 1,
-      "maxPrice": 64,
-      "baseRadius": 10.0,
-      "rate": 0.01
-    }
+    "minPrice": 1,
+    "maxPrice": 64,
+    "algorithm": "10"
   },
   "setting": {
     "effect": {
@@ -123,11 +120,19 @@ The in-game help guide will automatically adapt.
 
 ### General Settings
 
-| Field                | Type     | Description                                                                                |
-|----------------------|----------|--------------------------------------------------------------------------------------------|
-| `language`           | `string` | Language file (e.g., `zh_cn`, `en_us`, `zh_tw`), affects messages and help text.           |
-| `mainCommand`        | `string` | Main command name, e.g., `/ptp`.                                                           |
-| `crossDimMultiplier` | `double` | Price multiplier for cross-dimensional teleportation, e.g., 1.5 means 1.5× the base price. |
+| Field         | Type     | Description                                                                      |
+|---------------|----------|----------------------------------------------------------------------------------|
+| `language`    | `string` | Language file (e.g., `zh_cn`, `en_us`, `zh_tw`), affects messages and help text. |
+| `helpCommand` | `string` | Command used to display the PayTp guide (default `/ptphelp`).                    |
+
+---
+
+### Coordinate Teleport
+
+| Field               | Type      | Description                                                                                                             |
+|---------------------|-----------|-------------------------------------------------------------------------------------------------------------------------|
+| `coordinateCommand` | `string`  | Coordinate teleport command (default `/ptp`).                                                                          |
+| `allowCrossDim`     | `boolean` | Whether any teleport method may cross dimensions. When disabled, the dimension argument is not registered or displayed. |
 
 ---
 
@@ -153,20 +158,18 @@ The in-game help guide will automatically adapt.
 
 ### Home System
 
-| Field            | Type     | Description                                           |
-|------------------|----------|-------------------------------------------------------|
-| `homeCommand`    | `string` | Command to teleport home (default `/ptphome`).        |
-| `homeMultiplier` | `double` | Home teleport multiplier, e.g., 0.5 means half price. |
+| Field         | Type     | Description                                    |
+|---------------|----------|------------------------------------------------|
+| `homeCommand` | `string` | Command to teleport home (default `/ptphome`). |
 
 ---
 
 ### Back System
 
-| Field            | Type     | Description                                                  |
-|------------------|----------|--------------------------------------------------------------|
-| `backCommand`    | `string` | Command to return to previous location (default `/ptpback`). |
-| `maxBackStack`   | `int`    | Maximum number of saved historical positions.                |
-| `backMultiplier` | `double` | Back teleport multiplier, e.g., 0.8 means 20% discount.      |
+| Field          | Type     | Description                                                  |
+|----------------|----------|--------------------------------------------------------------|
+| `backCommand`  | `string` | Command to return to previous location (default `/ptpback`). |
+| `maxBackStack` | `int`    | Maximum number of saved historical positions.                |
 
 ---
 
@@ -177,7 +180,6 @@ The in-game help guide will automatically adapt.
 | `warpCommand`      | `string` | Command name to teleport to a waypoint (default `/ptpwarp`).                               |
 | `maxInactiveTicks` | `int`    | The cooldown time before a waypoint is deleted after its associated beacon is deactivated. |
 | `checkPeriodTicks` | `int`    | The interval for checking waypoint-to-beacon matching.                                     |
-| `warpMultiplier`   | `double` | Waypoint teleport multiplier, e.g., 0.5 means half price.                                  |
  
 ---
 
@@ -189,25 +191,13 @@ The in-game help guide will automatically adapt.
 |----------------|----------|----------------------------------------------------------|
 | `currencyItem` | `string` | The item ID used as currency, e.g., `minecraft:diamond`. |
 
-#### Parameters
+#### Price Range and Algorithm
 
-| Field        | Type     | Description                                                |
-|--------------|----------|------------------------------------------------------------|
-| `minPrice`   | `int`    | Minimum teleport cost.                                     |
-| `maxPrice`   | `int`    | Maximum cost per teleport.                                 |
-| `baseRadius` | `double` | Radius within which teleportation costs the minimum price. |
-| `rate`       | `double` | Distance increase rate for cost beyond base radius.        |
-
----
-
-### Waypoint System
-
-| Field              | Type     | Description                                                                                |
-|--------------------|----------|--------------------------------------------------------------------------------------------|
-| `warpCommand`      | `string` | Command name to teleport to a waypoint (default `/ptpwarp`).                               |
-| `maxInactiveTicks` | `int`    | The cooldown time before a waypoint is deleted after its associated beacon is deactivated. |
-| `checkPeriodTicks` | `int`    | The interval for checking waypoint-to-beacon matching.                                     |
-| `warpMultiplier`   | `double` | Waypoint teleport multiplier, e.g., 0.5 means half price.                                  |
+| Field       | Type     | Description                                                                                         |
+|-------------|----------|-----------------------------------------------------------------------------------------------------|
+| `minPrice`  | `int`    | Forced final lower bound. Must be non-negative.                                                      |
+| `maxPrice`  | `int`    | Forced final upper bound. Must be at least `minPrice`. Setting it to `0` disables price calculation. |
+| `algorithm` | `string` | A JEXL script that calculates distance and raw price and must return an `int`.                        |
  
 ---
 
@@ -231,68 +221,86 @@ The in-game help guide will automatically adapt.
 
 ---
 
-## Price Calculation Formula
+## JEXL Price Algorithm
 
-### Calculation Logic
+The `price.algorithm` string contains both the distance calculation and the price calculation. There are no fixed Java-side distance formulas or teleport multipliers. A script may be as simple as `10`, which returns a fixed price of 10.
 
-1. **Distance Calculation**:
+### Available Variables
 
-    - Same dimension:
-        - Use direct Euclidean distance.
-    - Cross-dimension:
-        - Overworld × 8 → Nether;
-        - Nether × 0.125 → Overworld;
-        - Entering/leaving The End: use the distance from whichever coordinate is in The End to the End center `(0,0,0)`.
-    - Other dimensions:
-        - Use Euclidean distance by default. Can customize in `PayTpCalculator#calculateDistance`.
+| Variable        | Type     | Description                                                                 |
+|-----------------|----------|-----------------------------------------------------------------------------|
+| `fromX`         | `double` | X coordinate before teleportation.                                          |
+| `fromY`         | `double` | Y coordinate before teleportation.                                          |
+| `fromZ`         | `double` | Z coordinate before teleportation.                                          |
+| `fromDimension` | `string` | Source dimension ID, e.g., `minecraft:overworld`.                           |
+| `toX`           | `double` | Destination X coordinate.                                                   |
+| `toY`           | `double` | Destination Y coordinate.                                                   |
+| `toZ`           | `double` | Destination Z coordinate.                                                   |
+| `toDimension`   | `string` | Destination dimension ID.                                                   |
+| `teleportType`  | `string` | One of `coordinate`, `request`, `home`, `back`, or `warp`.                  |
+| `player`        | `string` | Name of the player being teleported.                                        |
+| `otherPlayer`   | `string` | Name of the other player involved in a request, or an empty string if none. |
 
-2. **Formula**:
+`crossDimension` is intentionally not provided. Determine it inside the script:
 
-   ```
-   distanceBeyondBase = max(0, distance - baseRadius)
-   rawPrice = minPrice + distanceBeyondBase * increaseRate
-   totalPrice = rawPrice * externalMultiplier
-   ```
-
-3. **Final Price**:
-
-   ```
-   price = min(totalPrice, maxPrice)
-   ```
-
----
-
-### Example Calculation
-
-Default `price` configuration:
-
-```json
-{
-   "minPrice": 1,
-   "maxPrice": 64,
-   "baseRadius": 10.0,
-   "rate": 0.01,
-   "crossDimMultiplier": 1.5
-}
+```jexl
+var crossDimension = fromDimension != toDimension;
 ```
 
+### Return Value and Built-in Methods
 
-- Player A teleports to Player B (same world, distance 200 blocks):
-  ```
-  Extra distance = 200 - 10 = 190
-  Price = (1 + 190 × 0.01) × 1.0 = 2.9 → rounded to 3
-  ```
-- Cross-dimensional teleport:
-  ```
-  Price = 3 × 1.5 = 4.5 → rounded to 5
-  ```
-- Price is capped at 64 automatically.
+- The last expression must return an `int`. Integer literals such as `10` already satisfy this requirement.
+- Java's built-in `Math` methods are available through the `math` namespace, for example `math:sqrt(...)`, `math:max(...)`, and `math:round(...)`.
+- JEXL runs in strict mode, so undefined variables and invalid expressions are treated as errors.
+- Some methods return another numeric type. Convert it explicitly when necessary:
+
+```jexl
+math:round(rawPrice).intValue();
+```
+
+### Example Algorithm
+
+```jexl
+var basePrice = 1;
+var baseRadius = 10.0;
+var pricePerBlock = 0.01;
+var crossDimensionMultiplier = 1.5;
+var homeMultiplier = 0.5;
+var backMultiplier = 0.8;
+var warpMultiplier = 0.5;
+
+var deltaX = fromX - toX;
+var deltaY = fromY - toY;
+var deltaZ = fromZ - toZ;
+var distance = math:sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+var multiplier = fromDimension != toDimension ? crossDimensionMultiplier : 1.0;
+
+if (teleportType == "home") {
+  multiplier = multiplier * homeMultiplier;
+} else if (teleportType == "back") {
+  multiplier = multiplier * backMultiplier;
+} else if (teleportType == "warp") {
+  multiplier = multiplier * warpMultiplier;
+}
+
+var distanceBeyondBase = math:max(0, distance - baseRadius);
+math:round((basePrice + distanceBeyondBase * pricePerBlock) * multiplier).intValue();
+```
+
+The default algorithm additionally handles Nether coordinate scaling and The End. It is written into a newly generated configuration file and can be used as a complete starting template.
+
+### Validation and Final Price
+
+1. If `maxPrice` is `0`, the algorithm is not executed and every teleport costs `0`.
+2. Otherwise, the script result is forcibly clamped to the inclusive range `[minPrice, maxPrice]`.
+3. The script is compiled and test-executed when the configuration is validated. In Mod Menu, invalid input is marked red and prevents saving.
+4. If a custom algorithm fails during an actual teleport, PayTp logs the error and evaluates the default algorithm instead.
 
 ---
 
 ## Cloth Config Support
 
-If the **Cloth Config API** is installed, all settings can be adjusted directly through the in-game Mod Menu GUI. (World restart may be required.)
+If the **Cloth Config API** is installed, all settings can be adjusted directly through the in-game Mod Menu GUI. The price algorithm can be edited in a dedicated multi-line editor or imported from a `.jexl` file. Confirming an edit or importing a file immediately validates its compilation and integer output; invalid algorithms cannot be saved. (World restart may be required.)
 
 ---
 
@@ -313,4 +321,3 @@ If the **Cloth Config API** is installed, all settings can be adjusted directly 
 This mod is inspired by early economy-style teleport plugins. The request logic references the **Teleport Command** mod. The waypoint logic references the **Beacon Waypoint** mod.   
 Developed using Fabric API and fully compatible with vanilla saves.  
 Feel free to submit issues or pull requests on GitHub to improve configuration and calculation algorithms.
-
