@@ -314,7 +314,7 @@ public class PayTpCommand {
         false
     );
 
-    if (configData.setting().effect().soundEffect()) {
+    if (configData.general().effect().soundEffect()) {
       target.level().playSound(
           null,
           target,
@@ -368,7 +368,7 @@ public class PayTpCommand {
         true
     );
 
-    if (configData.setting().effect().soundEffect()) {
+    if (configData.general().effect().soundEffect()) {
       target.level().playSound(
           null,
           target,
@@ -690,12 +690,12 @@ public class PayTpCommand {
     // Pre-teleport effect
     // ---------------------------------
     // Particles
-    if (configData.setting().effect().particleEffect()) {
+    if (configData.general().effect().particleEffect()) {
       fromWorld.broadcastEntityEvent(player, (byte)46);
     }
 
     // Sound
-    if (configData.setting().effect().soundEffect()) {
+    if (configData.general().effect().soundEffect()) {
       fromWorld.playSound(
           null,
           new BlockPos(
@@ -728,12 +728,12 @@ public class PayTpCommand {
           }
 
           // Particles
-          if (configData.setting().effect().particleEffect()) {
+          if (configData.general().effect().particleEffect()) {
             toWorld.broadcastEntityEvent(playerEntity, (byte)46);
           }
 
           // Sound
-          if (configData.setting().effect().soundEffect()) {
+          if (configData.general().effect().soundEffect()) {
             toWorld.playSound(
                 null,
                 playerEntity.blockPosition(),

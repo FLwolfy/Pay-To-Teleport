@@ -27,7 +27,7 @@ import org.lwjgl.util.tinyfd.TinyFileDialogs;
 /**
  * Builds the Cloth Config entry used to edit, import, and validate PayTp scripts.
  */
-public class PayTpScriptEntryBuilder {
+public class PayTpScriptEntryBuilder extends PayTpEntryBuilderBase<PayTpScript> {
 
   /**
    * Creates a script field builder compatible with Cloth Config's generic entry pipeline.
@@ -37,7 +37,8 @@ public class PayTpScriptEntryBuilder {
    * @param label the localized field label
    * @return a builder for the custom script entry
    */
-  public AbstractFieldBuilder<?, ?, ?> create(
+  @Override
+  public AbstractFieldBuilder<PayTpScript, ?, ?> create(
       ConfigEntryBuilder builder,
       PayTpScript value,
       Component label

@@ -21,14 +21,19 @@ public record PayTpConfigData(
     Home home,
     Back back,
     Warp warp,
-    Price price,
-    Setting setting
+    Price price
 ) {
 
   public record General(
       PayTpLang language,
-      String helpCommand
-  ) {}
+      String helpCommand,
+      Effect effect
+  ) {
+    public record Effect(
+        boolean particleEffect,
+        boolean soundEffect
+    ) {}
+  }
 
   public record Teleport(
       String coordinateCommand,
@@ -67,8 +72,16 @@ public record PayTpConfigData(
       String currencyItem,
       int minPrice,
       int maxPrice,
-      PayTpScript algorithm
+      PayTpScript algorithm,
+      Deduction deduction
   ) {
+    public record Deduction(
+        boolean allowEnderChest,
+        boolean prioritizeEnderChest,
+        boolean allowShulkerBox,
+        boolean prioritizeShulkerBox
+    ) {}
+
     public static final PayTpScript DEFAULT_ALGORITHM = new PayTpScript("""
         // Available variables:
         // from, to: positions with .x, .y, .z, and .dimension
@@ -131,27 +144,14 @@ public record PayTpConfigData(
 
   }
 
-  public record Setting(
-      Effect effect,
-      Flag flag
-  ) {
-    public record Effect(
-        boolean particleEffect,
-        boolean soundEffect
-    ) {}
-
-    public record Flag(
-        boolean allowEnderChest,
-        boolean prioritizeEnderChest,
-        boolean allowShulkerBox,
-        boolean prioritizeShulkerBox
-    ) {}
-  }
-
   public static final PayTpConfigData DEFAULT = new PayTpConfigData(
       new General(
           PayTpLang.ENGLISH,
-          "ptphelp"
+          "ptphelp",
+          new General.Effect(
+              true,
+              true
+          )
       ),
       new Teleport(
           "ptp",
@@ -183,14 +183,8 @@ public record PayTpConfigData(
           "minecraft:diamond",
           1,
           64,
-          Price.DEFAULT_ALGORITHM
-      ),
-      new Setting(
-          new Setting.Effect(
-              true,
-              true
-          ),
-          new Setting.Flag(
+          Price.DEFAULT_ALGORITHM,
+          new Price.Deduction(
               true,
               true,
               false,
@@ -205,12 +199,12 @@ public record PayTpConfigData(
    * @return the combined {@link PayTpSettingFlags} mask
    */
   public int combineSettingFlags() {
-    Setting.Flag flag = setting.flag();
+    Price.Deduction deduction = price.deduction();
     return Flags.combine(
-        flag.allowEnderChest() ? PayTpSettingFlags.ALLOW_ENDER_CHEST : null,
-        flag.prioritizeEnderChest() ? PayTpSettingFlags.PRIORITIZE_ENDER_CHEST : null,
-        flag.allowShulkerBox() ? PayTpSettingFlags.ALLOW_SHULKER_BOX : null,
-        flag.prioritizeShulkerBox() ? PayTpSettingFlags.PRIORITIZE_SHULKER_BOX : null
+        deduction.allowEnderChest() ? PayTpSettingFlags.ALLOW_ENDER_CHEST : null,
+        deduction.prioritizeEnderChest() ? PayTpSettingFlags.PRIORITIZE_ENDER_CHEST : null,
+        deduction.allowShulkerBox() ? PayTpSettingFlags.ALLOW_SHULKER_BOX : null,
+        deduction.prioritizeShulkerBox() ? PayTpSettingFlags.PRIORITIZE_SHULKER_BOX : null
     );
   }
 
@@ -287,11 +281,11 @@ public record PayTpConfigData(
     });
 
     // Payment Priorities
-    if (setting.flag().prioritizeEnderChest() && !setting.flag().allowEnderChest()) {
-      invalidFields.add("setting.flag.prioritizeEnderChest");
+    if (price.deduction().prioritizeEnderChest() && !price.deduction().allowEnderChest()) {
+      invalidFields.add("price.deduction.prioritizeEnderChest");
     }
-    if (setting.flag().prioritizeShulkerBox() && !setting.flag().allowShulkerBox()) {
-      invalidFields.add("setting.flag.prioritizeShulkerBox");
+    if (price.deduction().prioritizeShulkerBox() && !price.deduction().allowShulkerBox()) {
+      invalidFields.add("price.deduction.prioritizeShulkerBox");
     }
 
     return List.copyOf(invalidFields);
