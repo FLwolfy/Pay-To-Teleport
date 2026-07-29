@@ -1,7 +1,8 @@
 package com.flwolfy.paytp.data.script;
 
 import com.flwolfy.paytp.util.PayTpShellExecutor;
-import com.flwolfy.paytp.util.PayTpMinecraftCommandExecutor;
+import com.flwolfy.paytp.util.PayTpCommandExecutor;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -36,7 +37,7 @@ public class PayTpScriptManager {
             PayTpScriptPosition.class,
             PayTpShellExecutor.class,
             PayTpShellExecutor.ShellResult.class,
-            PayTpMinecraftCommandExecutor.class
+            PayTpCommandExecutor.class
         ))
         .namespaces(Map.of(
             "math", Math.class,

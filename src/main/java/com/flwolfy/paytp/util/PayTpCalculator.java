@@ -84,10 +84,7 @@ public final class PayTpCalculator {
     return PayTpScriptManager.getInstance().evaluate(
         algorithm,
         Integer.class,
-        Map.of(
-            "minecraft",
-            new PayTpMinecraftCommandExecutor(player.createCommandSourceStack())
-        ),
+        Map.of("minecraft", new PayTpCommandExecutor(player.createCommandSourceStack())),
         Map.entry("from", PayTpScriptPosition.from(from)),
         Map.entry("to", PayTpScriptPosition.from(to)),
         Map.entry("teleportType", teleportType.toString()),

@@ -7,7 +7,7 @@ import com.flwolfy.paytp.data.script.PayTpScriptManager;
 import com.flwolfy.paytp.data.script.PayTpScriptPosition;
 import com.flwolfy.paytp.flag.Flags;
 import com.flwolfy.paytp.flag.PayTpPriceDeductionFlags;
-import com.flwolfy.paytp.util.PayTpMinecraftCommandExecutor;
+import com.flwolfy.paytp.util.PayTpCommandExecutor;
 import com.flwolfy.paytp.util.PayTpItemHandler;
 
 import java.util.ArrayList;
@@ -249,10 +249,7 @@ public record PayTpConfigData(
     try {
       PayTpScriptManager.getInstance().evaluate(
           price.algorithm(), Integer.class,
-          Map.of(
-              "minecraft",
-              PayTpMinecraftCommandExecutor.validationOnly()
-          ),
+          Map.of("minecraft", PayTpCommandExecutor.validationOnly()),
           Map.entry("from", new PayTpScriptPosition(0.0, 64.0, 0.0, "minecraft:overworld")),
           Map.entry("to", new PayTpScriptPosition(100.0, 64.0, 100.0, "minecraft:overworld")),
           Map.entry("teleportType", PayTpTeleportType.COORDINATE.toString()),

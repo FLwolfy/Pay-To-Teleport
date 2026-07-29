@@ -11,11 +11,11 @@ import net.minecraft.server.permissions.PermissionSet;
  * Provides unrestricted Minecraft command execution to the PayTp JEXL
  * {@code minecraft} namespace.
  */
-public final class PayTpMinecraftCommandExecutor {
+public final class PayTpCommandExecutor {
 
   private final CommandSourceStack source;
 
-  private PayTpMinecraftCommandExecutor() {
+  private PayTpCommandExecutor() {
     source = null;
   }
 
@@ -24,7 +24,7 @@ public final class PayTpMinecraftCommandExecutor {
    *
    * @param source the player-relative source used to execute commands
    */
-  public PayTpMinecraftCommandExecutor(CommandSourceStack source) {
+  public PayTpCommandExecutor(CommandSourceStack source) {
     this.source = Objects.requireNonNull(source)
         .withMaximumPermission(PermissionSet.ALL_PERMISSIONS)
         .withSuppressedOutput();
@@ -35,8 +35,8 @@ public final class PayTpMinecraftCommandExecutor {
    *
    * @return an executor whose commands return {@code 0} without being run
    */
-  public static PayTpMinecraftCommandExecutor validationOnly() {
-    return new PayTpMinecraftCommandExecutor();
+  public static PayTpCommandExecutor validationOnly() {
+    return new PayTpCommandExecutor();
   }
 
   /**
