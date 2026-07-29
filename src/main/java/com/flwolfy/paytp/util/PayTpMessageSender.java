@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
-public class PayTpMessageSender {
+public final class PayTpMessageSender {
 
   private static final PayTpLangManager LANG_LOADER = PayTpLangManager.getInstance();
 
@@ -103,6 +103,22 @@ public class PayTpMessageSender {
             currencyItemText,
             balance
         ));
+
+    player.sendSystemMessage(msg);
+  }
+
+  public static void msgPaymentError(ServerPlayer player) {
+    Component msg = Component.empty()
+        .append(PayTpTextBuilder.format(
+            LANG_LOADER.getText("paytp.teleport"),
+            PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+            PayTpTextBuilder.DEFAULT_WARN_COLOR,
+            LANG_LOADER.getText("paytp.failed")
+        ))
+        .append(Component.literal("\n"))
+        .append(LANG_LOADER.getText("paytp.payment-error")
+            .copy()
+            .withStyle(PayTpTextBuilder.DEFAULT_WARN_COLOR));
 
     player.sendSystemMessage(msg);
   }

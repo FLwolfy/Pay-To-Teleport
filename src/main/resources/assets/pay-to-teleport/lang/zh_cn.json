@@ -4,6 +4,7 @@
 
   "paytp.not-enough": "%s的数量不够，需要%s块%s而您只有%s块。",
   "paytp.requester-not-enough": "对方没有足够的金钱来传送。",
+  "paytp.payment-error": "扣款流程出现错误。",
   "paytp.cross-dimension-disabled": "服务器已禁用跨维度传送。",
 
   "paytp.tp-home": "欢迎回家～",

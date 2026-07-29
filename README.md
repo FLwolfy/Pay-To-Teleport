@@ -65,7 +65,11 @@ The in-game help guide will automatically adapt.
 {
   "general": {
     "language": "en_us",
-    "helpCommand": "ptphelp"
+    "helpCommand": "ptphelp",
+    "effect": {
+      "particleEffect": true,
+      "soundEffect": true
+    }
   },
   "teleport": {
     "coordinateCommand": "ptp",
@@ -97,14 +101,8 @@ The in-game help guide will automatically adapt.
     "currencyItem": "minecraft:diamond",
     "minPrice": 1,
     "maxPrice": 64,
-    "algorithm": "// Available variables:\n// from, to: positions with .x, .y, .z, and .dimension\n// teleportType: \"coordinate\", \"request\", \"home\", \"back\", or \"warp\"\n// player: name of the player being teleported\n// otherPlayer: name of the other request player, or an empty string\n//\n// Java\u0027s built-in Math methods are available through the \"math\" namespace.\n// Full system shell access is available through the \"shell\" namespace.\n\nvar basePrice \u003d 1;\nvar baseRadius \u003d 10.0;\nvar pricePerBlock \u003d 0.01;\nvar crossDimensionMultiplier \u003d 1.5;\nvar homeMultiplier \u003d 0.5;\nvar backMultiplier \u003d 0.8;\nvar warpMultiplier \u003d 0.5;\nvar netherCoordinateScale \u003d 8.0;\n\nvar crossDimension \u003d from.dimension !\u003d to.dimension;\nvar deltaX \u003d from.x - to.x;\nvar deltaY \u003d from.y - to.y;\nvar deltaZ \u003d from.z - to.z;\n\nif (crossDimension) {\n  if (from.dimension \u003d\u003d \"minecraft:the_end\") {\n    deltaX \u003d from.x;\n    deltaY \u003d from.y;\n    deltaZ \u003d from.z;\n  } else if (to.dimension \u003d\u003d \"minecraft:the_end\") {\n    deltaX \u003d to.x;\n    deltaY \u003d to.y;\n    deltaZ \u003d to.z;\n  } else if (from.dimension \u003d\u003d \"minecraft:the_nether\") {\n    deltaX \u003d from.x * netherCoordinateScale - to.x;\n    deltaY \u003d from.y * netherCoordinateScale - to.y;\n    deltaZ \u003d from.z * netherCoordinateScale - to.z;\n  } else if (to.dimension \u003d\u003d \"minecraft:the_nether\") {\n    deltaX \u003d from.x - to.x / netherCoordinateScale;\n    deltaY \u003d from.y - to.y / netherCoordinateScale;\n    deltaZ \u003d from.z - to.z / netherCoordinateScale;\n  }\n}\n\nvar distance \u003d math:sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);\nvar multiplier \u003d crossDimension ? crossDimensionMultiplier : 1.0;\n\nif (teleportType \u003d\u003d \"home\") {\n  multiplier \u003d multiplier * homeMultiplier;\n} else if (teleportType \u003d\u003d \"back\") {\n  multiplier \u003d multiplier * backMultiplier;\n} else if (teleportType \u003d\u003d \"warp\") {\n  multiplier \u003d multiplier * warpMultiplier;\n}\n\nvar distanceBeyondBase \u003d distance \u003e baseRadius ? distance - baseRadius : 0;\n\nmath:round((basePrice + distanceBeyondBase * pricePerBlock) * multiplier).intValue();"
-  },
-  "setting": {
-    "effect": {
-      "particleEffect": true,
-      "soundEffect": true
-    },
-    "flag": {
+    "algorithm": "10",
+    "deduction": {
       "allowEnderChest": true,
       "prioritizeEnderChest": true,
       "allowShulkerBox": false,
@@ -125,6 +123,13 @@ The in-game help guide will automatically adapt.
 | `language`    | `string` | Language file (e.g., `zh_cn`, `en_us`, `zh_tw`), affects messages and help text. |
 | `helpCommand` | `string` | Command used to display the PayTp guide (default `/ptphelp`).                    |
 
+#### Teleport Effects (`general.effect`)
+
+| Field            | Type      | Description                                   |
+|------------------|-----------|-----------------------------------------------|
+| `particleEffect` | `boolean` | Enable teleport particles; defaults to `true`. |
+| `soundEffect`    | `boolean` | Enable teleport sounds; defaults to `true`.    |
+
 ---
 
 ### Coordinate Teleport
@@ -132,7 +137,7 @@ The in-game help guide will automatically adapt.
 | Field               | Type      | Description                                                                                                             |
 |---------------------|-----------|-------------------------------------------------------------------------------------------------------------------------|
 | `coordinateCommand` | `string`  | Coordinate teleport command (default `/ptp`).                                                                           |
-| `allowCrossDim`     | `boolean` | Whether any teleport method may cross dimensions. When disabled, the dimension argument is not registered or displayed. |
+| `allowCrossDim`     | `boolean` | Whether any teleport method may cross dimensions; defaults to `true`. When disabled, the dimension argument is not registered or displayed. |
 
 ---
 
@@ -152,7 +157,7 @@ The in-game help guide will automatically adapt.
 
 | Field        | Type   |  Description                                 |
 |--------------|--------|----------------------------------------------|
-| `expireTime` | `int`  | Teleport request expiration time in seconds. |
+| `expireTime` | `int`  | Request expiration time in seconds; defaults to `10` and must be non-negative. |
 
 ---
 
@@ -169,7 +174,7 @@ The in-game help guide will automatically adapt.
 | Field          | Type     | Description                                                  |
 |----------------|----------|--------------------------------------------------------------|
 | `backCommand`  | `string` | Command to return to previous location (default `/ptpback`). |
-| `maxBackStack` | `int`    | Maximum number of saved historical positions.                |
+| `maxBackStack` | `int`    | Maximum saved historical positions; defaults to `10` and must be greater than zero. |
 
 ---
 
@@ -178,8 +183,8 @@ The in-game help guide will automatically adapt.
 | Field              | Type     | Description                                                                                |
 |--------------------|----------|--------------------------------------------------------------------------------------------|
 | `warpCommand`      | `string` | Command name to teleport to a waypoint (default `/ptpwarp`).                               |
-| `maxInactiveTicks` | `int`    | The cooldown time before a waypoint is deleted after its associated beacon is deactivated. |
-| `checkPeriodTicks` | `int`    | The interval for checking waypoint-to-beacon matching.                                     |
+| `maxInactiveTicks` | `int`    | Ticks before deleting a waypoint after beacon deactivation; defaults to `100` and must be non-negative. |
+| `checkPeriodTicks` | `int`    | Waypoint-to-beacon check interval in ticks; defaults to `20` and must be greater than zero.             |
  
 ---
 
@@ -189,35 +194,24 @@ The in-game help guide will automatically adapt.
 
 | Field          | Type     | Description                                              |
 |----------------|----------|----------------------------------------------------------|
-| `currencyItem` | `string` | The item ID used as currency, e.g., `minecraft:diamond`. |
+| `currencyItem` | `string` | A valid currency item ID; defaults to `minecraft:diamond`. |
 
 #### Price Range and Algorithm
 
 | Field       | Type     | Description                                                                                          |
 |-------------|----------|------------------------------------------------------------------------------------------------------|
-| `minPrice`  | `int`    | Forced final lower bound. Must be non-negative.                                                      |
-| `maxPrice`  | `int`    | Forced final upper bound. Must be at least `minPrice`. Setting it to `0` disables price calculation. |
+| `minPrice`  | `int`    | Final lower bound for non-negative prices; defaults to `1` and must satisfy `0 <= minPrice <= maxPrice`. |
+| `maxPrice`  | `int`    | Final upper bound; defaults to `64`. Setting both `minPrice` and `maxPrice` to `0` skips the algorithm and fixes the price at `0`. |
 | `algorithm` | `string` | A JEXL script that calculates distance and raw price and must return an `int`.                       |
- 
----
 
-### Settings
-
-#### Effects
-
-| Field            | Type      | Description                                   |
-|------------------|-----------|-----------------------------------------------|
-| `particleEffect` | `boolean` | Enable particle effects during teleportation. |
-| `soundEffect`    | `boolean` | Enable sound effects during teleportation.    |
-
-#### Feature Flags
+#### Payment Deduction (`price.deduction`)
 
 | Field                  | Type      | Description                              |
 |------------------------|-----------|------------------------------------------|
-| `allowEnderChest`      | `boolean` | Allow using currency from Ender Chests.  |
-| `prioritizeEnderChest` | `boolean` | Prioritize deduction from Ender Chests.  |
-| `allowShulkerBox`      | `boolean` | Allow using currency from Shulker Boxes. |
-| `prioritizeShulkerBox` | `boolean` | Prioritize deduction from Shulker Boxes. |
+| `allowEnderChest`      | `boolean` | Allow Ender Chest currency; defaults to `true`. |
+| `prioritizeEnderChest` | `boolean` | Prioritize Ender Chest deduction; defaults to `true` and requires `allowEnderChest`. |
+| `allowShulkerBox`      | `boolean` | Allow Shulker Box currency; defaults to `false`. |
+| `prioritizeShulkerBox` | `boolean` | Prioritize Shulker Box deduction; defaults to `false` and requires `allowShulkerBox`. |
 
 ---
 
@@ -241,17 +235,56 @@ The `price.algorithm` string contains both the distance calculation and the pric
 var crossDimension = from.dimension != to.dimension;
 ```
 
-### Return Value and Built-in Methods
+### Return Value and Strict Mode
 
 - The last expression must return an `int`. Integer literals such as `10` already satisfy this requirement.
-- Java's built-in `Math` methods are available through the `math` namespace, for example `math:sqrt(...)`, `math:max(...)`, and `math:round(...)`.
-- Full system shell access is available through the `shell` namespace.
+- Returning a negative integer cancels the payment and teleport. This allows an algorithm or
+  Minecraft command result to deliberately stop the operation without causing a script error.
 - JEXL runs in strict mode, so undefined variables and invalid expressions are treated as errors.
-- Some methods return another numeric type. Convert it explicitly when necessary:
+
+### Math Methods
+
+> [!TIP]
+> Use `math` for distance, multiplier, rounding, and boundary calculations directly inside the price algorithm without invoking an external process.
+
+The `math` namespace exposes Java's built-in `Math` methods.
+
+| Method                       | Return type | Description                                      |
+|------------------------------|-------------|--------------------------------------------------|
+| `math:sqrt(value)`           | `double`    | Returns the square root of a value.              |
+| `math:max(first, second)`    | numeric     | Returns the greater of two values.               |
+| `math:min(first, second)`    | numeric     | Returns the smaller of two values.               |
+| `math:round(value)`          | `long`      | Returns the closest integer value.               |
+| `math:pow(base, exponent)`   | `double`    | Raises `base` to the supplied power.             |
+| `math:abs(value)`            | numeric     | Returns the absolute value.                      |
+
+Methods may return a numeric type other than `int`. Convert the final result explicitly when
+necessary:
 
 ```jexl
 math:round(rawPrice).intValue();
 ```
+
+### Minecraft Commands
+
+> [!WARNING]
+> The `minecraft` namespace can execute every command registered with the server, including commands added by other mods. Commands run as the player being teleported with `ALL_PERMISSIONS`, so they can perform destructive or administrative operations such as `op`, `ban`, `data`, and `stop`. Only use algorithms from fully trusted sources.
+
+| Method                       | Return type | Description                                                                 |
+|------------------------------|-------------|-----------------------------------------------------------------------------|
+| `minecraft:execute(command)` | `int`       | Executes a Minecraft command. The leading `/` is optional and command feedback is suppressed. |
+
+The current player is the command source, so `@s`, relative coordinates, and the current dimension
+work as expected:
+
+```jexl
+minecraft:execute("scoreboard players add " + player + " teleport_count 1");
+minecraft:execute("tp @s ~ ~1 ~");
+10;
+```
+
+During configuration validation, `minecraft:execute(...)` returns `0` without running the command,
+so loading or editing an algorithm cannot modify server state.
 
 ### Shell Commands
 
@@ -287,6 +320,7 @@ shell:runInt("python3 /opt/paytp/price.py '" + player + "'");
 // otherPlayer: name of the other request player, or an empty string
 //
 // Java's built-in Math methods are available through the "math" namespace.
+// Minecraft commands are available through minecraft:execute("command").
 // Full system shell access is available through the "shell" namespace.
 
 var basePrice = 1;
@@ -320,9 +354,10 @@ The default algorithm additionally handles Nether coordinate scaling and The End
 ### Validation and Final Price
 
 1. If `maxPrice` is `0`, the algorithm is not executed and every teleport costs `0`.
-2. Otherwise, the script result is forcibly clamped to the inclusive range `[minPrice, maxPrice]`.
-3. The script is compiled and test-executed when the configuration is validated. In Mod Menu, invalid input is marked red and prevents saving.
-4. If a custom algorithm fails during an actual teleport, PayTp logs the error and evaluates the default algorithm instead.
+2. A negative script result cancels the payment and teleport without being clamped.
+3. Otherwise, the script result is forcibly clamped to the inclusive range `[minPrice, maxPrice]`.
+4. The script is compiled and test-executed when the configuration is validated. In Mod Menu, invalid input is marked red and prevents saving.
+5. If an algorithm fails during an actual teleport, `calculatePrice` returns `-1`; PayTp logs the error, cancels the teleport, and notifies the player that the payment process failed.
 
 ---
 

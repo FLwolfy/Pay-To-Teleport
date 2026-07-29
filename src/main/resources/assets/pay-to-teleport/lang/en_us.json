@@ -4,6 +4,7 @@
 
   "paytp.not-enough": "You don't have enough %s! The teleportation fee is %s %s but you only have %s.",
   "paytp.requester-not-enough": "The other player does not have enough money to teleport.",
+  "paytp.payment-error": "An error occurred while processing the payment.",
   "paytp.cross-dimension-disabled": "Cross-dimension teleportation is disabled.",
 
   "paytp.tp-home": "Welcome home~",

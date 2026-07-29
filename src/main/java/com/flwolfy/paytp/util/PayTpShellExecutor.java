@@ -1,4 +1,4 @@
-package com.flwolfy.paytp.data.script;
+package com.flwolfy.paytp.util;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

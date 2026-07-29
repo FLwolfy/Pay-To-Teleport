@@ -1,7 +1,8 @@
 package com.flwolfy.paytp.data.script;
 
+import com.flwolfy.paytp.util.PayTpShellExecutor;
+import com.flwolfy.paytp.util.PayTpMinecraftCommandExecutor;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.jexl3.JexlBuilder;
@@ -15,8 +16,9 @@ import org.apache.commons.jexl3.introspection.JexlPermissions;
  * Compiles and evaluates PayTp JEXL scripts.
  *
  * <p>The manager uses strict evaluation, caches compiled scripts by source, and exposes the
- * {@code math} and {@code shell} namespaces. Compiled scripts are thread-safe to retrieve from
- * the cache, while callers remain responsible for supplying appropriate argument values.</p>
+ * {@code math}, {@code shell}, and caller-provided namespaces. Compiled scripts are thread-safe
+ * to retrieve from the cache, while callers remain responsible for supplying appropriate
+ * argument values.</p>
  */
 public class PayTpScriptManager {
 
@@ -33,7 +35,8 @@ public class PayTpScriptManager {
             JexlPermissions.SECURE,
             PayTpScriptPosition.class,
             PayTpShellExecutor.class,
-            PayTpShellExecutor.ShellResult.class
+            PayTpShellExecutor.ShellResult.class,
+            PayTpMinecraftCommandExecutor.class
         ))
         .namespaces(Map.of(
             "math", Math.class,
@@ -64,7 +67,27 @@ public class PayTpScriptManager {
       Class<T> resultType,
       Map.Entry<String, ?>... arguments
   ) {
-    JexlContext context = new MapContext();
+    return evaluate(script, resultType, Map.of(), arguments);
+  }
+
+  /**
+   * Evaluates a script with additional namespaces available only for this execution.
+   *
+   * @param script the script to compile and execute
+   * @param resultType the exact reference type expected from the script
+   * @param namespaces namespace names mapped to their method providers
+   * @param arguments key-value pairs exposed as variables in the JEXL context
+   * @param <T> the expected result type
+   * @return the evaluated result cast to {@code resultType}
+   */
+  @SafeVarargs
+  public final <T> T evaluate(
+      PayTpScript script,
+      Class<T> resultType,
+      Map<String, ?> namespaces,
+      Map.Entry<String, ?>... arguments
+  ) {
+    ScriptContext context = new ScriptContext(namespaces);
     for (Map.Entry<String, ?> argument : arguments) {
       context.set(argument.getKey(), argument.getValue());
     }
@@ -87,5 +110,21 @@ public class PayTpScriptManager {
         script.source(),
         engine::createScript
     );
+  }
+
+  private static final class ScriptContext
+      extends MapContext
+      implements JexlContext.NamespaceResolver {
+
+    private final Map<String, ?> namespaces;
+
+    private ScriptContext(Map<String, ?> namespaces) {
+      this.namespaces = Map.copyOf(namespaces);
+    }
+
+    @Override
+    public Object resolveNamespace(String name) {
+      return namespaces.get(name);
+    }
   }
 }

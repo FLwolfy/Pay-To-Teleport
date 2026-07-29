@@ -14,7 +14,7 @@ import net.minecraft.world.level.block.ShulkerBoxBlock;
 /**
  * Resolves currency items and counts or removes them from Minecraft containers.
  */
-public class PayTpItemHandler {
+public final class PayTpItemHandler {
 
   private PayTpItemHandler() {}
 

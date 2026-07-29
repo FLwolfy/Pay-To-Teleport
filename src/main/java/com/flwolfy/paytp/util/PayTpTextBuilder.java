@@ -7,7 +7,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent.ShowText;
 import net.minecraft.network.chat.MutableComponent;
 
-public class PayTpTextBuilder {
+public final class PayTpTextBuilder {
 
   public static final ChatFormatting DEFAULT_TEXT_COLOR = ChatFormatting.YELLOW;
   public static final ChatFormatting DEFAULT_HIGHLIGHT_COLOR = ChatFormatting.GREEN;
