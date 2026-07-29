@@ -11,6 +11,8 @@
   "paytp.tp-home": "Welcome home~",
   "paytp.no-home": "You have not set a home yet.",
   "paytp.set-home": "Successfully set your current location as your %s!",
+  "paytp.home-respawn-set": "Your respawn point has also been set to this Home.",
+  "paytp.home-respawn-unsafe": "The Home respawn point is obstructed or unsafe. Your respawn point has been reset to the world spawn.",
 
   "paytp.no-warp": "No waypoint point named %s found!",
   "paytp.warp-exist": "A waypoint named %s already exists!",

@@ -2,6 +2,7 @@ package com.flwolfy.paytp;
 
 import com.flwolfy.paytp.command.back.PayTpBackManager;
 import com.flwolfy.paytp.command.PayTpCommand;
+import com.flwolfy.paytp.command.home.PayTpHomeManager;
 import com.flwolfy.paytp.command.warp.PayTpWarpNameArgument;
 import com.flwolfy.paytp.command.warp.PayTpWarpManager;
 import com.flwolfy.paytp.data.PayTpData;
@@ -9,6 +10,7 @@ import com.flwolfy.paytp.util.PayTpMessageSender;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -58,6 +60,10 @@ public class PayTpMod implements ModInitializer {
 				PayTpBackManager.getInstance().pushSingle(player, new PayTpData(player.level().dimension(), player.position()));
 			}
 		});
+
+		ServerPlayerEvents.AFTER_RESPAWN.register(
+				PayTpHomeManager.getInstance()::handleRespawn
+		);
 
 		ServerTickEvents.END_LEVEL_TICK.register(world -> {
 			if (!world.dimension().equals(Level.OVERWORLD)) return;

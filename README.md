@@ -175,10 +175,10 @@ The `/ptp` `<x> <y> <z>` text is a non-selectable format hint rather than a curr
 
 ### Home System
 
-| Field             | Type      | Description                                                                                   |
-|-------------------|-----------|-----------------------------------------------------------------------------------------------|
-| `homeCommand`     | `string`  | Command to teleport home (default `/ptphome`).                                                |
-| `setRespawnPoint` | `boolean` | Also move the player's respawn point when setting home; defaults to `false`.                  |
+| Field             | Type      | Description                                                                                                                                                                                                                                            |
+|-------------------|-----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `homeCommand`     | `string`  | Command to teleport home (default `/ptphome`).                                                                                                                                                                                                         |
+| `setRespawnPoint` | `boolean` | Also move the player's respawn point when setting home; defaults to `false`. When the player respawns at Home, the vanilla bed stand-up position resolver is always used; if it finds no valid position, the player is moved to the world spawn point. |
 
 ---
 

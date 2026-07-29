@@ -671,6 +671,9 @@ public class PayTpCommand {
 
     homeManager.setHome(player, configData.home().setRespawnPoint());
     PayTpMessageSender.msgHomeSet(player);
+    if (configData.home().setRespawnPoint()) {
+      PayTpMessageSender.msgHomeRespawnSet(player);
+    }
 
     return Command.SINGLE_SUCCESS;
   }

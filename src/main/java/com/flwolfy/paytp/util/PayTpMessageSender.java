@@ -285,6 +285,20 @@ public final class PayTpMessageSender {
     player.sendSystemMessage(msg);
   }
 
+  public static void msgHomeRespawnSet(ServerPlayer player) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.home-respawn-set")
+    ));
+  }
+
+  public static void msgHomeRespawnUnsafe(ServerPlayer player) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.home-respawn-unsafe"),
+        PayTpTextBuilder.DEFAULT_WARN_COLOR,
+        PayTpTextBuilder.DEFAULT_WARN_COLOR
+    ));
+  }
+
   public static void msgHomeNotSet(ServerPlayer player) {
     player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-home")));
   }

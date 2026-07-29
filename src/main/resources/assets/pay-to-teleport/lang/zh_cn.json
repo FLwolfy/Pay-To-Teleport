@@ -11,6 +11,8 @@
   "paytp.tp-home": "欢迎回家～",
   "paytp.no-home": "您尚未设置家。",
   "paytp.set-home": "成功设置当前位置为您的%s！",
+  "paytp.home-respawn-set": "您的重生点也已同步设置到此 Home。",
+  "paytp.home-respawn-unsafe": "Home 重生点被阻挡或不安全，您的重生点已重置为世界出生点。",
 
   "paytp.no-warp": "没有名为%s的传送点！",
   "paytp.warp-exist": "名为%s的传送点已存在！",
