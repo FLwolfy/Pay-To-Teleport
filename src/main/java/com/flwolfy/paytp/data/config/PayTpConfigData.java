@@ -1,7 +1,8 @@
 package com.flwolfy.paytp.data.config;
 
 import com.flwolfy.paytp.data.lang.PayTpLang;
-import com.flwolfy.paytp.data.PayTpTeleportType;
+import com.flwolfy.paytp.data.PayTpTeleportContext;
+import com.flwolfy.paytp.data.PayTpPlayer;
 import com.flwolfy.paytp.data.script.PayTpScript;
 import com.flwolfy.paytp.data.script.PayTpScriptManager;
 import com.flwolfy.paytp.data.script.PayTpScriptPosition;
@@ -129,10 +130,9 @@ public record PayTpConfigData(
           64,
           new PayTpScript("""
               // Available variables:
-              // from, to: positions with .x, .y, .z, and .dimension
-              // teleportType: "coordinate", "request", "home", "back", or "warp"
-              // player: name of the player being teleported
-              // otherPlayer: name of the other request player, or an empty string
+              // from, to: positions with .x(), .y(), .z(), and .dimension()
+              // teleportContext: exactly one of coordinate(), home(), back(), request(), or warp()
+              // player: the teleported player, with .uuid() and .name()
               //
               // Java's built-in Math methods are available through the "math" namespace.
               // Full system shell access is available through the "shell" namespace.
@@ -147,39 +147,39 @@ public record PayTpConfigData(
               var warpMultiplier = 0.5;
               var netherCoordinateScale = 8.0;
 
-              var crossDimension = from.dimension != to.dimension;
-              var deltaX = from.x - to.x;
-              var deltaY = from.y - to.y;
-              var deltaZ = from.z - to.z;
+              var crossDimension = from.dimension() != to.dimension();
+              var deltaX = from.x() - to.x();
+              var deltaY = from.y() - to.y();
+              var deltaZ = from.z() - to.z();
 
               if (crossDimension) {
-                if (from.dimension == "minecraft:the_end") {
-                  deltaX = from.x;
-                  deltaY = from.y;
-                  deltaZ = from.z;
-                } else if (to.dimension == "minecraft:the_end") {
-                  deltaX = to.x;
-                  deltaY = to.y;
-                  deltaZ = to.z;
-                } else if (from.dimension == "minecraft:the_nether") {
-                  deltaX = from.x * netherCoordinateScale - to.x;
-                  deltaY = from.y * netherCoordinateScale - to.y;
-                  deltaZ = from.z * netherCoordinateScale - to.z;
-                } else if (to.dimension == "minecraft:the_nether") {
-                  deltaX = from.x - to.x / netherCoordinateScale;
-                  deltaY = from.y - to.y / netherCoordinateScale;
-                  deltaZ = from.z - to.z / netherCoordinateScale;
+                if (from.dimension() == "minecraft:the_end") {
+                  deltaX = from.x();
+                  deltaY = from.y();
+                  deltaZ = from.z();
+                } else if (to.dimension() == "minecraft:the_end") {
+                  deltaX = to.x();
+                  deltaY = to.y();
+                  deltaZ = to.z();
+                } else if (from.dimension() == "minecraft:the_nether") {
+                  deltaX = from.x() * netherCoordinateScale - to.x();
+                  deltaY = from.y() * netherCoordinateScale - to.y();
+                  deltaZ = from.z() * netherCoordinateScale - to.z();
+                } else if (to.dimension() == "minecraft:the_nether") {
+                  deltaX = from.x() - to.x() / netherCoordinateScale;
+                  deltaY = from.y() - to.y() / netherCoordinateScale;
+                  deltaZ = from.z() - to.z() / netherCoordinateScale;
                 }
               }
 
               var distance = math:sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
               var multiplier = crossDimension ? crossDimensionMultiplier : 1.0;
 
-              if (teleportType == "home") {
+              if (teleportContext.home() != null) {
                 multiplier = multiplier * homeMultiplier;
-              } else if (teleportType == "back") {
+              } else if (teleportContext.back() != null) {
                 multiplier = multiplier * backMultiplier;
-              } else if (teleportType == "warp") {
+              } else if (teleportContext.warp() != null) {
                 multiplier = multiplier * warpMultiplier;
               }
 
@@ -258,8 +258,13 @@ public record PayTpConfigData(
           Map.of("minecraft", PayTpCommandExecutor.validationOnly()),
           Map.entry("from", new PayTpScriptPosition(0.0, 64.0, 0.0, "minecraft:overworld")),
           Map.entry("to", new PayTpScriptPosition(100.0, 64.0, 100.0, "minecraft:overworld")),
-          Map.entry("teleportType", PayTpTeleportType.COORDINATE.toString()),
-          Map.entry("player", "Player"), Map.entry("otherPlayer", "")
+          Map.entry("teleportContext", PayTpTeleportContext.coordinate(
+              new PayTpTeleportContext.Coordinate()
+          )),
+          Map.entry("player", new PayTpPlayer(
+              "00000000-0000-0000-0000-000000000000",
+              "Player"
+          ))
       );
     } catch (RuntimeException e) {
       invalidFields.add("price.algorithm");

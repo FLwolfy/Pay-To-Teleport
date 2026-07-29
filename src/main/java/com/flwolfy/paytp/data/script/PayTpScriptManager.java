@@ -1,8 +1,11 @@
 package com.flwolfy.paytp.data.script;
 
+import com.flwolfy.paytp.data.PayTpTeleportContext;
+import com.flwolfy.paytp.data.PayTpPlayer;
 import com.flwolfy.paytp.util.PayTpShellExecutor;
 import com.flwolfy.paytp.util.PayTpCommandExecutor;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -34,10 +37,13 @@ public class PayTpScriptManager {
         .silent(false)
         .permissions(new JexlPermissions.ClassPermissions(
             JexlPermissions.SECURE,
-            PayTpScriptPosition.class,
-            PayTpShellExecutor.class,
-            PayTpShellExecutor.ShellResult.class,
-            PayTpCommandExecutor.class
+            includeNestMembers(
+                PayTpScriptPosition.class,
+                PayTpTeleportContext.class,
+                PayTpPlayer.class,
+                PayTpShellExecutor.class,
+                PayTpCommandExecutor.class
+            )
         ))
         .namespaces(Map.of(
             "math", Math.class,
@@ -111,6 +117,13 @@ public class PayTpScriptManager {
         script.source(),
         engine::createScript
     );
+  }
+
+  private static Class<?>[] includeNestMembers(Class<?>... rootClasses) {
+    return Arrays.stream(rootClasses)
+        .flatMap(rootClass -> Arrays.stream(rootClass.getNestMembers()))
+        .distinct()
+        .toArray(Class<?>[]::new);
   }
 
   private static final class ScriptContext

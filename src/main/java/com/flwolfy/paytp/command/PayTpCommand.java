@@ -10,8 +10,8 @@ import com.flwolfy.paytp.data.config.PayTpConfigData;
 import com.flwolfy.paytp.data.config.PayTpConfigManager;
 import com.flwolfy.paytp.data.warp.PayTpWarpPermission;
 import com.flwolfy.paytp.data.PayTpData;
-import com.flwolfy.paytp.data.PayTpTeleportType;
-import com.flwolfy.paytp.data.PayTpTeleportResult;
+import com.flwolfy.paytp.data.PayTpPlayer;
+import com.flwolfy.paytp.data.PayTpTeleportContext;
 import com.flwolfy.paytp.data.lang.PayTpLangManager;
 import com.flwolfy.paytp.util.PayTpCalculator;
 import com.flwolfy.paytp.util.PayTpItemHandler;
@@ -61,6 +61,20 @@ public class PayTpCommand {
   private static PayTpConfigData configData;
 
   private PayTpCommand() {}
+
+  /**
+   * Describes the outcome of a PayTp teleport operation.
+   */
+  private enum PayTpTeleportResult {
+    SUCCESS,
+    INSUFFICIENT_FUNDS,
+    CROSS_DIMENSION_DISABLED,
+    FAILED;
+
+    public int commandResult() {
+      return this == SUCCESS ? Command.SINGLE_SUCCESS : 0;
+    }
+  }
 
   /**
    * Resolves and stores the managers required by command handlers.
@@ -369,8 +383,7 @@ public class PayTpCommand {
         player,
         payTpData,
         true,
-        PayTpTeleportType.COORDINATE,
-        ""
+        PayTpTeleportContext.coordinate(new PayTpTeleportContext.Coordinate())
     ).commandResult();
   }
 
@@ -387,8 +400,7 @@ public class PayTpCommand {
         player,
         payTpData,
         true,
-        PayTpTeleportType.COORDINATE,
-        ""
+        PayTpTeleportContext.coordinate(new PayTpTeleportContext.Coordinate())
     ).commandResult();
   }
 
@@ -413,8 +425,13 @@ public class PayTpCommand {
           sender,
           targetTp,
           true,
-          PayTpTeleportType.REQUEST,
-          target.getName().getString()
+          PayTpTeleportContext.request(new PayTpTeleportContext.Request(
+              new PayTpPlayer(
+                  target.getUUID().toString(),
+                  target.getName().getString()
+              ),
+              true
+          ))
       );
 
       if (result == PayTpTeleportResult.SUCCESS) {
@@ -473,8 +490,13 @@ public class PayTpCommand {
           target,
           senderTp,
           true,
-          PayTpTeleportType.REQUEST,
-          sender.getName().getString()
+          PayTpTeleportContext.request(new PayTpTeleportContext.Request(
+              new PayTpPlayer(
+                  sender.getUUID().toString(),
+                  sender.getName().getString()
+              ),
+              false
+          ))
       );
 
     }, () -> {
@@ -607,8 +629,7 @@ public class PayTpCommand {
         player,
         targetTp,
         false,
-        PayTpTeleportType.BACK,
-        ""
+        PayTpTeleportContext.back(new PayTpTeleportContext.Back())
     );
 
     if (result != PayTpTeleportResult.SUCCESS) {
@@ -633,8 +654,7 @@ public class PayTpCommand {
         player,
         home,
         true,
-        PayTpTeleportType.HOME,
-        ""
+        PayTpTeleportContext.home(new PayTpTeleportContext.Home())
     );
 
     if (result == PayTpTeleportResult.SUCCESS) {
@@ -659,18 +679,26 @@ public class PayTpCommand {
     if (player == null) return 0;
 
     String name = StringArgumentType.getString(ctx, "name");
-    PayTpData target = warpManager.getWarp(player, name);
-    if (target == null) {
+    PayTpWarpManager.WarpView warp = warpManager.getWarpView(player, name);
+    if (warp == null || !warp.accessible()) {
       PayTpMessageSender.msgNoWarp(player, name);
       return 0;
     }
 
     return PayTpCommand.teleport(
         player,
-        target,
+        warp.destination(),
         true,
-        PayTpTeleportType.WARP,
-        ""
+        PayTpTeleportContext.warp(new PayTpTeleportContext.Warp(
+            warp.name(),
+            warp.scriptAccessType(),
+            warp.ownerId() == null
+                ? null
+                : new PayTpPlayer(
+                    warp.ownerId().toString(),
+                    warp.ownerName()
+                )
+        ))
     ).commandResult();
   }
 
@@ -1003,8 +1031,7 @@ public class PayTpCommand {
       ServerPlayer player,
       PayTpData targetData,
       boolean recordToBackStack,
-      PayTpTeleportType teleportType,
-      String otherPlayer
+      PayTpTeleportContext teleportContext
   ) {
     // ---------------------------------
     // Fetch teleport info
@@ -1036,9 +1063,8 @@ public class PayTpCommand {
       price = PayTpCalculator.calculatePrice(
           fromData,
           targetData,
-          teleportType,
+          teleportContext,
           player,
-          otherPlayer,
           configData.price()
       );
       if (price < 0) {
@@ -1147,7 +1173,7 @@ public class PayTpCommand {
           }
 
           // Message
-          if (teleportType == PayTpTeleportType.BACK) {
+          if (teleportContext.back() != null) {
             PayTpMessageSender.msgTpBackSucceeded(
                 playerEntity,
                 (new ItemStack(PayTpItemHandler.getItemByStringId(configData.price().currencyItem()))).getHoverName(),

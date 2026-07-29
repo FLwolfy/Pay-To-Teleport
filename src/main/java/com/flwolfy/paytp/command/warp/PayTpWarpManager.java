@@ -18,6 +18,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -78,11 +79,16 @@ public class PayTpWarpManager {
   public record WarpView(
       String name,
       PayTpData destination,
+      UUID ownerId,
       String ownerName,
       AccessType accessType
   ) {
     public boolean accessible() {
       return accessType != AccessType.LOCKED;
+    }
+
+    public String scriptAccessType() {
+      return accessType.name().toLowerCase(Locale.ROOT);
     }
   }
 
@@ -427,25 +433,7 @@ public class PayTpWarpManager {
       if (filter == AccessType.OWNED && !owned) return;
       if (filter == AccessType.INVITED && !invited) return;
 
-      AccessType accessType;
-      if (serverWarp) {
-        accessType = AccessType.SERVER;
-      } else if (publicWarp) {
-        accessType = AccessType.PUBLIC;
-      } else if (owned) {
-        accessType = AccessType.OWNED;
-      } else if (invited) {
-        accessType = AccessType.INVITED;
-      } else {
-        accessType = AccessType.LOCKED;
-      }
-      UUID ownerId = state.getOwnerId(name);
-      String ownerName = ownerId == null ? "" :
-          player.level().getServer().services().nameToIdCache()
-              .get(ownerId)
-              .map(profile -> profile.name())
-              .orElse(ownerId.toString());
-      warps.add(new WarpView(name, destination, ownerName, accessType));
+      warps.add(createWarpView(player, state, name, destination));
     });
 
     warps.sort(
@@ -453,6 +441,42 @@ public class PayTpWarpManager {
             .thenComparing(WarpView::name, String.CASE_INSENSITIVE_ORDER)
     );
     return List.copyOf(warps);
+  }
+
+  public WarpView getWarpView(ServerPlayer player, String name) {
+    PayTpWarpState state = getState(player.level().getServer().overworld());
+    PayTpData destination = state.getWarp(name);
+    if (destination == null) return null;
+    return createWarpView(player, state, name, destination);
+  }
+
+  private WarpView createWarpView(
+      ServerPlayer player,
+      PayTpWarpState state,
+      String name,
+      PayTpData destination
+  ) {
+    UUID playerId = player.getUUID();
+    AccessType accessType;
+    if (state.isServer(name)) {
+      accessType = AccessType.SERVER;
+    } else if (state.isPublic(name)) {
+      accessType = AccessType.PUBLIC;
+    } else if (state.isOwner(name, playerId)) {
+      accessType = AccessType.OWNED;
+    } else if (state.isInvited(name, playerId)) {
+      accessType = AccessType.INVITED;
+    } else {
+      accessType = AccessType.LOCKED;
+    }
+
+    UUID ownerId = state.getOwnerId(name);
+    String ownerName = ownerId == null ? "" :
+        player.level().getServer().services().nameToIdCache()
+            .get(ownerId)
+            .map(profile -> profile.name())
+            .orElse(ownerId.toString());
+    return new WarpView(name, destination, ownerId, ownerName, accessType);
   }
 
   public boolean isOwner(ServerPlayer player, String name) {

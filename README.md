@@ -229,18 +229,32 @@ The `price.algorithm` string contains both the distance calculation and the pric
 
 ### Available Variables
 
-| Variable       | Type       | Description                                                                 |
-|----------------|------------|-----------------------------------------------------------------------------|
-| `from`         | `position` | Source position with `.x`, `.y`, `.z`, and `.dimension` properties.         |
-| `to`           | `position` | Destination position with `.x`, `.y`, `.z`, and `.dimension` properties.    |
-| `teleportType` | `string`   | One of `coordinate`, `request`, `home`, `back`, or `warp`.                  |
-| `player`       | `string`   | Name of the player being teleported.                                        |
-| `otherPlayer`  | `string`   | Name of the other player involved in a request, or an empty string if none. |
+| Variable          | Type       | Description                                                     |
+|-------------------|------------|-----------------------------------------------------------------|
+| `from`            | `position` | Source record with `x()`, `y()`, `z()`, and `dimension()`.      |
+| `to`              | `position` | Destination record with `x()`, `y()`, `z()`, and `dimension()`. |
+| `teleportContext` | `teleport` | Type-specific teleport context described below.                 |
+| `player`          | `player`   | Teleported player record with `uuid()` and `name()`.            |
+
+`teleportContext` contains five nullable nested records. Exactly one accessor returns a record for
+each execution; the other four return `null`:
+
+| Accessor                       | Record contents                                                                                                                                                     |
+|--------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `teleportContext.coordinate()` | Coordinate-command context; currently empty.                                                                                                                        |
+| `teleportContext.home()`       | Home context; currently empty.                                                                                                                                      |
+| `teleportContext.back()`       | Back context; currently empty.                                                                                                                                      |
+| `teleportContext.request()`    | `otherPlayer()` returns the other player with `uuid()` and `name()`;<br/>`isRequester()` is a `bool` indicating whether the current `player` initiated the request. |
+| `teleportContext.warp()`       | `name()`, `accessType()`, and `owner()`; the owner has `uuid()` and `name()`.                                                                                       |
+
+`isRequester()` is `true` when the current `player` initiated the request and `false` when they
+accepted a request to teleport to its sender. Warp `accessType()` is `owned`, `invited`, `server`,
+or `public`; `owner()` is `null` for an ownerless server waypoint.
 
 `crossDimension` is intentionally not provided. Determine it inside the script:
 
 ```jexl
-var crossDimension = from.dimension != to.dimension;
+var crossDimension = from.dimension() != to.dimension();
 ```
 
 ### Return Value and Strict Mode
@@ -283,13 +297,13 @@ math:round(rawPrice).intValue();
 | `minecraft:execute(command)` | `int`       | Executes a Minecraft command. The leading `/` is optional and command feedback is suppressed. |
 
 The server—not the teleported player—is the command source, so `@s` cannot be used to refer to the
-player. Use the algorithm's `player` name when a command needs a player target. Commands involving
+player. Use the algorithm's `player.name()` when a command needs a player target. Commands involving
 locations or dimensions should specify their target, coordinates, and dimension explicitly instead
 of relying on player-relative command context:
 
 ```jexl
-minecraft:execute("scoreboard players add " + player + " teleport_count 1");
-minecraft:execute("effect give " + player + " minecraft:regeneration 5 0");
+minecraft:execute("scoreboard players add " + player.name() + " teleport_count 1");
+minecraft:execute("effect give " + player.name() + " minecraft:regeneration 5 0");
 10;
 ```
 
@@ -317,17 +331,16 @@ result.exitCode == 0 ? result.stdoutInt() : 0;
 For a price algorithm, `runInt` is usually the simplest form:
 
 ```jexl
-shell:runInt("python3 /opt/paytp/price.py '" + player + "'");
+shell:runInt("python3 /opt/paytp/price.py '" + player.name() + "'");
 ```
 
 ### Example Algorithm
 
 ```jexl
 // Available variables:
-// from, to: positions with .x, .y, .z, and .dimension
-// teleportType: "coordinate", "request", "home", "back", or "warp"
-// player: name of the player being teleported
-// otherPlayer: name of the other request player, or an empty string
+// from, to: positions with .x(), .y(), .z(), and .dimension()
+// teleportContext: exactly one of coordinate(), home(), back(), request(), or warp()
+// player: the teleported player, with .uuid() and .name()
 //
 // Java's built-in Math methods are available through the "math" namespace.
 // Minecraft commands are available through minecraft:execute("command").
@@ -341,17 +354,17 @@ var homeMultiplier = 0.5;
 var backMultiplier = 0.8;
 var warpMultiplier = 0.5;
 
-var deltaX = from.x - to.x;
-var deltaY = from.y - to.y;
-var deltaZ = from.z - to.z;
+var deltaX = from.x() - to.x();
+var deltaY = from.y() - to.y();
+var deltaZ = from.z() - to.z();
 var distance = math:sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
-var multiplier = from.dimension != to.dimension ? crossDimensionMultiplier : 1.0;
+var multiplier = from.dimension() != to.dimension() ? crossDimensionMultiplier : 1.0;
 
-if (teleportType == "home") {
+if (teleportContext.home() != null) {
   multiplier = multiplier * homeMultiplier;
-} else if (teleportType == "back") {
+} else if (teleportContext.back() != null) {
   multiplier = multiplier * backMultiplier;
-} else if (teleportType == "warp") {
+} else if (teleportContext.warp() != null) {
   multiplier = multiplier * warpMultiplier;
 }
 

@@ -24,26 +24,6 @@ public record PayTpScriptPosition(
     Objects.requireNonNull(dimension, "dimension");
   }
 
-  @SuppressWarnings("unused")
-  public double getX() {
-    return x;
-  }
-
-  @SuppressWarnings("unused")
-  public double getY() {
-    return y;
-  }
-
-  @SuppressWarnings("unused")
-  public double getZ() {
-    return z;
-  }
-
-  @SuppressWarnings("unused")
-  public String getDimension() {
-    return dimension;
-  }
-
   /**
    * Converts stored teleport data into its script-facing representation.
    *

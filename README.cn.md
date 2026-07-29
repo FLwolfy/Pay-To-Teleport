@@ -230,18 +230,32 @@ See the English document [here](./README.md).
 
 ### 可用参数
 
-| 参数名         | 类型       | 说明                                                        |
-|----------------|------------|-------------------------------------------------------------|
-| `from`         | `position` | 传送起点，包含 `.x`、`.y`、`.z` 和 `.dimension` 属性。      |
-| `to`           | `position` | 传送终点，包含 `.x`、`.y`、`.z` 和 `.dimension` 属性。      |
-| `teleportType` | `string`   | `coordinate`、`request`、`home`、`back` 或 `warp`。         |
-| `player`       | `string`   | 被传送玩家的名称。                                          |
-| `otherPlayer`  | `string`   | 请求中另一位玩家的名称；不存在时为空字符串。                |
+| 参数名            | 类型       | 说明                                                         |
+|-------------------|------------|--------------------------------------------------------------|
+| `from`            | `position` | 传送起点 record，提供 `x()`、`y()`、`z()` 和 `dimension()`。 |
+| `to`              | `position` | 传送终点 record，提供 `x()`、`y()`、`z()` 和 `dimension()`。 |
+| `teleportContext` | `teleport` | 下表所述的传送类型专属上下文。                               |
+| `player`          | `player`   | 被传送玩家 record，提供 `uuid()` 和 `name()`。               |
+
+`teleportContext` 内含五个可空的嵌套 record。每次执行时恰好一个方法返回对应 record，
+其余四个均返回 `null`：
+
+| 方法                           | Record 内容                                                                                                                    |
+|--------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| `teleportContext.coordinate()` | 坐标指令上下文；目前没有额外字段。                                                                                             |
+| `teleportContext.home()`       | Home 上下文；目前没有额外字段。                                                                                                |
+| `teleportContext.back()`       | Back 上下文；目前没有额外字段。                                                                                                |
+| `teleportContext.request()`    | `otherPlayer()` 返回包含 `uuid()` 与 `name()` 的对方玩家；<br/>`isRequester()` 为 `bool`，表示当前 `player` 是否为请求发起者。 |
+| `teleportContext.warp()`       | `name()`、`accessType()` 和 `owner()`；创建者提供 `uuid()` 与 `name()`。                                                       |
+
+当当前 `player` 是请求发起者时，`isRequester()` 为 `true`；当其接受请求并传送到发起者身边时为
+`false`。Warp 的 `accessType()` 为 `owned`、`invited`、`server` 或 `public`；
+没有创建者的服务器传送点，其 `owner()` 为 `null`。
 
 脚本不会收到 `crossDimension` 参数，需要现场判断：
 
 ```jexl
-var crossDimension = from.dimension != to.dimension;
+var crossDimension = from.dimension() != to.dimension();
 ```
 
 ### 返回值与严格模式
@@ -281,11 +295,11 @@ math:round(rawPrice).intValue();
 |------------------------------|----------|-------------------------------------------------------------------|
 | `minecraft:execute(command)` | `int`    | 执行 Minecraft 命令；开头的 `/` 可省略，且不会显示命令反馈。      |
 
-命令执行源是服务器而不是被传送玩家，因此不能使用 `@s` 指代玩家。需要目标玩家时请使用算法提供的 `player` 名称；涉及位置或维度的命令应显式指定目标、坐标和维度，不要依赖玩家执行上下文：
+命令执行源是服务器而不是被传送玩家，因此不能使用 `@s` 指代玩家。需要目标玩家时请使用算法提供的 `player.name()`；涉及位置或维度的命令应显式指定目标、坐标和维度，不要依赖玩家执行上下文：
 
 ```jexl
-minecraft:execute("scoreboard players add " + player + " teleport_count 1");
-minecraft:execute("effect give " + player + " minecraft:regeneration 5 0");
+minecraft:execute("scoreboard players add " + player.name() + " teleport_count 1");
+minecraft:execute("effect give " + player.name() + " minecraft:regeneration 5 0");
 10;
 ```
 
@@ -312,17 +326,16 @@ result.exitCode == 0 ? result.stdoutInt() : 0;
 价格算法通常可以直接使用 `runInt`：
 
 ```jexl
-shell:runInt("python3 /opt/paytp/price.py '" + player + "'");
+shell:runInt("python3 /opt/paytp/price.py '" + player.name() + "'");
 ```
 
 ### 算法示例
 
 ```jexl
 // Available variables:
-// from, to: positions with .x, .y, .z, and .dimension
-// teleportType: "coordinate", "request", "home", "back", or "warp"
-// player: name of the player being teleported
-// otherPlayer: name of the other request player, or an empty string
+// from, to: positions with .x(), .y(), .z(), and .dimension()
+// teleportContext: exactly one of coordinate(), home(), back(), request(), or warp()
+// player: the teleported player, with .uuid() and .name()
 //
 // Java's built-in Math methods are available through the "math" namespace.
 // Minecraft commands are available through minecraft:execute("command").
@@ -336,17 +349,17 @@ var homeMultiplier = 0.5;
 var backMultiplier = 0.8;
 var warpMultiplier = 0.5;
 
-var deltaX = from.x - to.x;
-var deltaY = from.y - to.y;
-var deltaZ = from.z - to.z;
+var deltaX = from.x() - to.x();
+var deltaY = from.y() - to.y();
+var deltaZ = from.z() - to.z();
 var distance = math:sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
-var multiplier = from.dimension != to.dimension ? crossDimensionMultiplier : 1.0;
+var multiplier = from.dimension() != to.dimension() ? crossDimensionMultiplier : 1.0;
 
-if (teleportType == "home") {
+if (teleportContext.home() != null) {
   multiplier = multiplier * homeMultiplier;
-} else if (teleportType == "back") {
+} else if (teleportContext.back() != null) {
   multiplier = multiplier * backMultiplier;
-} else if (teleportType == "warp") {
+} else if (teleportContext.warp() != null) {
   multiplier = multiplier * warpMultiplier;
 }
 
