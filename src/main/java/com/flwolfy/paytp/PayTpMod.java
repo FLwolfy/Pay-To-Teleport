@@ -1,8 +1,9 @@
 package com.flwolfy.paytp;
 
-import com.flwolfy.paytp.command.PayTpBackManager;
+import com.flwolfy.paytp.command.back.PayTpBackManager;
 import com.flwolfy.paytp.command.PayTpCommand;
-import com.flwolfy.paytp.command.PayTpWarpManager;
+import com.flwolfy.paytp.command.warp.PayTpWarpNameArgument;
+import com.flwolfy.paytp.command.warp.PayTpWarpManager;
 import com.flwolfy.paytp.data.PayTpData;
 import com.flwolfy.paytp.util.PayTpMessageSender;
 
@@ -30,6 +31,8 @@ public class PayTpMod implements ModInitializer {
 	 */
 	@Override
 	public void onInitialize() {
+		PayTpWarpNameArgument.register();
+
 		// Init command
 		PayTpCommand.init();
 
@@ -60,7 +63,10 @@ public class PayTpMod implements ModInitializer {
 			if (!world.dimension().equals(Level.OVERWORLD)) return;
 			PayTpWarpManager.getInstance().checkWarpState(world.getServer(), name -> {
 				for (ServerPlayer onlinePlayer : world.getServer().getPlayerList().getPlayers()) {
-					PayTpMessageSender.msgWarpDeletedServer(onlinePlayer, name);
+					PayTpMessageSender.msgWarpDeletedServer(
+							onlinePlayer,
+							name
+					);
 				}
 			});
 		});

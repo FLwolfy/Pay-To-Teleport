@@ -5,8 +5,9 @@ import com.flwolfy.paytp.data.PayTpTeleportType;
 import com.flwolfy.paytp.data.script.PayTpScript;
 import com.flwolfy.paytp.data.script.PayTpScriptManager;
 import com.flwolfy.paytp.data.script.PayTpScriptPosition;
+import com.flwolfy.paytp.data.warp.PayTpWarpPermission;
 import com.flwolfy.paytp.flag.Flags;
-import com.flwolfy.paytp.flag.PayTpPriceDeductionFlags;
+import com.flwolfy.paytp.flag.PayTpDeductionFlags;
 import com.flwolfy.paytp.util.PayTpCommandExecutor;
 import com.flwolfy.paytp.util.PayTpItemHandler;
 
@@ -65,6 +66,7 @@ public record PayTpConfigData(
 
   public record Warp(
       String warpCommand,
+      PayTpWarpPermission serverWarpPermission,
       int maxInactiveTicks,
       int checkPeriodTicks
   ) {}
@@ -117,6 +119,7 @@ public record PayTpConfigData(
       ),
       new Warp(
           "ptpwarp",
+          PayTpWarpPermission.GAMEMASTERS,
           100,
           20
       ),
@@ -196,15 +199,15 @@ public record PayTpConfigData(
   /**
    * Encodes the configured payment-storage options as a bit mask.
    *
-   * @return the combined {@link PayTpPriceDeductionFlags} mask
+   * @return the combined {@link PayTpDeductionFlags} mask
    */
   public int deductionFlags() {
     Price.Deduction deduction = price.deduction();
     return Flags.combine(
-        deduction.allowEnderChest() ? PayTpPriceDeductionFlags.ALLOW_ENDER_CHEST : null,
-        deduction.prioritizeEnderChest() ? PayTpPriceDeductionFlags.PRIORITIZE_ENDER_CHEST : null,
-        deduction.allowShulkerBox() ? PayTpPriceDeductionFlags.ALLOW_SHULKER_BOX : null,
-        deduction.prioritizeShulkerBox() ? PayTpPriceDeductionFlags.PRIORITIZE_SHULKER_BOX : null
+        deduction.allowEnderChest() ? PayTpDeductionFlags.ALLOW_ENDER_CHEST : null,
+        deduction.prioritizeEnderChest() ? PayTpDeductionFlags.PRIORITIZE_ENDER_CHEST : null,
+        deduction.allowShulkerBox() ? PayTpDeductionFlags.ALLOW_SHULKER_BOX : null,
+        deduction.prioritizeShulkerBox() ? PayTpDeductionFlags.PRIORITIZE_SHULKER_BOX : null
     );
   }
 
@@ -236,6 +239,9 @@ public record PayTpConfigData(
     }
     if (warp.checkPeriodTicks() <= 0) {
       invalidFields.add("warp.checkPeriodTicks");
+    }
+    if (warp.serverWarpPermission() == null) {
+      invalidFields.add("warp.serverWarpPermission");
     }
 
     // Currency Item

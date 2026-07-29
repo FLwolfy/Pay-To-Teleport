@@ -5,6 +5,8 @@ import com.flwolfy.paytp.data.lang.PayTpLang;
 import com.flwolfy.paytp.data.lang.PayTpLangAdapter;
 import com.flwolfy.paytp.data.script.PayTpScript;
 import com.flwolfy.paytp.data.script.PayTpScriptAdapter;
+import com.flwolfy.paytp.data.warp.PayTpWarpPermission;
+import com.flwolfy.paytp.data.warp.PayTpWarpPermissionAdapter;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -40,6 +42,10 @@ public class PayTpConfigManager {
     // ================================
     gsonBuilder.registerTypeAdapter(PayTpLang.class, new PayTpLangAdapter());
     gsonBuilder.registerTypeAdapter(PayTpScript.class, new PayTpScriptAdapter());
+    gsonBuilder.registerTypeAdapter(
+        PayTpWarpPermission.class,
+        new PayTpWarpPermissionAdapter()
+    );
     // ================================
 
     GSON = gsonBuilder.setPrettyPrinting().create();

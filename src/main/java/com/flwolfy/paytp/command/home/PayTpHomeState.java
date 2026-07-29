@@ -1,4 +1,4 @@
-package com.flwolfy.paytp.command;
+package com.flwolfy.paytp.command.home;
 
 import com.flwolfy.paytp.data.PayTpData;
 

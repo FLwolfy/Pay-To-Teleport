@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.permissions.PermissionSet;
 
 /**
@@ -20,12 +21,13 @@ public final class PayTpCommandExecutor {
   }
 
   /**
-   * Creates an executor using the supplied command source with maximum permissions.
+   * Creates an executor using the server console as the command source.
    *
-   * @param source the player-relative source used to execute commands
+   * @param server the server whose registered commands will be executed
    */
-  public PayTpCommandExecutor(CommandSourceStack source) {
-    this.source = Objects.requireNonNull(source)
+  public PayTpCommandExecutor(MinecraftServer server) {
+    this.source = Objects.requireNonNull(server)
+        .createCommandSourceStack()
         .withMaximumPermission(PermissionSet.ALL_PERMISSIONS)
         .withSuppressedOutput();
   }
@@ -40,10 +42,11 @@ public final class PayTpCommandExecutor {
   }
 
   /**
-   * Executes any command registered with the Minecraft server.
+   * Executes any command registered with the Minecraft server as the server console.
    *
    * <p>The leading slash is optional. The returned value is the command result reported by
-   * Minecraft, or {@code 0} when the command reports no successful result.</p>
+   * Minecraft, or {@code 0} when the command reports no successful result. Since the command
+   * source has no entity, {@code @s} cannot refer to the teleported player.</p>
    *
    * @param command the complete Minecraft command
    * @return the command result

@@ -32,22 +32,28 @@ The in-game help guide will automatically adapt.
 
 *All displays show the default command names, where <> indicates required parameters and () indicates optional parameters*
 
-| Command                        | Description                                                  |
-|--------------------------------|--------------------------------------------------------------|
-| `/ptphelp`                     | Get command guide for PayTp                                  |
-| `/ptp (dimension) <x> <y> <z>` | Teleport to specified coordinates (in a specific dimension)  |
-| `/ptpto <player>`              | Send request to teleport to a player                         |
-| `/ptphere <player>`            | Send request to a player to teleport to you                  |
-| `/ptpaccept (player)`          | Accept a teleport request (from a specific player)           |
-| `/ptpdeny (player)`            | Deny a teleport request (from a specific player)             |
-| `/ptpcancel (player)`          | Cancel a pending teleport request (to a specific player)     |
-| `/ptpback`                     | Return to the previous location                              |
-| `/ptphome`                     | Teleport to your home (if configured)                        |
-| `/ptphome set`                 | Set your home to your current position                       |
-| `/ptpwarp <name>`              | Teleport to the specified waypoint                           |
-| `/ptpwarp create <name>`       | Create a new waypoint (must be within an active beacon beam) |
-| `/ptpwarp delete <name>`       | Delete the specified waypoint                                |
-| `/ptpwarp list (page)`         | View all waypoints on the server                             |
+Every `<player>` argument accepts and suggests online player names only; entity selectors such as `@a`, `@p`, and `@s` are not supported.
+The `/ptp` `<x> <y> <z>` text is a non-selectable format hint rather than a current-coordinate suggestion; `~` and `^` relative coordinates remain supported.
+
+| Command                                                  | Description                                                                  |
+|----------------------------------------------------------|------------------------------------------------------------------------------|
+| `/ptphelp`                                               | Get command guide for PayTp                                                  |
+| `/ptp (dimension) <x> <y> <z>`                           | Teleport to specified coordinates (in a specific dimension)                  |
+| `/ptpto <player>`                                        | Send request to teleport to a player                                         |
+| `/ptphere <player>`                                      | Send request to a player to teleport to you                                  |
+| `/ptpaccept (player)`                                    | Accept a teleport request (from a specific player)                           |
+| `/ptpdeny (player)`                                      | Deny a teleport request (from a specific player)                             |
+| `/ptpcancel (player)`                                    | Cancel a pending teleport request (to a specific player)                     |
+| `/ptpback`                                               | Return to the previous location                                              |
+| `/ptphome`                                               | Teleport to your home (if configured)                                        |
+| `/ptphome set`                                           | Set your home to your current position                                       |
+| `/ptpwarp <name>`                                        | Teleport to the specified waypoint                                           |
+| `/ptpwarp create <name> (public/private/server)`         | Create a waypoint; defaults to `private`; `server` is permission-controlled. |
+| `/ptpwarp delete <name> (forced)`                        | Delete your waypoint; `forced` is permission-controlled.                     |
+| `/ptpwarp rename <name> <new_name>`                      | Rename a waypoint you created.                                               |
+| `/ptpwarp invite <name> <player>`                        | Invite a player to one of your private waypoints.                            |
+| `/ptpwarp exclude <name> <player>`                       | Remove an invited player from a private waypoint.                            |
+| `/ptpwarp list (all/public/owned/invited/server) (page)` | Filter and page through server waypoints.                                    |
 
 ---
 
@@ -94,6 +100,7 @@ The in-game help guide will automatically adapt.
   },
   "warp": {
     "warpCommand": "ptpwarp",
+    "serverWarpPermission": 2,
     "maxInactiveTicks": 100,
     "checkPeriodTicks": 20
   },
@@ -125,8 +132,8 @@ The in-game help guide will automatically adapt.
 
 #### Teleport Effects (`general.effect`)
 
-| Field            | Type      | Description                                   |
-|------------------|-----------|-----------------------------------------------|
+| Field            | Type      | Description                                    |
+|------------------|-----------|------------------------------------------------|
 | `particleEffect` | `boolean` | Enable teleport particles; defaults to `true`. |
 | `soundEffect`    | `boolean` | Enable teleport sounds; defaults to `true`.    |
 
@@ -134,9 +141,9 @@ The in-game help guide will automatically adapt.
 
 ### Coordinate Teleport
 
-| Field               | Type      | Description                                                                                                             |
-|---------------------|-----------|-------------------------------------------------------------------------------------------------------------------------|
-| `coordinateCommand` | `string`  | Coordinate teleport command (default `/ptp`).                                                                           |
+| Field               | Type      | Description                                                                                                                                 |
+|---------------------|-----------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| `coordinateCommand` | `string`  | Coordinate teleport command (default `/ptp`).                                                                                               |
 | `allowCrossDim`     | `boolean` | Whether any teleport method may cross dimensions; defaults to `true`. When disabled, the dimension argument is not registered or displayed. |
 
 ---
@@ -155,8 +162,8 @@ The in-game help guide will automatically adapt.
 
 #### Configuration
 
-| Field        | Type   |  Description                                 |
-|--------------|--------|----------------------------------------------|
+| Field        | Type   | Description                                                                    |
+|--------------|--------|--------------------------------------------------------------------------------|
 | `expireTime` | `int`  | Request expiration time in seconds; defaults to `10` and must be non-negative. |
 
 ---
@@ -171,46 +178,47 @@ The in-game help guide will automatically adapt.
 
 ### Back System
 
-| Field          | Type     | Description                                                  |
-|----------------|----------|--------------------------------------------------------------|
-| `backCommand`  | `string` | Command to return to previous location (default `/ptpback`). |
+| Field          | Type     | Description                                                                         |
+|----------------|----------|-------------------------------------------------------------------------------------|
+| `backCommand`  | `string` | Command to return to previous location (default `/ptpback`).                        |
 | `maxBackStack` | `int`    | Maximum saved historical positions; defaults to `10` and must be greater than zero. |
 
 ---
 
 ### Waypoint System
 
-| Field              | Type     | Description                                                                                |
-|--------------------|----------|--------------------------------------------------------------------------------------------|
-| `warpCommand`      | `string` | Command name to teleport to a waypoint (default `/ptpwarp`).                               |
-| `maxInactiveTicks` | `int`    | Ticks before deleting a waypoint after beacon deactivation; defaults to `100` and must be non-negative. |
-| `checkPeriodTicks` | `int`    | Waypoint-to-beacon check interval in ticks; defaults to `20` and must be greater than zero.             |
- 
+| Field                  | Type      | Description                                                                                                                            |
+|------------------------|-----------|----------------------------------------------------------------------------------------------------------------------------------------|
+| `warpCommand`          | `string`  | Command name to teleport to a waypoint (default `/ptpwarp`).                                                                           |
+| `serverWarpPermission` | `int`     | Minecraft permission level required to create server waypoints and force-delete waypoints; ranges from `0` to `4` and defaults to `2`. |
+| `maxInactiveTicks`     | `int`     | Ticks before deleting a waypoint after beacon deactivation; defaults to `100` and must be non-negative.                                |
+| `checkPeriodTicks`     | `int`     | Waypoint-to-beacon check interval in ticks; defaults to `20` and must be greater than zero.                                            |
+
 ---
 
 ### Cost Calculation Settings
 
 #### Currency
 
-| Field          | Type     | Description                                              |
-|----------------|----------|----------------------------------------------------------|
+| Field          | Type     | Description                                                |
+|----------------|----------|------------------------------------------------------------|
 | `currencyItem` | `string` | A valid currency item ID; defaults to `minecraft:diamond`. |
 
 #### Price Range and Algorithm
 
-| Field       | Type     | Description                                                                                          |
-|-------------|----------|------------------------------------------------------------------------------------------------------|
-| `minPrice`  | `int`    | Final lower bound for non-negative prices; defaults to `1` and must satisfy `0 <= minPrice <= maxPrice`. |
+| Field       | Type     | Description                                                                                                                        |
+|-------------|----------|------------------------------------------------------------------------------------------------------------------------------------|
+| `minPrice`  | `int`    | Final lower bound for non-negative prices; defaults to `1` and must satisfy `0 <= minPrice <= maxPrice`.                           |
 | `maxPrice`  | `int`    | Final upper bound; defaults to `64`. Setting both `minPrice` and `maxPrice` to `0` skips the algorithm and fixes the price at `0`. |
-| `algorithm` | `string` | A JEXL script that calculates distance and raw price and must return an `int`.                       |
+| `algorithm` | `string` | A JEXL script that calculates distance and raw price and must return an `int`.                                                     |
 
 #### Payment Deduction (`price.deduction`)
 
-| Field                  | Type      | Description                              |
-|------------------------|-----------|------------------------------------------|
-| `allowEnderChest`      | `boolean` | Allow Ender Chest currency; defaults to `true`. |
-| `prioritizeEnderChest` | `boolean` | Prioritize Ender Chest deduction; defaults to `true` and requires `allowEnderChest`. |
-| `allowShulkerBox`      | `boolean` | Allow Shulker Box currency; defaults to `false`. |
+| Field                  | Type      | Description                                                                           |
+|------------------------|-----------|---------------------------------------------------------------------------------------|
+| `allowEnderChest`      | `boolean` | Allow Ender Chest currency; defaults to `true`.                                       |
+| `prioritizeEnderChest` | `boolean` | Prioritize Ender Chest deduction; defaults to `true` and requires `allowEnderChest`.  |
+| `allowShulkerBox`      | `boolean` | Allow Shulker Box currency; defaults to `false`.                                      |
 | `prioritizeShulkerBox` | `boolean` | Prioritize Shulker Box deduction; defaults to `false` and requires `allowShulkerBox`. |
 
 ---
@@ -268,18 +276,20 @@ math:round(rawPrice).intValue();
 ### Minecraft Commands
 
 > [!WARNING]
-> The `minecraft` namespace can execute every command registered with the server, including commands added by other mods. Commands run as the player being teleported with `ALL_PERMISSIONS`, so they can perform destructive or administrative operations such as `op`, `ban`, `data`, and `stop`. Only use algorithms from fully trusted sources.
+> The `minecraft` namespace can execute every command registered with the server, including commands added by other mods. Commands run as the server console with `ALL_PERMISSIONS`, so they can perform destructive or administrative operations such as `op`, `ban`, `data`, and `stop`. Only use algorithms from fully trusted sources.
 
-| Method                       | Return type | Description                                                                 |
-|------------------------------|-------------|-----------------------------------------------------------------------------|
+| Method                       | Return type | Description                                                                                   |
+|------------------------------|-------------|-----------------------------------------------------------------------------------------------|
 | `minecraft:execute(command)` | `int`       | Executes a Minecraft command. The leading `/` is optional and command feedback is suppressed. |
 
-The current player is the command source, so `@s`, relative coordinates, and the current dimension
-work as expected:
+The server—not the teleported player—is the command source, so `@s` cannot be used to refer to the
+player. Use the algorithm's `player` name when a command needs a player target. Commands involving
+locations or dimensions should specify their target, coordinates, and dimension explicitly instead
+of relying on player-relative command context:
 
 ```jexl
 minecraft:execute("scoreboard players add " + player + " teleport_count 1");
-minecraft:execute("tp @s ~ ~1 ~");
+minecraft:execute("effect give " + player + " minecraft:regeneration 5 0");
 10;
 ```
 

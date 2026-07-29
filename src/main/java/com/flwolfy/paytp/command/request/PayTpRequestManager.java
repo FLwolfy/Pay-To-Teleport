@@ -1,4 +1,4 @@
-package com.flwolfy.paytp.command;
+package com.flwolfy.paytp.command.request;
 
 import com.flwolfy.paytp.PayTpMod;
 
