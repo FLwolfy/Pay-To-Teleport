@@ -4,6 +4,7 @@ import com.flwolfy.paytp.data.PayTpData;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.level.storage.SavedDataStorage;
 
 /**
@@ -34,10 +35,26 @@ public class PayTpHomeManager {
    * Stores the player's current position and dimension as their home.
    *
    * @param player the player whose home is updated
+   * @param setRespawnPoint whether the player's respawn point should follow the home
    */
-  public void setHome(ServerPlayer player) {
+  public void setHome(ServerPlayer player, boolean setRespawnPoint) {
     ServerLevel overworld = player.level().getServer().overworld();
     getState(overworld).setHome(player.getUUID(), player.position(), player.level().dimension());
+
+    if (setRespawnPoint) {
+      player.setRespawnPosition(
+          new ServerPlayer.RespawnConfig(
+              LevelData.RespawnData.of(
+                  player.level().dimension(),
+                  player.blockPosition(),
+                  player.getYRot(),
+                  player.getXRot()
+              ),
+              true
+          ),
+          false
+      );
+    }
   }
 
   /**

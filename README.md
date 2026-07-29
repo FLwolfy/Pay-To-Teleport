@@ -92,7 +92,8 @@ The `/ptp` `<x> <y> <z>` text is a non-selectable format hint rather than a curr
     "expireTime": 10
   },
   "home": {
-    "homeCommand": "ptphome"
+    "homeCommand": "ptphome",
+    "setRespawnPoint": false
   },
   "back": {
     "backCommand": "ptpback",
@@ -170,9 +171,10 @@ The `/ptp` `<x> <y> <z>` text is a non-selectable format hint rather than a curr
 
 ### Home System
 
-| Field         | Type     | Description                                    |
-|---------------|----------|------------------------------------------------|
-| `homeCommand` | `string` | Command to teleport home (default `/ptphome`). |
+| Field             | Type      | Description                                                                                   |
+|-------------------|-----------|-----------------------------------------------------------------------------------------------|
+| `homeCommand`     | `string`  | Command to teleport home (default `/ptphome`).                                                |
+| `setRespawnPoint` | `boolean` | Also move the player's respawn point when setting home; defaults to `false`.                  |
 
 ---
 

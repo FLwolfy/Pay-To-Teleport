@@ -170,6 +170,8 @@
   "paytp.config.home.homeCommand": "回家命令",
   "paytp.config.home.homeCommand.tooltip": "执行回家传送的命令名称",
   "paytp.config.home.homeCommand.invalid": "非空命令名称必须互不相同",
+  "paytp.config.home.setRespawnPoint": "同步重生点",
+  "paytp.config.home.setRespawnPoint.tooltip": "每次设置家时，同时将玩家的重生点移动到家",
 
   "paytp.config.back": "回溯",
   "paytp.config.back.backCommand": "回溯命令",

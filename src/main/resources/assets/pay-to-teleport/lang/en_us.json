@@ -170,6 +170,8 @@
   "paytp.config.home.homeCommand": "Home Command",
   "paytp.config.home.homeCommand.tooltip": "Command name to teleport home",
   "paytp.config.home.homeCommand.invalid": "Non-empty command names must be unique",
+  "paytp.config.home.setRespawnPoint": "Set Respawn Point",
+  "paytp.config.home.setRespawnPoint.tooltip": "Move the player's respawn point whenever they set their home",
 
   "paytp.config.back": "Back",
   "paytp.config.back.backCommand": "Back Command",

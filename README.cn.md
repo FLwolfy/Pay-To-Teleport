@@ -92,7 +92,8 @@ See the English document [here](./README.md).
     "expireTime": 10
   },
   "home": {
-    "homeCommand": "ptphome"
+    "homeCommand": "ptphome",
+    "setRespawnPoint": false
   },
   "back": {
     "backCommand": "ptpback",
@@ -170,9 +171,10 @@ See the English document [here](./README.md).
 
 ### 家系统
 
-| 字段名           | 类型     | 说明                          |
-|------------------|----------|-------------------------------|
-| `homeCommand`    | `string` | 回家命令（默认 `/ptphome`）。 |
+| 字段名             | 类型      | 说明                                               |
+|--------------------|-----------|----------------------------------------------------|
+| `homeCommand`      | `string`  | 回家命令（默认 `/ptphome`）。                      |
+| `setRespawnPoint`  | `boolean` | 设置家时同时将玩家重生点移动到家，默认为 `false`。 |
 
 ---
 

@@ -668,7 +668,7 @@ public class PayTpCommand {
     ServerPlayer player = ctx.getSource().getPlayer();
     if (player == null) return 0;
 
-    homeManager.setHome(player);
+    homeManager.setHome(player, configData.home().setRespawnPoint());
     PayTpMessageSender.msgHomeSet(player);
 
     return Command.SINGLE_SUCCESS;

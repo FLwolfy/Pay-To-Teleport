@@ -57,7 +57,8 @@ public record PayTpConfigData(
   }
 
   public record Home(
-      String homeCommand
+      String homeCommand,
+      boolean setRespawnPoint
   ) {}
 
   public record Back(
@@ -112,7 +113,8 @@ public record PayTpConfigData(
           10
       ),
       new Home(
-          "ptphome"
+          "ptphome",
+          false
       ),
       new Back(
           "ptpback",
