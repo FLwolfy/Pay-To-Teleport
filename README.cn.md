@@ -72,6 +72,8 @@ See the English document [here](./README.md).
   "general": {
     "language": "en_us",
     "helpCommand": "ptphelp",
+    "safeTeleport": false,
+    "safeTeleportRange": 5,
     "effect": {
       "particleEffect": true,
       "soundEffect": true
@@ -126,10 +128,12 @@ See the English document [here](./README.md).
 
 ### 通用设置
 
-| 字段名          | 类型     | 说明                                                            |
-|-----------------|----------|-----------------------------------------------------------------|
-| `language`      | `string` | 语言文件 （如 `zh_cn`, `en_us`, `zh_tw`），影响提示与帮助信息。 |
-| `helpCommand`   | `string` | 显示 PayTp 指令指南的命令（默认 `/ptphelp`）。                  |
+| 字段名              | 类型      | 说明                                                                  |
+|---------------------|-----------|-----------------------------------------------------------------------|
+| `language`          | `string`  | 语言文件 （如 `zh_cn`, `en_us`, `zh_tw`），影响提示与帮助信息。       |
+| `helpCommand`       | `string`  | 显示 PayTp 指令指南的命令（默认 `/ptphelp`）。                        |
+| `safeTeleport`      | `boolean` | 目标不安全时改为附近最近的安全位置，默认 `false`。                    |
+| `safeTeleportRange` | `int`     | 安全位置的最大水平与垂直搜索范围，默认为 `5`，必须在 `1`～`64` 之间。 |
 
 #### 传送效果（`general.effect`）
 

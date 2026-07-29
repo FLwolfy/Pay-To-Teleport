@@ -6,6 +6,7 @@
   "paytp.requester-not-enough": "對方沒有足夠的金錢來傳送。",
   "paytp.payment-error": "扣款流程發生錯誤。",
   "paytp.cross-dimension-disabled": "伺服器已停用跨維度傳送。",
+  "paytp.no-safe-destination": "目標位置附近找不到安全的傳送位置。",
 
   "paytp.tp-home": "歡迎回家～",
   "paytp.no-home": "您尚未設定家。",
@@ -131,6 +132,11 @@
   "paytp.config.general.helpCommand": "說明指令",
   "paytp.config.general.helpCommand.tooltip": "設定顯示 PayTp 說明指南的指令名稱",
   "paytp.config.general.helpCommand.invalid": "非空指令名稱必須互不相同",
+  "paytp.config.general.safeTeleport": "安全傳送",
+  "paytp.config.general.safeTeleport.tooltip": "目標不安全時，改為傳送到附近最近的安全位置",
+  "paytp.config.general.safeTeleportRange": "安全傳送範圍",
+  "paytp.config.general.safeTeleportRange.tooltip": "尋找安全位置時允許搜尋的最大水平與垂直距離",
+  "paytp.config.general.safeTeleportRange.invalid": "安全傳送範圍必須在 1～64 之間",
 
   "paytp.config.general.effect": "效果",
   "paytp.config.general.effect.particleEffect": "啟用粒子特效",

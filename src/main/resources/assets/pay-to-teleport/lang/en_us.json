@@ -6,6 +6,7 @@
   "paytp.requester-not-enough": "The other player does not have enough money to teleport.",
   "paytp.payment-error": "An error occurred while processing the payment.",
   "paytp.cross-dimension-disabled": "Cross-dimension teleportation is disabled.",
+  "paytp.no-safe-destination": "No safe destination was found near the requested location.",
 
   "paytp.tp-home": "Welcome home~",
   "paytp.no-home": "You have not set a home yet.",
@@ -131,6 +132,11 @@
   "paytp.config.general.helpCommand": "Help Command",
   "paytp.config.general.helpCommand.tooltip": "Set the command name used to display the PayTp help guide",
   "paytp.config.general.helpCommand.invalid": "Non-empty command names must be unique",
+  "paytp.config.general.safeTeleport": "Safe Teleport",
+  "paytp.config.general.safeTeleport.tooltip": "Move unsafe teleport destinations to the nearest safe position",
+  "paytp.config.general.safeTeleportRange": "Safe Teleport Range",
+  "paytp.config.general.safeTeleportRange.tooltip": "Maximum horizontal and vertical distance searched for a safe position",
+  "paytp.config.general.safeTeleportRange.invalid": "Safe teleport range must be from 1 to 64",
 
   "paytp.config.general.effect": "Effects",
   "paytp.config.general.effect.particleEffect": "Enable Particle Effects",

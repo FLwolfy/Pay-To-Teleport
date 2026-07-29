@@ -30,6 +30,8 @@ public record PayTpConfigData(
   public record General(
       PayTpLang language,
       String helpCommand,
+      boolean safeTeleport,
+      int safeTeleportRange,
       Effect effect
   ) {
     public record Effect(
@@ -93,6 +95,8 @@ public record PayTpConfigData(
       new General(
           PayTpLang.ENGLISH,
           "ptphelp",
+          false,
+          5,
           new General.Effect(
               true,
               true
@@ -230,6 +234,9 @@ public record PayTpConfigData(
     }
 
     // Time and Capacity
+    if (general.safeTeleportRange() < 1 || general.safeTeleportRange() > 64) {
+      invalidFields.add("general.safeTeleportRange");
+    }
     if (request.expireTime() < 0) {
       invalidFields.add("request.expireTime");
     }

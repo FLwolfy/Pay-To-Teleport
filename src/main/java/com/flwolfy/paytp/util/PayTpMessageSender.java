@@ -141,6 +141,24 @@ public final class PayTpMessageSender {
     player.sendSystemMessage(msg);
   }
 
+  public static void msgNoSafeDestination(ServerPlayer player) {
+    Component msg = Component.empty()
+        .append(PayTpTextBuilder.format(
+            LANG_LOADER.getText("paytp.teleport"),
+            PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+            PayTpTextBuilder.DEFAULT_WARN_COLOR,
+            LANG_LOADER.getText("paytp.failed")
+        ))
+        .append(Component.literal("\n"))
+        .append(PayTpTextBuilder.format(
+            LANG_LOADER.getText("paytp.no-safe-destination"),
+            PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+            PayTpTextBuilder.DEFAULT_WARN_COLOR
+        ));
+
+    player.sendSystemMessage(msg);
+  }
+
   public static void msgTpAccepted(ServerPlayer player, Component senderText) {
     player.sendSystemMessage(PayTpTextBuilder.format(
         LANG_LOADER.getText("paytp.request.accept"),

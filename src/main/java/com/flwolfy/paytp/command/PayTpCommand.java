@@ -16,6 +16,7 @@ import com.flwolfy.paytp.data.lang.PayTpLangManager;
 import com.flwolfy.paytp.util.PayTpCalculator;
 import com.flwolfy.paytp.util.PayTpItemHandler;
 import com.flwolfy.paytp.util.PayTpMessageSender;
+import com.flwolfy.paytp.util.PayTpSafeChecker;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
@@ -1046,11 +1047,28 @@ public class PayTpCommand {
     ServerLevel fromWorld = player.level();
     PayTpData fromData = new PayTpData(fromWorld.dimension(), player.position());
 
+    PayTpData resolvedTargetData;
+    if (configData.general().safeTeleport()) {
+      PayTpData safeTarget = PayTpSafeChecker.findSafeDestination(
+          player,
+          targetWorld,
+          targetData,
+          configData.general().safeTeleportRange()
+      );
+      if (safeTarget == null) {
+        PayTpMessageSender.msgNoSafeDestination(player);
+        return PayTpTeleportResult.FAILED;
+      }
+      resolvedTargetData = safeTarget;
+    } else {
+      resolvedTargetData = targetData;
+    }
+
     // ---------------------------------
     // Check dimension
     // ---------------------------------
     if (!configData.teleport().allowCrossDim()
-        && !fromData.world().equals(targetData.world())) {
+        && !fromData.world().equals(resolvedTargetData.world())) {
       PayTpMessageSender.msgCrossDimensionDisabled(player);
       return PayTpTeleportResult.CROSS_DIMENSION_DISABLED;
     }
@@ -1062,7 +1080,7 @@ public class PayTpCommand {
     try {
       price = PayTpCalculator.calculatePrice(
           fromData,
-          targetData,
+          resolvedTargetData,
           teleportContext,
           player,
           configData.price()
@@ -1111,7 +1129,7 @@ public class PayTpCommand {
     // Record to back stack
     // ---------------------------------
     if (recordToBackStack) {
-      backManager.pushPair(player, fromData, targetData);
+      backManager.pushPair(player, fromData, resolvedTargetData);
     }
 
     // ---------------------------------
@@ -1143,13 +1161,13 @@ public class PayTpCommand {
     // ---------------------------------
     TeleportTransition teleportTarget = new TeleportTransition(
         targetWorld,
-        targetData.pos(),
+        resolvedTargetData.pos(),
         player.getDeltaMovement(),
         player.getYRot(),
         player.getXRot(),
         entity -> {
           ServerPlayer playerEntity = (ServerPlayer) entity;
-          ServerLevel toWorld = server.getLevel(targetData.world());
+          ServerLevel toWorld = server.getLevel(resolvedTargetData.world());
           if (toWorld == null) {
             LOGGER.error("No world to teleport player {}.", player.getName());
             return;

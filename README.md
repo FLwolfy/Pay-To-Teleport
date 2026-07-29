@@ -72,6 +72,8 @@ The `/ptp` `<x> <y> <z>` text is a non-selectable format hint rather than a curr
   "general": {
     "language": "en_us",
     "helpCommand": "ptphelp",
+    "safeTeleport": false,
+    "safeTeleportRange": 5,
     "effect": {
       "particleEffect": true,
       "soundEffect": true
@@ -126,10 +128,12 @@ The `/ptp` `<x> <y> <z>` text is a non-selectable format hint rather than a curr
 
 ### General Settings
 
-| Field         | Type     | Description                                                                      |
-|---------------|----------|----------------------------------------------------------------------------------|
-| `language`    | `string` | Language file (e.g., `zh_cn`, `en_us`, `zh_tw`), affects messages and help text. |
-| `helpCommand` | `string` | Command used to display the PayTp guide (default `/ptphelp`).                    |
+| Field               | Type      | Description                                                                                               |
+|---------------------|-----------|-----------------------------------------------------------------------------------------------------------|
+| `language`          | `string`  | Language file (e.g., `zh_cn`, `en_us`, `zh_tw`), affects messages and help text.                          |
+| `helpCommand`       | `string`  | Command used to display the PayTp guide (default `/ptphelp`).                                             |
+| `safeTeleport`      | `boolean` | Move an unsafe destination to the nearest safe position; defaults to `false`.                             |
+| `safeTeleportRange` | `int`     | Maximum horizontal and vertical safe-position search range; defaults to `5` and must be from `1` to `64`. |
 
 #### Teleport Effects (`general.effect`)
 
