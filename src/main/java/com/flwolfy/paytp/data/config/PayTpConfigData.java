@@ -195,14 +195,11 @@ public record PayTpConfigData(
                 multiplier = multiplier * warpMultiplier;
               }
 
-              var distanceBeyondBase = distance > baseRadius ? distance - baseRadius : 0;
-
               callback.onSuccess() += () -> {
-                minecraft:execute(
-                    "effect give " + player.name() + " minecraft:weakness 1 1"
-                );
+                minecraft:execute("effect give " + player.name() + " minecraft:weakness 1 1");
               };
-
+              
+              var distanceBeyondBase = distance > baseRadius ? distance - baseRadius : 0;
               math:round((basePrice + distanceBeyondBase * pricePerBlock) * multiplier).intValue();
               """.stripTrailing()),
           new Price.Deduction(

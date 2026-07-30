@@ -402,6 +402,10 @@ if (context.home() != null) {
   multiplier = multiplier * warpMultiplier;
 }
 
+callback.onSuccess() += () -> {
+  minecraft:execute("effect give " + player.name() + " minecraft:weakness 1 1");
+};
+
 var distanceBeyondBase = math:max(0, distance - baseRadius);
 math:round((basePrice + distanceBeyondBase * pricePerBlock) * multiplier).intValue();
 ```
