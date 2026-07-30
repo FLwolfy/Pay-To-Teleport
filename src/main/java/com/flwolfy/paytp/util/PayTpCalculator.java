@@ -3,7 +3,8 @@ package com.flwolfy.paytp.util;
 import com.flwolfy.paytp.PayTpMod;
 import com.flwolfy.paytp.data.PayTpData;
 import com.flwolfy.paytp.data.PayTpPlayer;
-import com.flwolfy.paytp.data.PayTpTeleportContext;
+import com.flwolfy.paytp.data.PayTpContext;
+import com.flwolfy.paytp.data.PayTpCallback;
 import com.flwolfy.paytp.data.config.PayTpConfigData;
 import com.flwolfy.paytp.data.script.PayTpScript;
 import com.flwolfy.paytp.data.script.PayTpScriptManager;
@@ -37,7 +38,7 @@ public final class PayTpCalculator {
    *
    * @param from the player's current location
    * @param to the teleport destination
-   * @param teleportContext the operation-specific teleport context
+   * @param context the operation-specific teleport context
    * @param player the player being teleported; Minecraft commands use this player's server console
    * @param priceConfig the price range, currency, and algorithm configuration
    * @return a negative value when payment must be canceled; otherwise the final price within the
@@ -46,8 +47,9 @@ public final class PayTpCalculator {
   public static int calculatePrice(
       PayTpData from,
       PayTpData to,
-      PayTpTeleportContext teleportContext,
+      PayTpContext context,
       ServerPlayer player,
+      PayTpCallback callback,
       PayTpConfigData.Price priceConfig
   ) {
     int minPrice = priceConfig.minPrice();
@@ -60,8 +62,9 @@ public final class PayTpCalculator {
           priceConfig.algorithm(),
           from,
           to,
-          teleportContext,
-          player
+          context,
+          player,
+          callback
       );
       if (price < 0) return price;
       return Math.clamp(price, minPrice, maxPrice);
@@ -75,8 +78,9 @@ public final class PayTpCalculator {
       PayTpScript algorithm,
       PayTpData from,
       PayTpData to,
-      PayTpTeleportContext teleportContext,
-      ServerPlayer player
+      PayTpContext context,
+      ServerPlayer player,
+      PayTpCallback callback
   ) {
     return PayTpScriptManager.getInstance().evaluate(
         algorithm,
@@ -84,11 +88,12 @@ public final class PayTpCalculator {
         Map.of("minecraft", new PayTpCommandExecutor(player.level().getServer())),
         Map.entry("from", PayTpScriptPosition.from(from)),
         Map.entry("to", PayTpScriptPosition.from(to)),
-        Map.entry("teleportContext", teleportContext),
+        Map.entry("context", context),
         Map.entry("player", new PayTpPlayer(
             player.getUUID().toString(),
             player.getName().getString()
-        ))
+        )),
+        Map.entry("callback", callback)
     );
   }
 

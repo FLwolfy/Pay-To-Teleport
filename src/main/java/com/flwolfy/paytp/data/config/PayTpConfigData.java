@@ -1,7 +1,8 @@
 package com.flwolfy.paytp.data.config;
 
 import com.flwolfy.paytp.data.lang.PayTpLang;
-import com.flwolfy.paytp.data.PayTpTeleportContext;
+import com.flwolfy.paytp.data.PayTpContext;
+import com.flwolfy.paytp.data.PayTpCallback;
 import com.flwolfy.paytp.data.PayTpPlayer;
 import com.flwolfy.paytp.data.script.PayTpScript;
 import com.flwolfy.paytp.data.script.PayTpScriptManager;
@@ -136,13 +137,18 @@ public record PayTpConfigData(
           64,
           new PayTpScript("""
               // Available variables:
-              // from, to: positions with .x(), .y(), .z(), and .dimension()
-              // teleportContext: exactly one of coordinate(), home(), back(), request(), or warp()
-              // player: the teleported player, with .uuid() and .name()
+              //
+              // Variable | Available methods
+              // -------- | -----------------------------------------------------------
+              // from     | .x(), .y(), .z(), .dimension()
+              // to       | .x(), .y(), .z(), .dimension()
+              // context  | .coordinate(), .home(), .back(), .request(), .warp()
+              // player   | .uuid(), .name()
+              // callback | .onSuccess(), .onFailure()
               //
               // Java's built-in Math methods are available through the "math" namespace.
-              // Full system shell access is available through the "shell" namespace.
               // Minecraft commands are available through minecraft:execute("command").
+              // Full system shell access is available through the "shell" namespace.
 
               var basePrice = 1;
               var baseRadius = 10.0;
@@ -181,15 +187,21 @@ public record PayTpConfigData(
               var distance = math:sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
               var multiplier = crossDimension ? crossDimensionMultiplier : 1.0;
 
-              if (teleportContext.home() != null) {
+              if (context.home() != null) {
                 multiplier = multiplier * homeMultiplier;
-              } else if (teleportContext.back() != null) {
+              } else if (context.back() != null) {
                 multiplier = multiplier * backMultiplier;
-              } else if (teleportContext.warp() != null) {
+              } else if (context.warp() != null) {
                 multiplier = multiplier * warpMultiplier;
               }
 
               var distanceBeyondBase = distance > baseRadius ? distance - baseRadius : 0;
+
+              callback.onSuccess() += () -> {
+                minecraft:execute(
+                    "effect give " + player.name() + " minecraft:weakness 1 1"
+                );
+              };
 
               math:round((basePrice + distanceBeyondBase * pricePerBlock) * multiplier).intValue();
               """.stripTrailing()),
@@ -262,18 +274,20 @@ public record PayTpConfigData(
 
     // Price Algorithm
     try {
+      PayTpCallback callback = new PayTpCallback();
       PayTpScriptManager.getInstance().evaluate(
           price.algorithm(), Integer.class,
           Map.of("minecraft", PayTpCommandExecutor.validationOnly()),
           Map.entry("from", new PayTpScriptPosition(0.0, 64.0, 0.0, "minecraft:overworld")),
           Map.entry("to", new PayTpScriptPosition(100.0, 64.0, 100.0, "minecraft:overworld")),
-          Map.entry("teleportContext", PayTpTeleportContext.coordinate(
-              new PayTpTeleportContext.Coordinate()
+          Map.entry("context", PayTpContext.coordinate(
+              new PayTpContext.Coordinate()
           )),
           Map.entry("player", new PayTpPlayer(
               "00000000-0000-0000-0000-000000000000",
               "Player"
-          ))
+          )),
+          Map.entry("callback", callback)
       );
     } catch (RuntimeException e) {
       invalidFields.add("price.algorithm");

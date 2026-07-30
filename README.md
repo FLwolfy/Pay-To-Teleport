@@ -235,27 +235,57 @@ The `price.algorithm` string contains both the distance calculation and the pric
 
 ### Available Variables
 
-| Variable          | Type       | Description                                                     |
-|-------------------|------------|-----------------------------------------------------------------|
-| `from`            | `position` | Source record with `x()`, `y()`, `z()`, and `dimension()`.      |
-| `to`              | `position` | Destination record with `x()`, `y()`, `z()`, and `dimension()`. |
-| `teleportContext` | `teleport` | Type-specific teleport context described below.                 |
-| `player`          | `player`   | Teleported player record with `uuid()` and `name()`.            |
+| Variable   | Type       | Available methods                                                   |
+|------------|------------|---------------------------------------------------------------------|
+| `from`     | `position` | `.x()`, `.y()`, `.z()`, `.dimension()`                              |
+| `to`       | `position` | `.x()`, `.y()`, `.z()`, `.dimension()`                              |
+| `context`  | `context`  | `.coordinate()`, `.home()`, `.back()`, `.request()`, `.warp()`      |
+| `player`   | `player`   | `.uuid()`, `.name()`                                                |
+| `callback` | `callback` | `.onSuccess()`, `.onFailure()`                                      |
 
-`teleportContext` contains five nullable nested records. Exactly one accessor returns a record for
+`context` contains five nullable nested records. Exactly one accessor returns a record for
 each execution; the other four return `null`:
 
-| Accessor                       | Record contents                                                                                                                                                     |
-|--------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `teleportContext.coordinate()` | Coordinate-command context; currently empty.                                                                                                                        |
-| `teleportContext.home()`       | Home context; currently empty.                                                                                                                                      |
-| `teleportContext.back()`       | Back context; currently empty.                                                                                                                                      |
-| `teleportContext.request()`    | `otherPlayer()` returns the other player with `uuid()` and `name()`;<br/>`isRequester()` is a `bool` indicating whether the current `player` initiated the request. |
-| `teleportContext.warp()`       | `name()`, `accessType()`, and `owner()`; the owner has `uuid()` and `name()`.                                                                                       |
+| Accessor               | Record contents                                                                                                                                                     |
+|------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `context.coordinate()` | Coordinate-command context; currently empty.                                                                                                                        |
+| `context.home()`       | Home context; currently empty.                                                                                                                                      |
+| `context.back()`       | Back context; currently empty.                                                                                                                                      |
+| `context.request()`    | `otherPlayer()` returns the other player with `uuid()` and `name()`;<br/>`isRequester()` is a `bool` indicating whether the current `player` initiated the request. |
+| `context.warp()`       | `name()`, `accessType()`, and `owner()`; the owner has `uuid()` and `name()`.                                                                                       |
 
 `isRequester()` is `true` when the current `player` initiated the request and `false` when they
 accepted a request to teleport to its sender. Warp `accessType()` is `owned`, `invited`, `server`,
 or `public`; `owner()` is `null` for an ownerless server waypoint.
+
+### Teleport Callbacks
+
+`callback.onSuccess()` and `callback.onFailure()` are independent callback chains for each teleport. Use `+=` to append
+any number of JEXL lambdas. Save a lambda to a variable first if it may later be removed with `-=`:
+
+```jexl
+var audit = () -> {
+  minecraft:execute("scoreboard players add " + player.name() + " tp_success 1");
+};
+
+callback.onSuccess() += audit;
+callback.onSuccess() += () -> {
+  minecraft:execute("tell " + player.name() + " Teleport completed");
+};
+callback.onSuccess() -= audit;
+
+callback.onFailure() += () -> {
+  minecraft:execute("scoreboard players add " + player.name() + " tp_failed 1");
+};
+```
+
+Callbacks execute in registration order. Removing one requires the same lambda object; repeating
+the same lambda expression creates a different object. A callback error is logged without stopping
+later callbacks. The price script runs before destination validation so that an unavailable world,
+missing safe destination, or disabled cross-dimension teleport can invoke `callback.onFailure()`;
+`to` therefore represents the originally requested destination. No payment is taken until all
+destination checks pass. A `maxPrice` of `0` bypasses the price script, so no callbacks are
+registered.
 
 `crossDimension` is intentionally not provided. Determine it inside the script:
 
@@ -344,9 +374,14 @@ shell:runInt("python3 /opt/paytp/price.py '" + player.name() + "'");
 
 ```jexl
 // Available variables:
-// from, to: positions with .x(), .y(), .z(), and .dimension()
-// teleportContext: exactly one of coordinate(), home(), back(), request(), or warp()
-// player: the teleported player, with .uuid() and .name()
+//
+// Variable | Available methods
+// -------- | -----------------------------------------------------------
+// from     | .x(), .y(), .z(), .dimension()
+// to       | .x(), .y(), .z(), .dimension()
+// context  | .coordinate(), .home(), .back(), .request(), .warp()
+// player   | .uuid(), .name()
+// callback | .onSuccess(), .onFailure()
 //
 // Java's built-in Math methods are available through the "math" namespace.
 // Minecraft commands are available through minecraft:execute("command").
@@ -366,11 +401,11 @@ var deltaZ = from.z() - to.z();
 var distance = math:sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
 var multiplier = from.dimension() != to.dimension() ? crossDimensionMultiplier : 1.0;
 
-if (teleportContext.home() != null) {
+if (context.home() != null) {
   multiplier = multiplier * homeMultiplier;
-} else if (teleportContext.back() != null) {
+} else if (context.back() != null) {
   multiplier = multiplier * backMultiplier;
-} else if (teleportContext.warp() != null) {
+} else if (context.warp() != null) {
   multiplier = multiplier * warpMultiplier;
 }
 

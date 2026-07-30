@@ -11,7 +11,8 @@ import com.flwolfy.paytp.data.config.PayTpConfigManager;
 import com.flwolfy.paytp.data.warp.PayTpWarpPermission;
 import com.flwolfy.paytp.data.PayTpData;
 import com.flwolfy.paytp.data.PayTpPlayer;
-import com.flwolfy.paytp.data.PayTpTeleportContext;
+import com.flwolfy.paytp.data.PayTpContext;
+import com.flwolfy.paytp.data.PayTpCallback;
 import com.flwolfy.paytp.data.lang.PayTpLangManager;
 import com.flwolfy.paytp.util.PayTpCalculator;
 import com.flwolfy.paytp.util.PayTpItemHandler;
@@ -384,7 +385,7 @@ public class PayTpCommand {
         player,
         payTpData,
         true,
-        PayTpTeleportContext.coordinate(new PayTpTeleportContext.Coordinate())
+        PayTpContext.coordinate(new PayTpContext.Coordinate())
     ).commandResult();
   }
 
@@ -401,7 +402,7 @@ public class PayTpCommand {
         player,
         payTpData,
         true,
-        PayTpTeleportContext.coordinate(new PayTpTeleportContext.Coordinate())
+        PayTpContext.coordinate(new PayTpContext.Coordinate())
     ).commandResult();
   }
 
@@ -426,7 +427,7 @@ public class PayTpCommand {
           sender,
           targetTp,
           true,
-          PayTpTeleportContext.request(new PayTpTeleportContext.Request(
+          PayTpContext.request(new PayTpContext.Request(
               new PayTpPlayer(
                   target.getUUID().toString(),
                   target.getName().getString()
@@ -491,7 +492,7 @@ public class PayTpCommand {
           target,
           senderTp,
           true,
-          PayTpTeleportContext.request(new PayTpTeleportContext.Request(
+          PayTpContext.request(new PayTpContext.Request(
               new PayTpPlayer(
                   sender.getUUID().toString(),
                   sender.getName().getString()
@@ -630,7 +631,7 @@ public class PayTpCommand {
         player,
         targetTp,
         false,
-        PayTpTeleportContext.back(new PayTpTeleportContext.Back())
+        PayTpContext.back(new PayTpContext.Back())
     );
 
     if (result != PayTpTeleportResult.SUCCESS) {
@@ -655,7 +656,7 @@ public class PayTpCommand {
         player,
         home,
         true,
-        PayTpTeleportContext.home(new PayTpTeleportContext.Home())
+        PayTpContext.home(new PayTpContext.Home())
     );
 
     if (result == PayTpTeleportResult.SUCCESS) {
@@ -693,7 +694,7 @@ public class PayTpCommand {
         player,
         warp.destination(),
         true,
-        PayTpTeleportContext.warp(new PayTpTeleportContext.Warp(
+        PayTpContext.warp(new PayTpContext.Warp(
             warp.name(),
             warp.scriptAccessType(),
             warp.ownerId() == null
@@ -1035,20 +1036,43 @@ public class PayTpCommand {
       ServerPlayer player,
       PayTpData targetData,
       boolean recordToBackStack,
-      PayTpTeleportContext teleportContext
+      PayTpContext context
   ) {
     // ---------------------------------
     // Fetch teleport info
     // ---------------------------------
     MinecraftServer server = player.level().getServer();
-    ServerLevel targetWorld = server.getLevel(targetData.world());
-    if (targetWorld == null) {
-      LOGGER.error("Failed to teleport to null world");
+    ServerLevel fromWorld = player.level();
+    PayTpData fromData = new PayTpData(fromWorld.dimension(), player.position());
+    PayTpCallback callback = new PayTpCallback();
+
+    // ---------------------------------
+    // Calculate price and register callbacks
+    // ---------------------------------
+    int price = PayTpCalculator.calculatePrice(
+        fromData,
+        targetData,
+        context,
+        player,
+        callback,
+        configData.price()
+    );
+    if (price < 0) {
+      LOGGER.warn("Price algorithm canceled payment with result {}", price);
+      PayTpMessageSender.msgPaymentError(player);
+      callback.onFailure().execute();
       return PayTpTeleportResult.FAILED;
     }
 
-    ServerLevel fromWorld = player.level();
-    PayTpData fromData = new PayTpData(fromWorld.dimension(), player.position());
+    // ---------------------------------
+    // Resolve and validate target
+    // ---------------------------------
+    ServerLevel targetWorld = server.getLevel(targetData.world());
+    if (targetWorld == null) {
+      LOGGER.error("Failed to teleport to null world");
+      callback.onFailure().execute();
+      return PayTpTeleportResult.FAILED;
+    }
 
     PayTpData resolvedTargetData;
     if (configData.general().safeTeleport()) {
@@ -1060,6 +1084,7 @@ public class PayTpCommand {
       );
       if (safeTarget == null) {
         PayTpMessageSender.msgNoSafeDestination(player);
+        callback.onFailure().execute();
         return PayTpTeleportResult.FAILED;
       }
       resolvedTargetData = safeTarget;
@@ -1073,27 +1098,14 @@ public class PayTpCommand {
     if (!configData.teleport().allowCrossDim()
         && !fromData.world().equals(resolvedTargetData.world())) {
       PayTpMessageSender.msgCrossDimensionDisabled(player);
+      callback.onFailure().execute();
       return PayTpTeleportResult.CROSS_DIMENSION_DISABLED;
     }
 
     // ---------------------------------
     // Check payment
     // ---------------------------------
-    int price;
     try {
-      price = PayTpCalculator.calculatePrice(
-          fromData,
-          resolvedTargetData,
-          teleportContext,
-          player,
-          configData.price()
-      );
-      if (price < 0) {
-        LOGGER.warn("Price algorithm canceled payment with result {}", price);
-        PayTpMessageSender.msgPaymentError(player);
-        return PayTpTeleportResult.FAILED;
-      }
-
       int balance = PayTpCalculator.checkBalance(
           configData.price().currencyItem(),
           player,
@@ -1109,6 +1121,7 @@ public class PayTpCommand {
             balance
         );
 
+        callback.onFailure().execute();
         return PayTpTeleportResult.INSUFFICIENT_FUNDS;
       }
 
@@ -1120,11 +1133,13 @@ public class PayTpCommand {
       )) {
         LOGGER.error("Payment proceed failed");
         PayTpMessageSender.msgPaymentError(player);
+        callback.onFailure().execute();
         return PayTpTeleportResult.FAILED;
       }
     } catch (Exception e) {
       LOGGER.error("Payment process failed", e);
       PayTpMessageSender.msgPaymentError(player);
+      callback.onFailure().execute();
       return PayTpTeleportResult.FAILED;
     }
 
@@ -1170,20 +1185,15 @@ public class PayTpCommand {
         player.getXRot(),
         entity -> {
           ServerPlayer playerEntity = (ServerPlayer) entity;
-          ServerLevel toWorld = server.getLevel(resolvedTargetData.world());
-          if (toWorld == null) {
-            LOGGER.error("No world to teleport player {}.", player.getName());
-            return;
-          }
 
           // Particles
           if (configData.general().effect().particleEffect()) {
-            toWorld.broadcastEntityEvent(playerEntity, (byte)46);
+            targetWorld.broadcastEntityEvent(playerEntity, (byte)46);
           }
 
           // Sound
           if (configData.general().effect().soundEffect()) {
-            toWorld.playSound(
+            targetWorld.playSound(
                 null,
                 playerEntity.blockPosition(),
                 SoundEvents.PLAYER_TELEPORT,
@@ -1194,7 +1204,7 @@ public class PayTpCommand {
           }
 
           // Message
-          if (teleportContext.back() != null) {
+          if (context.back() != null) {
             PayTpMessageSender.msgTpBackSucceeded(
                 playerEntity,
                 (new ItemStack(PayTpItemHandler.getItemByStringId(configData.price().currencyItem()))).getHoverName(),
@@ -1210,7 +1220,14 @@ public class PayTpCommand {
         }
     );
 
-    player.teleport(teleportTarget);
+    try {
+      player.teleport(teleportTarget);
+    } catch (RuntimeException e) {
+      LOGGER.error("Teleport execution failed", e);
+      callback.onFailure().execute();
+      return PayTpTeleportResult.FAILED;
+    }
+    callback.onSuccess().execute();
     return PayTpTeleportResult.SUCCESS;
   }
 

@@ -15,7 +15,7 @@ import java.util.Objects;
  * @param request teleport-request context, or {@code null}
  * @param warp warp context, or {@code null}
  */
-public record PayTpTeleportContext(
+public record PayTpContext(
     Coordinate coordinate,
     Home home,
     Back back,
@@ -27,7 +27,7 @@ public record PayTpTeleportContext(
   // Number of types checker (uniqueness)
   // =======================================================
 
-  public PayTpTeleportContext {
+  public PayTpContext {
     int present = (coordinate == null ? 0 : 1)
         + (home == null ? 0 : 1)
         + (back == null ? 0 : 1)
@@ -44,8 +44,8 @@ public record PayTpTeleportContext(
   // All types of builders
   // =======================================================
 
-  public static PayTpTeleportContext coordinate(Coordinate coordinate) {
-    return new PayTpTeleportContext(
+  public static PayTpContext coordinate(Coordinate coordinate) {
+    return new PayTpContext(
         Objects.requireNonNull(coordinate, "coordinate"),
         null,
         null,
@@ -54,8 +54,8 @@ public record PayTpTeleportContext(
     );
   }
 
-  public static PayTpTeleportContext home(Home home) {
-    return new PayTpTeleportContext(
+  public static PayTpContext home(Home home) {
+    return new PayTpContext(
         null,
         Objects.requireNonNull(home, "home"),
         null,
@@ -64,8 +64,8 @@ public record PayTpTeleportContext(
     );
   }
 
-  public static PayTpTeleportContext back(Back back) {
-    return new PayTpTeleportContext(
+  public static PayTpContext back(Back back) {
+    return new PayTpContext(
         null,
         null,
         Objects.requireNonNull(back, "back"),
@@ -74,8 +74,8 @@ public record PayTpTeleportContext(
     );
   }
 
-  public static PayTpTeleportContext request(Request request) {
-    return new PayTpTeleportContext(
+  public static PayTpContext request(Request request) {
+    return new PayTpContext(
         null,
         null,
         null,
@@ -84,8 +84,8 @@ public record PayTpTeleportContext(
     );
   }
 
-  public static PayTpTeleportContext warp(Warp warp) {
-    return new PayTpTeleportContext(
+  public static PayTpContext warp(Warp warp) {
+    return new PayTpContext(
         null,
         null,
         null,
