@@ -58,7 +58,7 @@ public class PayTpModMenu implements ModMenuApi {
               ? e.getClass().getSimpleName()
               : e.getMessage();
           SystemToast.add(
-              Minecraft.getInstance().gui.toastManager(),
+              Minecraft.getInstance().getToastManager(),
               CONFIG_SAVE_FAILURE,
               Component.translatable("paytp.config.price.algorithm.save-failed"),
               Component.literal(error)

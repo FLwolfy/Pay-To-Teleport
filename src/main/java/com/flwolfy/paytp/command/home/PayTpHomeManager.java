@@ -7,7 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.phys.Vec3;
@@ -88,7 +88,7 @@ public class PayTpHomeManager {
     Vec3 bedLikeRespawn = homeWorld == null
         ? null
         : BedBlock.findStandUpPosition(
-            EntityTypes.PLAYER,
+            EntityType.PLAYER,
             homeWorld,
             BlockPos.containing(home.pos()),
             Direction.fromYRot(respawnConfig.respawnData().yaw()),
