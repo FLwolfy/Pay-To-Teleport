@@ -8,6 +8,7 @@ import java.lang.reflect.RecordComponent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -15,6 +16,7 @@ import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
+import me.shedaniel.clothconfig2.gui.entries.SubCategoryListEntry;
 import me.shedaniel.clothconfig2.impl.builders.SubCategoryBuilder;
 
 import net.minecraft.ChatFormatting;
@@ -24,6 +26,9 @@ import net.minecraft.network.chat.Style;
 
 import org.slf4j.Logger;
 
+/**
+ * Reflectively converts the nested PayTp configuration records into Cloth Config categories.
+ */
 public class PayTpClothConfigBuilder {
 
   private static final Logger LOGGER = PayTpMod.LOGGER;
@@ -35,16 +40,31 @@ public class PayTpClothConfigBuilder {
   private final ConfigEntryBuilder entryBuilder;
   private final Map<String, Object> currentFlattenedData;
 
+  /**
+   * Creates a configuration UI builder bound to the supplied Cloth Config objects.
+   *
+   * @param builder the owning config screen builder
+   * @param entryBuilder the factory used to create individual entries
+   */
   public PayTpClothConfigBuilder(ConfigBuilder builder, ConfigEntryBuilder entryBuilder) {
     this.builder = builder;
     this.entryBuilder = entryBuilder;
     this.currentFlattenedData = new ConcurrentHashMap<>();
   }
 
+  /**
+   * Populates the configuration screen and returns a supplier for the edited record.
+   *
+   * @param data the current configuration record
+   * @param defaultData the matching default configuration record
+   * @param <T> the root record type
+   * @return a supplier that reconstructs the edited record, or {@code null} when data is null
+   */
   @SuppressWarnings("unchecked")
   public <T extends Record> Supplier<T> buildConfigUI(T data, T defaultData) {
     if (data == null) return null;
 
+    PayTpClothConfigGUI.clearCache();
     currentFlattenedData.clear();
     currentFlattenedData.putAll(PayTpConfigMapper.flattenData(data));
 
@@ -75,7 +95,10 @@ public class PayTpClothConfigBuilder {
       SubCategoryBuilder otherSubCat = entryBuilder.startSubCategory(Component.translatable(BASE_KEY + "other"))
           .setExpanded(true);
       otherSubCat.addAll(otherEntries);
-      allCategory.addEntry(otherSubCat.build());
+      allCategory.addEntry(new AllCategoryEntry(
+          Component.translatable(BASE_KEY + "other"),
+          otherSubCat
+      ));
     }
 
     return () -> {
@@ -122,7 +145,10 @@ public class PayTpClothConfigBuilder {
         .startSubCategory(Component.translatable(BASE_KEY + key))
         .setExpanded(true);
     processSubCategory(subCatInAllCategory, (Record) value, (Record) defaultValue, key + ".");
-    allCategory.addEntry(subCatInAllCategory.build());
+    allCategory.addEntry(new AllCategoryEntry(
+        Component.translatable(BASE_KEY + key),
+        subCatInAllCategory
+    ));
   }
 
   private void processCategory(ConfigCategory category, Record record, Record defaultRecord, String prefix) {
@@ -203,5 +229,23 @@ public class PayTpClothConfigBuilder {
         Component.translatable(BASE_KEY + prefix + component.getName()),
         Component.translatable(BASE_KEY + prefix + component.getName() + ".tooltip")
     );
+  }
+
+  /**
+   * Prevents the All category from reporting errors already reported by each field's own category.
+   */
+  private static class AllCategoryEntry extends SubCategoryListEntry {
+
+    private AllCategoryEntry(
+        Component label,
+        List<AbstractConfigListEntry> entries
+    ) {
+      super(label, entries, true);
+    }
+
+    @Override
+    public Optional<Component> getError() {
+      return Optional.empty();
+    }
   }
 }

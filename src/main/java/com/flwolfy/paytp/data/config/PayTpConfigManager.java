@@ -3,6 +3,10 @@ package com.flwolfy.paytp.data.config;
 import com.flwolfy.paytp.PayTpMod;
 import com.flwolfy.paytp.data.lang.PayTpLang;
 import com.flwolfy.paytp.data.lang.PayTpLangAdapter;
+import com.flwolfy.paytp.data.script.PayTpScript;
+import com.flwolfy.paytp.data.script.PayTpScriptAdapter;
+import com.flwolfy.paytp.data.warp.PayTpWarpPermission;
+import com.flwolfy.paytp.data.warp.PayTpWarpPermissionAdapter;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -18,6 +22,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.slf4j.Logger;
 
+/**
+ * Loads, validates, normalizes, updates, and persists the PayTp configuration.
+ *
+ * <p>Reads and writes are guarded by a shared lock. Missing fields are recursively populated from
+ * {@link PayTpConfigData#DEFAULT}, and invalid files are replaced with the default configuration.</p>
+ */
 public class PayTpConfigManager {
 
   private static final Logger LOGGER = PayTpMod.LOGGER;
@@ -31,6 +41,11 @@ public class PayTpConfigManager {
     // Register customized adapter here
     // ================================
     gsonBuilder.registerTypeAdapter(PayTpLang.class, new PayTpLangAdapter());
+    gsonBuilder.registerTypeAdapter(PayTpScript.class, new PayTpScriptAdapter());
+    gsonBuilder.registerTypeAdapter(
+        PayTpWarpPermission.class,
+        new PayTpWarpPermissionAdapter()
+    );
     // ================================
 
     GSON = gsonBuilder.setPrettyPrinting().create();
@@ -51,6 +66,11 @@ public class PayTpConfigManager {
     return instance;
   }
 
+  /**
+   * Returns the current immutable configuration snapshot under the read lock.
+   *
+   * @return the active configuration
+   */
   public PayTpConfigData data() {
     lock.readLock().lock();
     try {
@@ -89,9 +109,19 @@ public class PayTpConfigManager {
       boolean hasMissing = mergeDefaults(jsonObject, defaultJson);
 
       PayTpConfigData data = GSON.fromJson(jsonObject, PayTpConfigData.class);
+      var invalidFields = data.validate();
+      if (!invalidFields.isEmpty()) {
+        LOGGER.error(
+            "Invalid PayTp config fields: {}; using defaults",
+            invalidFields
+        );
+        saveStatic(defaults);
+        return defaults;
+      }
+      JsonObject normalizedJson = GSON.toJsonTree(data).getAsJsonObject();
 
-      if (hasMissing) {
-        LOGGER.info("Config missing some fields, repairing file at {}", CONFIG_PATH);
+      if (hasMissing || !jsonObject.equals(normalizedJson)) {
+        LOGGER.info("Normalizing config file at {}", CONFIG_PATH);
         saveStatic(data);
       }
 
@@ -144,6 +174,12 @@ public class PayTpConfigManager {
   // ====== Update Config =======
   // ============================
 
+  /**
+   * Validates, persists, and activates a replacement configuration.
+   *
+   * @param newData the complete replacement configuration
+   * @return {@code true} if validation and persistence succeeded; otherwise {@code false}
+   */
   public boolean update(PayTpConfigData newData) {
     if (newData == null) {
       LOGGER.warn("Attempted to update with null data, ignoring");
@@ -152,6 +188,14 @@ public class PayTpConfigManager {
 
     lock.writeLock().lock();
     try {
+      var invalidFields = newData.validate();
+      if (!invalidFields.isEmpty()) {
+        LOGGER.error(
+            "Refusing to save invalid PayTp config fields: {}",
+            invalidFields
+        );
+        return false;
+      }
       saveStatic(newData);
       this.data = newData;
       LOGGER.info("Config updated successfully");
@@ -164,6 +208,11 @@ public class PayTpConfigManager {
     }
   }
 
+  /**
+   * Reloads the configuration from disk and replaces the active snapshot.
+   *
+   * @return {@code true} if the reload completed; otherwise {@code false}
+   */
   public boolean reload() {
     lock.writeLock().lock();
     try {

@@ -2,17 +2,18 @@ package com.flwolfy.paytp.util;
 
 import com.flwolfy.paytp.data.PayTpData;
 import com.flwolfy.paytp.data.lang.PayTpLangManager;
+import com.flwolfy.paytp.command.warp.PayTpWarpManager;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 
-public class PayTpMessageSender {
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+
+public final class PayTpMessageSender {
 
   private static final PayTpLangManager LANG_LOADER = PayTpLangManager.getInstance();
 
@@ -101,6 +102,58 @@ public class PayTpMessageSender {
             price,
             currencyItemText,
             balance
+        ));
+
+    player.sendSystemMessage(msg);
+  }
+
+  public static void msgPaymentError(ServerPlayer player) {
+    Component msg = Component.empty()
+        .append(PayTpTextBuilder.format(
+            LANG_LOADER.getText("paytp.teleport"),
+            PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+            PayTpTextBuilder.DEFAULT_WARN_COLOR,
+            LANG_LOADER.getText("paytp.failed")
+        ))
+        .append(Component.literal("\n"))
+        .append(LANG_LOADER.getText("paytp.payment-error")
+            .copy()
+            .withStyle(PayTpTextBuilder.DEFAULT_WARN_COLOR));
+
+    player.sendSystemMessage(msg);
+  }
+
+  public static void msgCrossDimensionDisabled(ServerPlayer player) {
+    Component msg = Component.empty()
+        .append(PayTpTextBuilder.format(
+            LANG_LOADER.getText("paytp.teleport"),
+            PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+            PayTpTextBuilder.DEFAULT_WARN_COLOR,
+            LANG_LOADER.getText("paytp.failed")
+        ))
+        .append(Component.literal("\n"))
+        .append(PayTpTextBuilder.format(
+            LANG_LOADER.getText("paytp.cross-dimension-disabled"),
+            PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+            PayTpTextBuilder.DEFAULT_WARN_COLOR
+        ));
+
+    player.sendSystemMessage(msg);
+  }
+
+  public static void msgNoSafeDestination(ServerPlayer player) {
+    Component msg = Component.empty()
+        .append(PayTpTextBuilder.format(
+            LANG_LOADER.getText("paytp.teleport"),
+            PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+            PayTpTextBuilder.DEFAULT_WARN_COLOR,
+            LANG_LOADER.getText("paytp.failed")
+        ))
+        .append(Component.literal("\n"))
+        .append(PayTpTextBuilder.format(
+            LANG_LOADER.getText("paytp.no-safe-destination"),
+            PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+            PayTpTextBuilder.DEFAULT_WARN_COLOR
         ));
 
     player.sendSystemMessage(msg);
@@ -232,13 +285,48 @@ public class PayTpMessageSender {
     player.sendSystemMessage(msg);
   }
 
+  public static void msgHomeRespawnSet(ServerPlayer player) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.home-respawn-set")
+    ));
+  }
+
+  public static void msgHomeRespawnUnsafe(ServerPlayer player) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.home-respawn-unsafe"),
+        PayTpTextBuilder.DEFAULT_WARN_COLOR,
+        PayTpTextBuilder.DEFAULT_WARN_COLOR
+    ));
+  }
+
   public static void msgHomeNotSet(ServerPlayer player) {
     player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-home")));
   }
 
-  public static void msgWarpCreated(ServerPlayer player, ServerPlayer createPlayer, String name) {
+  public static void msgWarpCreated(
+      ServerPlayer player,
+      ServerPlayer createPlayer,
+      String name,
+      boolean publicWarp
+  ) {
     player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.create-warp"),
+        LANG_LOADER.getText(
+            publicWarp ? "paytp.warp.public" : "paytp.warp.private"
+        ),
         name,
+        createPlayer.getName()
+    ));
+  }
+
+  public static void msgServerWarpCreated(
+      ServerPlayer player,
+      ServerPlayer createPlayer,
+      String name
+  ) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.create-warp-server"),
+        name,
+        LANG_LOADER.getText("paytp.administrator"),
         createPlayer.getName()
     ));
   }
@@ -251,8 +339,16 @@ public class PayTpMessageSender {
     ));
   }
 
-  public static void msgWarpCreateFailed(ServerPlayer player, String name) {
-    player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.create-warp-failed"),
+  public static void msgWarpBeaconInactive(ServerPlayer player, String name) {
+    player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.warp.beacon-inactive"),
+        PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+        PayTpTextBuilder.DEFAULT_WARN_COLOR,
+        name
+    ));
+  }
+
+  public static void msgWarpBeaconOccupied(ServerPlayer player, String name) {
+    player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.warp.beacon-occupied"),
         PayTpTextBuilder.DEFAULT_TEXT_COLOR,
         PayTpTextBuilder.DEFAULT_WARN_COLOR,
         name
@@ -268,6 +364,67 @@ public class PayTpMessageSender {
     ));
   }
 
+  public static void msgServerWarpDeleted(
+      ServerPlayer player,
+      ServerPlayer deletePlayer,
+      String name
+  ) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.delete-server-warp"),
+        PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+        PayTpTextBuilder.DEFAULT_WARN_COLOR,
+        name,
+        LANG_LOADER.getText("paytp.administrator"),
+        deletePlayer.getName()
+    ));
+  }
+
+  public static void msgWarpForceDeleted(
+      ServerPlayer player,
+      ServerPlayer deletePlayer,
+      String name
+  ) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.delete-warp-forced"),
+        PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+        PayTpTextBuilder.DEFAULT_WARN_COLOR,
+        name,
+        LANG_LOADER.getText("paytp.administrator"),
+        deletePlayer.getName()
+    ));
+  }
+
+  public static void msgServerWarpRenameFailed(ServerPlayer player, String name) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.warp.server-no-rename"),
+        PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+        PayTpTextBuilder.DEFAULT_WARN_COLOR,
+        name
+    ));
+  }
+
+  public static void msgServerWarpNoPermission(ServerPlayer player, String name) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.warp.server-no-permission"),
+        PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+        PayTpTextBuilder.DEFAULT_WARN_COLOR,
+        name
+    ));
+  }
+
+  public static void msgServerWarpDeleteRequiresForced(
+      ServerPlayer player,
+      String name
+  ) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.warp.server-delete-requires-forced"),
+        PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+        PayTpTextBuilder.DEFAULT_WARN_COLOR,
+        name,
+        "forced"
+    ));
+  }
+
   public static void msgWarpDeletedServer(ServerPlayer player, String name) {
     player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.delete-warp-server"),
         PayTpTextBuilder.DEFAULT_TEXT_COLOR,
@@ -277,21 +434,121 @@ public class PayTpMessageSender {
     ));
   }
 
-  public static void msgEmptyWarp(ServerPlayer player) {
-    player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.empty-warp")));
+  public static void msgWarpNotOwner(ServerPlayer player, String name) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.warp.not-owner"),
+        PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+        PayTpTextBuilder.DEFAULT_WARN_COLOR,
+        name
+    ));
+  }
+
+  public static void msgWarpRenamed(
+      ServerPlayer player,
+      String name,
+      String newName
+  ) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.rename-warp"),
+        name,
+        newName
+    ));
+  }
+
+  public static void msgWarpInvited(
+      ServerPlayer player,
+      ServerPlayer target,
+      String name
+  ) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.invite-warp"),
+        target.getName(),
+        name
+    ));
+  }
+
+  public static void msgWarpExcluded(
+      ServerPlayer player,
+      ServerPlayer target,
+      String name
+  ) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.exclude-warp"),
+        target.getName(),
+        name
+    ));
+  }
+
+  public static void msgWarpPublicOnly(ServerPlayer player, String name) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.warp.public-no-invites"),
+        PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+        PayTpTextBuilder.DEFAULT_WARN_COLOR,
+        name
+    ));
+  }
+
+  public static void msgWarpAlreadyInvited(
+      ServerPlayer player,
+      ServerPlayer target,
+      String name
+  ) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.warp.already-invited"),
+        PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+        PayTpTextBuilder.DEFAULT_WARN_COLOR,
+        target.getName(),
+        name
+    ));
+  }
+
+  public static void msgWarpNotInvited(
+      ServerPlayer player,
+      ServerPlayer target,
+      String name
+  ) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.warp.not-invited"),
+        PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+        PayTpTextBuilder.DEFAULT_WARN_COLOR,
+        target.getName(),
+        name
+    ));
+  }
+
+  public static void msgWarpExcludeSelf(ServerPlayer player, String name) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.warp.exclude-self"),
+        PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+        PayTpTextBuilder.DEFAULT_WARN_COLOR,
+        name
+    ));
+  }
+
+  public static void msgEmptyWarp(
+      ServerPlayer player,
+      PayTpWarpManager.AccessType filter
+  ) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.empty-warp"),
+        PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+        PayTpTextBuilder.DEFAULT_WARN_COLOR,
+        LANG_LOADER.getText(warpListFilterKey(filter))
+    ));
   }
 
   public static void msgWarpList(
       ServerPlayer player,
-      Map<String, PayTpData> warpList,
+      List<PayTpWarpManager.WarpView> warpList,
       String warpCommandName,
       String warpListCommandName,
+      PayTpWarpManager.AccessType filter,
       int page
   ) {
     final int PAGE_SIZE = 8;
 
     String newline = "\n";
-    List<Map.Entry<String, PayTpData>> entries = new ArrayList<>(warpList.entrySet());
+    List<PayTpWarpManager.WarpView> entries = new ArrayList<>(warpList);
 
     int totalPages = Math.max(1, (int) Math.ceil(entries.size() / (double) PAGE_SIZE));
     page = Math.max(1, Math.min(page, totalPages));
@@ -300,21 +557,46 @@ public class PayTpMessageSender {
     msg.append(newline);
     msg.append(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.help.divider")));
     msg.append(newline);
-    msg.append(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.warp-list")));
+    msg.append(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.warp-list"),
+        LANG_LOADER.getText(warpListFilterKey(filter))
+    ));
 
     int start = (page - 1) * PAGE_SIZE;
     int end = Math.min(start + PAGE_SIZE, entries.size());
 
     for (int i = start; i < end; i++) {
-      Map.Entry<String, PayTpData> entry = entries.get(i);
+      PayTpWarpManager.WarpView entry = entries.get(i);
+      String icon = switch (entry.accessType()) {
+        case OWNED -> "⭐";
+        case INVITED -> "✉️";
+        case SERVER -> "🏯";
+        case PUBLIC -> "🌐";
+        case LOCKED -> "🔒";
+      };
+      Component displayName = Component.literal(icon + " " + entry.name())
+          .withStyle(
+              entry.accessType() == PayTpWarpManager.AccessType.LOCKED
+                  ? PayTpTextBuilder.DEFAULT_WARN_COLOR
+                  : PayTpTextBuilder.DEFAULT_HIGHLIGHT_COLOR
+          );
+
       msg.append(newline);
-      msg.append(PayTpTextBuilder.commandText(
-          Component.literal(entry.getKey()).withStyle(PayTpTextBuilder.DEFAULT_HIGHLIGHT_COLOR),
-          PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.warp"), entry.getKey()),
-          "/" + warpCommandName + " " + entry.getKey()
-      ));
-      msg.append(Component.literal(" "));
-      msg.append(Component.literal(entry.getValue().toString()).withStyle(PayTpTextBuilder.DEFAULT_SHADE_COLOR));
+      if (entry.accessible()) {
+        msg.append(PayTpTextBuilder.commandText(
+            displayName,
+            PayTpTextBuilder.format(
+                LANG_LOADER.getText("paytp.hover.warp"),
+                entry.name()
+            ),
+            "/" + warpCommandName + " " + entry.name()
+        ));
+        msg.append(Component.literal(" "));
+        msg.append(Component.literal(formatWarpInformation(entry))
+            .withStyle(PayTpTextBuilder.DEFAULT_SHADE_COLOR));
+      } else {
+        msg.append(displayName);
+      }
     }
 
     msg.append(newline);
@@ -326,7 +608,7 @@ public class PayTpMessageSender {
       pageButtons.append(PayTpTextBuilder.commandText(
           Component.literal("⏪").withStyle(PayTpTextBuilder.DEFAULT_TEXT_COLOR),
           PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.page"), (page - 1)),
-          "/" + warpListCommandName + " " + (page - 1)
+          warpListPageCommand(warpListCommandName, filter, page - 1)
       ));
     } else {
       pageButtons.append(Component.literal("⏪").withStyle(PayTpTextBuilder.DEFAULT_SHADE_COLOR));
@@ -340,7 +622,7 @@ public class PayTpMessageSender {
       pageButtons.append(PayTpTextBuilder.commandText(
           Component.literal("⏩").withStyle(PayTpTextBuilder.DEFAULT_TEXT_COLOR),
           PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.page"), (page + 1)),
-          "/" + warpListCommandName + " " + (page + 1)
+          warpListPageCommand(warpListCommandName, filter, page + 1)
       ));
     } else {
       pageButtons.append(Component.literal("⏩").withStyle(PayTpTextBuilder.DEFAULT_SHADE_COLOR));
@@ -353,9 +635,58 @@ public class PayTpMessageSender {
     player.sendSystemMessage(msg);
   }
 
+  private static String formatWarpInformation(PayTpWarpManager.WarpView warp) {
+    PayTpData destination = warp.destination();
+    if (warp.accessType() == PayTpWarpManager.AccessType.OWNED
+        || warp.accessType() == PayTpWarpManager.AccessType.SERVER) {
+      return "<%s, (%d, %d, %d)>".formatted(
+          destination.world().identifier().getPath(),
+          Math.round(destination.pos().x),
+          Math.round(destination.pos().y),
+          Math.round(destination.pos().z)
+      );
+    }
+    return "<%s, %s, (%d, %d, %d)>".formatted(
+        warp.ownerName(),
+        destination.world().identifier().getPath(),
+        Math.round(destination.pos().x),
+        Math.round(destination.pos().y),
+        Math.round(destination.pos().z)
+    );
+  }
+
+  private static String warpListPageCommand(
+      String warpListCommandName,
+      PayTpWarpManager.AccessType filter,
+      int page
+  ) {
+    String filterArgument = filter == null ? " all" : switch (filter) {
+      case PUBLIC -> " public";
+      case SERVER -> " server";
+      case OWNED -> " owned";
+      case INVITED -> " invited";
+      case LOCKED -> " all";
+    };
+    return "/" + warpListCommandName + filterArgument + " " + page;
+  }
+
+  private static String warpListFilterKey(PayTpWarpManager.AccessType filter) {
+    if (filter == null) {
+      return "paytp.warp-list.all";
+    }
+    return switch (filter) {
+      case PUBLIC -> "paytp.warp-list.public";
+      case SERVER -> "paytp.warp-list.server";
+      case OWNED -> "paytp.warp-list.owned";
+      case INVITED -> "paytp.warp-list.invited";
+      case LOCKED -> "paytp.warp-list.all";
+    };
+  }
+
   public static void msgHelp(
       ServerPlayer player,
       String tpCommandName,
+      boolean allowCrossDim,
       String backCommandName,
       String tpPlayerCommandName,
       String tpPlayerHereCommandName,
@@ -367,10 +698,13 @@ public class PayTpMessageSender {
       String warpCommandName,
       String warpCreateCommandName,
       String warpDeleteCommandName,
+      String warpRenameCommandName,
+      String warpInviteCommandName,
+      String warpExcludeCommandName,
       String warpListCommandName
   ) {
     // -------------------
-    // Reuse texts
+    // Reuse components
     // -------------------
     String newline = "\n";
     String indentCmd = " ".repeat(4);
@@ -394,7 +728,7 @@ public class PayTpMessageSender {
     };
 
     // -------------------
-    // Text combinations
+    // Component combinations
     // -------------------
     BiConsumer<String, String> appendCmdText = (key, cmd) -> {
       if (!cmd.isEmpty()) {
@@ -420,7 +754,10 @@ public class PayTpMessageSender {
 
     // Teleport
     appendSectionIfNotEmpty.accept("paytp.help.section.tp", () -> {
-      appendCmdText.accept("paytp.help.tp.coord", tpCommandName);
+      appendCmdText.accept(
+          allowCrossDim ? "paytp.help.tp.coord.cross-dim" : "paytp.help.tp.coord",
+          tpCommandName
+      );
       appendCmdText.accept("paytp.help.tp.back", backCommandName);
     });
 
@@ -444,17 +781,19 @@ public class PayTpMessageSender {
       appendCmdText.accept("paytp.help.warp.goto", warpCommandName);
       appendCmdText.accept("paytp.help.warp.create", warpCreateCommandName);
       appendCmdText.accept("paytp.help.warp.delete", warpDeleteCommandName);
+      appendCmdText.accept("paytp.help.warp.rename", warpRenameCommandName);
+      appendCmdText.accept("paytp.help.warp.invite", warpInviteCommandName);
+      appendCmdText.accept("paytp.help.warp.exclude", warpExcludeCommandName);
       appendCmdText.accept("paytp.help.warp.list", warpListCommandName);
     });
 
     // -------------------
     // Footer
     // -------------------
-    msgHolder[0].append(newline).append(LANG_LOADER.getText("paytp.help.note")).append(newline)
-        .append(divider);
+    msgHolder[0].append(newline).append(divider);
 
     // -------------------
-    // Text formatting
+    // Component formatting
     // -------------------
     List<Component> formattedTexts = new ArrayList<>();
 
@@ -470,7 +809,10 @@ public class PayTpMessageSender {
     };
 
     // Teleport
-    suggestIfNotEmpty.apply(tpCommandName, "/" + tpCommandName + " (dim) <x> <y> <z>");
+    String coordinatePlaceholder = "/" + tpCommandName
+        + (allowCrossDim ? " (dim)" : "")
+        + " <x> <y> <z>";
+    suggestIfNotEmpty.apply(tpCommandName, coordinatePlaceholder);
     suggestIfNotEmpty.apply(backCommandName, "/" + backCommandName);
 
     // Request
@@ -486,9 +828,12 @@ public class PayTpMessageSender {
 
     // Warp
     suggestIfNotEmpty.apply(warpCommandName, "/" + warpCommandName + " <name>");
-    suggestIfNotEmpty.apply(warpCreateCommandName, "/" + warpCreateCommandName + " <name>");
+    suggestIfNotEmpty.apply(warpCreateCommandName, "/" + warpCreateCommandName + " <name> (public/private/server)");
     suggestIfNotEmpty.apply(warpDeleteCommandName, "/" + warpDeleteCommandName + " <name>");
-    suggestIfNotEmpty.apply(warpListCommandName, "/" + warpListCommandName + " (page)");
+    suggestIfNotEmpty.apply(warpRenameCommandName, "/" + warpRenameCommandName + " <name> <new_name>");
+    suggestIfNotEmpty.apply(warpInviteCommandName, "/" + warpInviteCommandName + " <name> <player>");
+    suggestIfNotEmpty.apply(warpExcludeCommandName, "/" + warpExcludeCommandName + " <name> <player>");
+    suggestIfNotEmpty.apply(warpListCommandName, "/" + warpListCommandName + " (all/public/owned/invited/server) (page)");
 
     // -------------------
     // Msg Send
