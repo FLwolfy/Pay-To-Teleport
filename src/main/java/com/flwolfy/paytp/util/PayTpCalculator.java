@@ -1,65 +1,105 @@
 package com.flwolfy.paytp.util;
 
-import com.flwolfy.paytp.flag.Flags;
-import com.flwolfy.paytp.flag.PayTpSettingFlags;
+import com.flwolfy.paytp.PayTpMod;
 import com.flwolfy.paytp.data.PayTpData;
+import com.flwolfy.paytp.data.PayTpPlayer;
+import com.flwolfy.paytp.data.PayTpTeleportContext;
+import com.flwolfy.paytp.data.config.PayTpConfigData;
+import com.flwolfy.paytp.data.script.PayTpScript;
+import com.flwolfy.paytp.data.script.PayTpScriptManager;
+import com.flwolfy.paytp.data.script.PayTpScriptPosition;
+import com.flwolfy.paytp.flag.Flags;
+import com.flwolfy.paytp.flag.PayTpDeductionFlags;
 
-import net.minecraft.resources.ResourceKey;
+import java.util.Map;
+
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.PlayerEnderChestContainer;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.server.level.ServerPlayer;
 
-public class PayTpCalculator {
+import org.slf4j.Logger;
+
+/**
+ * Calculates teleport prices and manages currency balance and payment operations.
+ */
+public final class PayTpCalculator {
+
+  private static final Logger LOGGER = PayTpMod.LOGGER;
 
   private PayTpCalculator() {}
 
-  public static double calculateDistance(
-      PayTpData from,
-      PayTpData to
-  ) {
-    Vec3 fromPos = from.pos();
-    Vec3 toPos = to.pos();
-
-    ResourceKey<Level> fromWorld = from.world();
-    ResourceKey<Level> toWorld = to.world();
-
-    double distance;
-    if (fromWorld == toWorld) {
-      distance = fromPos.distanceTo(toPos);
-    } else if (fromWorld == Level.END) {
-      distance = fromPos.distanceTo(Vec3.ZERO);
-    } else if (toWorld == Level.END) {
-      distance = Vec3.ZERO.distanceTo(toPos);
-    } else if (fromWorld == Level.NETHER) {
-      distance = (fromPos.scale(8)).distanceTo(toPos);
-    } else if (toWorld == Level.NETHER) {
-      distance = fromPos.distanceTo(toPos.scale(0.125));
-    } else {
-      // Note: If you have other worlds, customize your distance calculation here.
-      //       Default distance -> Euclidean distance
-      distance = fromPos.distanceTo(toPos);
-    }
-
-    return distance;
-  }
-
+  /**
+   * Evaluates and clamps the configured price algorithm for one teleport.
+   *
+   * <p>A zero maximum price bypasses script execution.</p>
+   *
+   * @param from the player's current location
+   * @param to the teleport destination
+   * @param teleportContext the operation-specific teleport context
+   * @param player the player being teleported; Minecraft commands use this player's server console
+   * @param priceConfig the price range, currency, and algorithm configuration
+   * @return a negative value when payment must be canceled; otherwise the final price within the
+   *     configured inclusive range
+   */
   public static int calculatePrice(
-      double distance,
-      double baseRadius,
-      double increaseRate,
-      double externalMultiplier,
-      int minPrice,
-      int maxPrice
+      PayTpData from,
+      PayTpData to,
+      PayTpTeleportContext teleportContext,
+      ServerPlayer player,
+      PayTpConfigData.Price priceConfig
   ) {
-    double distanceBeyondBase = Math.max(0, distance - baseRadius);
-    int calculatedPrice = (int) Math.round((minPrice + distanceBeyondBase * increaseRate) * externalMultiplier);
+    int minPrice = priceConfig.minPrice();
+    int maxPrice = priceConfig.maxPrice();
 
-    return Math.min(calculatedPrice, maxPrice);
+    if (maxPrice == 0) return 0;
+
+    try {
+      int price = evaluatePrice(
+          priceConfig.algorithm(),
+          from,
+          to,
+          teleportContext,
+          player
+      );
+      if (price < 0) return price;
+      return Math.clamp(price, minPrice, maxPrice);
+    } catch (Exception e) {
+      LOGGER.error("PayTp price algorithm failed; canceling payment", e);
+      return -1;
+    }
   }
 
+  private static int evaluatePrice(
+      PayTpScript algorithm,
+      PayTpData from,
+      PayTpData to,
+      PayTpTeleportContext teleportContext,
+      ServerPlayer player
+  ) {
+    return PayTpScriptManager.getInstance().evaluate(
+        algorithm,
+        Integer.class,
+        Map.of("minecraft", new PayTpCommandExecutor(player.level().getServer())),
+        Map.entry("from", PayTpScriptPosition.from(from)),
+        Map.entry("to", PayTpScriptPosition.from(to)),
+        Map.entry("teleportContext", teleportContext),
+        Map.entry("player", new PayTpPlayer(
+            player.getUUID().toString(),
+            player.getName().getString()
+        ))
+    );
+  }
+
+  /**
+   * Counts all available currency permitted by the configured storage flags.
+   *
+   * @param currencyItemFullId the namespaced currency item identifier
+   * @param player the player whose accessible storage is inspected
+   * @param settingFlags combined {@link PayTpDeductionFlags} values
+   * @return the total number of matching currency items
+   */
   public static int checkBalance(
       String currencyItemFullId,
       Player player,
@@ -67,14 +107,23 @@ public class PayTpCalculator {
   ) {
     Item currencyItem = PayTpItemHandler.getItemByStringId(currencyItemFullId);
 
-    int totalCount = PayTpItemHandler.getInventoryCount(player.getInventory(), currencyItem, Flags.check(settingFlags, PayTpSettingFlags.ALLOW_SHULKER_BOX));
-    if (Flags.check(settingFlags, PayTpSettingFlags.ALLOW_ENDER_CHEST)) {
-      totalCount += PayTpItemHandler.getInventoryCount(player.getEnderChestInventory(), currencyItem, Flags.check(settingFlags, PayTpSettingFlags.ALLOW_SHULKER_BOX));
+    int totalCount = PayTpItemHandler.getInventoryCount(player.getInventory(), currencyItem, Flags.check(settingFlags, PayTpDeductionFlags.ALLOW_SHULKER_BOX));
+    if (Flags.check(settingFlags, PayTpDeductionFlags.ALLOW_ENDER_CHEST)) {
+      totalCount += PayTpItemHandler.getInventoryCount(player.getEnderChestInventory(), currencyItem, Flags.check(settingFlags, PayTpDeductionFlags.ALLOW_SHULKER_BOX));
     }
 
     return totalCount;
   }
 
+  /**
+   * Removes a price from the player's permitted storage in configured priority order.
+   *
+   * @param currencyItemFullId the namespaced currency item identifier
+   * @param player the player being charged
+   * @param price the number of items to remove
+   * @param configFlags combined {@link PayTpDeductionFlags} values
+   * @return {@code true} when the requested amount was removed; otherwise {@code false}
+   */
   public static boolean proceedPayment(
       String currencyItemFullId,
       Player player,
@@ -92,10 +141,10 @@ public class PayTpCalculator {
     // Priority 1: Ender Chest Shulker -> Ender Chest -> Inventory Shulker -> Inventory
     // ------------------------------------------------------------------------------------------------------------------------
     if (Flags.equivalent(configFlags,
-        PayTpSettingFlags.ALLOW_ENDER_CHEST,
-        PayTpSettingFlags.PRIORITIZE_ENDER_CHEST,
-        PayTpSettingFlags.ALLOW_SHULKER_BOX,
-        PayTpSettingFlags.PRIORITIZE_SHULKER_BOX)) {
+        PayTpDeductionFlags.ALLOW_ENDER_CHEST,
+        PayTpDeductionFlags.PRIORITIZE_ENDER_CHEST,
+        PayTpDeductionFlags.ALLOW_SHULKER_BOX,
+        PayTpDeductionFlags.PRIORITIZE_SHULKER_BOX)) {
 
       remaining = PayTpItemHandler.removeShulkerItems(enderChestInventory, currencyItem, remaining);
       remaining = PayTpItemHandler.removeInventoryItems(enderChestInventory, currencyItem, remaining);
@@ -107,9 +156,9 @@ public class PayTpCalculator {
     // Priority 2: Ender Chest -> Ender Chest Shulker -> Inventory -> Inventory Shulker
     // ------------------------------------------------------------------------------------------------------------------------
     else if (Flags.equivalent(configFlags,
-        PayTpSettingFlags.ALLOW_ENDER_CHEST,
-        PayTpSettingFlags.PRIORITIZE_ENDER_CHEST,
-        PayTpSettingFlags.ALLOW_SHULKER_BOX)) {
+        PayTpDeductionFlags.ALLOW_ENDER_CHEST,
+        PayTpDeductionFlags.PRIORITIZE_ENDER_CHEST,
+        PayTpDeductionFlags.ALLOW_SHULKER_BOX)) {
 
       remaining = PayTpItemHandler.removeInventoryItems(enderChestInventory, currencyItem, remaining);
       remaining = PayTpItemHandler.removeShulkerItems(enderChestInventory, currencyItem, remaining);
@@ -122,9 +171,9 @@ public class PayTpCalculator {
     // Priority 3: Inventory Shulker -> Inventory -> Ender Chest Shulker -> Ender Chest
     // ------------------------------------------------------------------------------------------------------------------------
     else if (Flags.equivalent(configFlags,
-        PayTpSettingFlags.ALLOW_ENDER_CHEST,
-        PayTpSettingFlags.ALLOW_SHULKER_BOX,
-        PayTpSettingFlags.PRIORITIZE_SHULKER_BOX)) {
+        PayTpDeductionFlags.ALLOW_ENDER_CHEST,
+        PayTpDeductionFlags.ALLOW_SHULKER_BOX,
+        PayTpDeductionFlags.PRIORITIZE_SHULKER_BOX)) {
 
       remaining = PayTpItemHandler.removeShulkerItems(playerInventory, currencyItem, remaining);
       remaining = PayTpItemHandler.removeInventoryItems(playerInventory, currencyItem, remaining);
@@ -136,8 +185,8 @@ public class PayTpCalculator {
     // Priority 4: Inventory -> Inventory Shulker -> Ender Chest -> Ender Chest Shulker
     // ------------------------------------------------------------------------------------------------------------------------
     else if (Flags.equivalent(configFlags,
-        PayTpSettingFlags.ALLOW_ENDER_CHEST,
-        PayTpSettingFlags.ALLOW_SHULKER_BOX)) {
+        PayTpDeductionFlags.ALLOW_ENDER_CHEST,
+        PayTpDeductionFlags.ALLOW_SHULKER_BOX)) {
 
       remaining = PayTpItemHandler.removeInventoryItems(playerInventory, currencyItem, remaining);
       remaining = PayTpItemHandler.removeShulkerItems(playerInventory, currencyItem, remaining);
@@ -149,8 +198,8 @@ public class PayTpCalculator {
     // Priority 5: Ender Chest -> Inventory
     // ------------------------------------------------------------------------------------------------------------------------
     else if (Flags.check(configFlags,
-        PayTpSettingFlags.ALLOW_ENDER_CHEST,
-        PayTpSettingFlags.PRIORITIZE_ENDER_CHEST)) {
+        PayTpDeductionFlags.ALLOW_ENDER_CHEST,
+        PayTpDeductionFlags.PRIORITIZE_ENDER_CHEST)) {
 
       remaining = PayTpItemHandler.removeInventoryItems(enderChestInventory, currencyItem, remaining);
       remaining = PayTpItemHandler.removeInventoryItems(playerInventory, currencyItem, remaining);
@@ -160,7 +209,7 @@ public class PayTpCalculator {
     // Priority 6: Inventory -> Ender Chest
     // ------------------------------------------------------------------------------------------------------------------------
     else if (Flags.check(configFlags,
-        PayTpSettingFlags.ALLOW_ENDER_CHEST)) {
+        PayTpDeductionFlags.ALLOW_ENDER_CHEST)) {
 
       remaining = PayTpItemHandler.removeInventoryItems(playerInventory, currencyItem, remaining);
       remaining = PayTpItemHandler.removeInventoryItems(enderChestInventory, currencyItem, remaining);
@@ -170,7 +219,7 @@ public class PayTpCalculator {
     // Priority 7: Inventory -> Inventory Shulker
     // ------------------------------------------------------------------------------------------------------------------------
     else if (Flags.check(configFlags,
-        PayTpSettingFlags.ALLOW_SHULKER_BOX)) {
+        PayTpDeductionFlags.ALLOW_SHULKER_BOX)) {
 
       remaining = PayTpItemHandler.removeInventoryItems(playerInventory, currencyItem, remaining);
       remaining = PayTpItemHandler.removeShulkerItems(playerInventory, currencyItem, remaining);
@@ -180,8 +229,8 @@ public class PayTpCalculator {
     // Priority 7: Inventory Shulker -> Inventory
     // ------------------------------------------------------------------------------------------------------------------------
     else if (Flags.check(configFlags,
-        PayTpSettingFlags.ALLOW_SHULKER_BOX,
-        PayTpSettingFlags.PRIORITIZE_SHULKER_BOX)) {
+        PayTpDeductionFlags.ALLOW_SHULKER_BOX,
+        PayTpDeductionFlags.PRIORITIZE_SHULKER_BOX)) {
 
       remaining = PayTpItemHandler.removeShulkerItems(playerInventory, currencyItem, remaining);
       remaining = PayTpItemHandler.removeInventoryItems(playerInventory, currencyItem, remaining);

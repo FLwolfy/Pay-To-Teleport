@@ -1,4 +1,4 @@
-package com.flwolfy.paytp.command;
+package com.flwolfy.paytp.command.request;
 
 import com.flwolfy.paytp.PayTpMod;
 
@@ -38,11 +38,11 @@ import org.slf4j.Logger;
  *     | pushes RequestData |                     |
  *     |                    |                     |
  *     | accept()           |                     |
- *     |<-------------------|                     |
+ *     |&lt;-------------------|                     |
  *     | pops RequestData   |                     |
  *     | executes onAccept()|                     |
  *     | cancelByTarget()   |                     |
- *     |<-------------------|                     |
+ *     |&lt;-------------------|                     |
  *     | pops RequestData   |                     |
  *     | executes onCancel()|                     |
  *     | cancelBySender()   |                     |
@@ -120,6 +120,15 @@ public class PayTpRequestManager {
   // ====== Requests ======= //
   // ======================= //
 
+  /**
+   * Adds a request and schedules its automatic cancellation.
+   *
+   * @param sender the player who sent the request
+   * @param target the player who may accept or deny the request
+   * @param onAccept action executed exactly once when accepted
+   * @param onCancel action executed exactly once when denied, cancelled, or expired
+   * @param expireTimeSeconds request lifetime in seconds
+   */
   public void sendRequest(
       ServerPlayer sender,
       ServerPlayer target,
@@ -142,6 +151,13 @@ public class PayTpRequestManager {
     }, expireTimeSeconds, TimeUnit.SECONDS);
   }
 
+  /**
+   * Accepts the newest pending request from a specific sender.
+   *
+   * @param target the request recipient
+   * @param sender the required request sender
+   * @return {@code true} if a pending request was accepted
+   */
   public boolean accept(ServerPlayer target, ServerPlayer sender) {
     Deque<RequestData> stack = pendingRequests.get(target.getUUID());
     if (stack == null) return false;
@@ -157,6 +173,12 @@ public class PayTpRequestManager {
     return false;
   }
 
+  /**
+   * Accepts the newest pending request received by a player.
+   *
+   * @param target the request recipient
+   * @return {@code true} if a pending request was accepted
+   */
   public boolean acceptLatest(ServerPlayer target) {
     Deque<RequestData> stack = pendingRequests.get(target.getUUID());
     if (stack == null) return false;
@@ -172,6 +194,13 @@ public class PayTpRequestManager {
     return false;
   }
 
+  /**
+   * Denies the newest pending request from a specific sender.
+   *
+   * @param target the request recipient
+   * @param sender the required request sender
+   * @return {@code true} if a pending request was denied
+   */
   public boolean deny(ServerPlayer target, ServerPlayer sender) {
     Deque<RequestData> stack = pendingRequests.get(target.getUUID());
     if (stack == null) return false;
@@ -187,6 +216,12 @@ public class PayTpRequestManager {
     return false;
   }
 
+  /**
+   * Denies the newest pending request received by a player.
+   *
+   * @param target the request recipient
+   * @return {@code true} if a pending request was denied
+   */
   public boolean denyLatest(ServerPlayer target) {
     Deque<RequestData> stack = pendingRequests.get(target.getUUID());
     if (stack == null) return false;
@@ -202,6 +237,13 @@ public class PayTpRequestManager {
     return false;
   }
 
+  /**
+   * Cancels a pending request sent to a specific target.
+   *
+   * @param sender the request sender
+   * @param target the required request recipient
+   * @return {@code true} if a pending request was cancelled
+   */
   public boolean cancel(ServerPlayer sender, ServerPlayer target) {
     UUID senderId = sender.getUUID();
     Deque<RequestData> stack = pendingRequests.get(target.getUUID());
@@ -219,6 +261,12 @@ public class PayTpRequestManager {
     return false;
   }
 
+  /**
+   * Cancels the newest pending request sent by a player.
+   *
+   * @param sender the request sender
+   * @return {@code true} if a pending request was cancelled
+   */
   public boolean cancelLatest(ServerPlayer sender) {
     UUID senderId = sender.getUUID();
     for (Map.Entry<UUID, Deque<RequestData>> entry : pendingRequests.entrySet()) {

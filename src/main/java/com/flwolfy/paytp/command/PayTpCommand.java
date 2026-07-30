@@ -1,18 +1,26 @@
 package com.flwolfy.paytp.command;
 
 import com.flwolfy.paytp.PayTpMod;
+import com.flwolfy.paytp.command.back.PayTpBackManager;
+import com.flwolfy.paytp.command.home.PayTpHomeManager;
+import com.flwolfy.paytp.command.request.PayTpRequestManager;
+import com.flwolfy.paytp.command.warp.PayTpWarpManager;
+import com.flwolfy.paytp.command.warp.PayTpWarpNameArgument;
 import com.flwolfy.paytp.data.config.PayTpConfigData;
 import com.flwolfy.paytp.data.config.PayTpConfigManager;
+import com.flwolfy.paytp.data.warp.PayTpWarpPermission;
 import com.flwolfy.paytp.data.PayTpData;
+import com.flwolfy.paytp.data.PayTpPlayer;
+import com.flwolfy.paytp.data.PayTpTeleportContext;
 import com.flwolfy.paytp.data.lang.PayTpLangManager;
-import com.flwolfy.paytp.flag.Flags;
-import com.flwolfy.paytp.flag.PayTpMultiplierFlags;
 import com.flwolfy.paytp.util.PayTpCalculator;
 import com.flwolfy.paytp.util.PayTpItemHandler;
 import com.flwolfy.paytp.util.PayTpMessageSender;
+import com.flwolfy.paytp.util.PayTpSafeChecker;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -23,7 +31,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.DimensionArgument;
-import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
@@ -35,7 +43,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.Map;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
@@ -43,8 +51,7 @@ import org.slf4j.Logger;
 public class PayTpCommand {
 
   private static final Logger LOGGER = PayTpMod.LOGGER;
-  private static final String HELP_COMMAND = "ptp";
-
+  private static final String POSITION_ARGUMENT = "x> <y> <z";
   private static PayTpConfigManager configManager;
   private static PayTpLangManager langManager;
   private static PayTpBackManager backManager;
@@ -55,7 +62,24 @@ public class PayTpCommand {
   private static PayTpConfigData configData;
 
   private PayTpCommand() {}
-  
+
+  /**
+   * Describes the outcome of a PayTp teleport operation.
+   */
+  private enum PayTpTeleportResult {
+    SUCCESS,
+    INSUFFICIENT_FUNDS,
+    CROSS_DIMENSION_DISABLED,
+    FAILED;
+
+    public int commandResult() {
+      return this == SUCCESS ? Command.SINGLE_SUCCESS : 0;
+    }
+  }
+
+  /**
+   * Resolves and stores the managers required by command handlers.
+   */
   public static void init() {
     // Init manager singletons
     configManager = PayTpConfigManager.getInstance();
@@ -66,6 +90,9 @@ public class PayTpCommand {
     warpManager = PayTpWarpManager.getInstance();
   }
 
+  /**
+   * Reloads configuration and propagates configurable values to dependent managers.
+   */
   public static void reload() {
     configManager.reload();
 
@@ -75,28 +102,43 @@ public class PayTpCommand {
     // Config content
     langManager.setLanguage(configData.general().language());
     backManager.setMaxBackStack(configData.back().maxBackStack());
+    warpManager.resetTimers();
     warpManager.setMaxInactiveTicks(configData.warp().maxInactiveTicks());
     warpManager.setCheckPeriodTicks(configData.warp().checkPeriodTicks());
   }
 
+  /**
+   * Registers every enabled PayTp command with Brigadier.
+   *
+   * @param dispatcher the server command dispatcher
+   */
   public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-    // ===== /ptp =====
-    dispatcher.register(Commands.literal(HELP_COMMAND)
-        .executes(PayTpCommand::payTpHelp)
-    );
+    // ===== /ptphelp =====
+    String helpCmd = configData.general().helpCommand();
+    if (!helpCmd.isEmpty()) {
+      dispatcher.register(Commands.literal(helpCmd)
+          .executes(PayTpCommand::payTpHelp)
+      );
+    }
 
     // ===== /ptp (dimension) <pos> =====
-    String mainCmd = configData.general().mainCommand();
+    String mainCmd = configData.teleport().coordinateCommand();
     if (!mainCmd.isEmpty()) {
-      dispatcher.register(Commands.literal(mainCmd)
-          .then(Commands.argument("pos", Vec3Argument.vec3())
-              .executes(PayTpCommand::payTpCoords))
-          .then(Commands.argument("dimension", DimensionArgument.dimension())
-              .then(Commands.argument("pos", Vec3Argument.vec3())
-                  .executes(PayTpCommand::payTpDimCoords)
-              )
-          )
-      );
+      LiteralArgumentBuilder<CommandSourceStack> coordinateCommand =
+          Commands.literal(mainCmd)
+              .then(Commands.argument(POSITION_ARGUMENT, Vec3Argument.vec3())
+                  .suggests((context, builder) -> builder.buildFuture())
+                  .executes(PayTpCommand::payTpCoords));
+
+      if (configData.teleport().allowCrossDim()) {
+        coordinateCommand.then(Commands.argument("dimension", DimensionArgument.dimension())
+            .then(Commands.argument(POSITION_ARGUMENT, Vec3Argument.vec3())
+                .suggests((context, builder) -> builder.buildFuture())
+                .executes(PayTpCommand::payTpDimCoords)
+            )
+        );
+      }
+      dispatcher.register(coordinateCommand);
     }
 
     // ===== /ptpback =====
@@ -111,7 +153,8 @@ public class PayTpCommand {
     String tpToCmd = configData.request().requestCommand().toCommand();
     if (!tpToCmd.isEmpty()) {
       dispatcher.register(Commands.literal(tpToCmd)
-          .then(Commands.argument("target", EntityArgument.player())
+          .then(Commands.argument("target", StringArgumentType.word())
+              .suggests(PayTpCommand::onlinePlayerSuggest)
               .executes(PayTpCommand::payTpPlayer))
       );
     }
@@ -120,7 +163,8 @@ public class PayTpCommand {
     String tpHereCmd = configData.request().requestCommand().hereCommand();
     if (!tpHereCmd.isEmpty()) {
       dispatcher.register(Commands.literal(tpHereCmd)
-          .then(Commands.argument("target", EntityArgument.player())
+          .then(Commands.argument("target", StringArgumentType.word())
+              .suggests(PayTpCommand::onlinePlayerSuggest)
               .executes(PayTpCommand::payTpPlayerHere))
       );
     }
@@ -130,7 +174,8 @@ public class PayTpCommand {
     if (!acceptCmd.isEmpty()) {
       dispatcher.register(Commands.literal(acceptCmd)
           .executes(PayTpCommand::payTpAcceptLatest)
-          .then(Commands.argument("sender", EntityArgument.player())
+          .then(Commands.argument("sender", StringArgumentType.word())
+              .suggests(PayTpCommand::onlinePlayerSuggest)
               .executes(PayTpCommand::payTpAccept))
       );
     }
@@ -140,7 +185,8 @@ public class PayTpCommand {
     if (!denyCmd.isEmpty()) {
       dispatcher.register(Commands.literal(denyCmd)
           .executes(PayTpCommand::payTpDenyLatest)
-          .then(Commands.argument("sender", EntityArgument.player())
+          .then(Commands.argument("sender", StringArgumentType.word())
+              .suggests(PayTpCommand::onlinePlayerSuggest)
               .executes(PayTpCommand::payTpDeny))
       );
     }
@@ -150,7 +196,8 @@ public class PayTpCommand {
     if (!cancelCmd.isEmpty()) {
       dispatcher.register(Commands.literal(cancelCmd)
           .executes(PayTpCommand::payTpCancelLatest)
-          .then(Commands.argument("target", EntityArgument.player())
+          .then(Commands.argument("target", StringArgumentType.word())
+              .suggests(PayTpCommand::onlinePlayerSuggest)
               .executes(PayTpCommand::payTpCancel))
       );
     }
@@ -169,13 +216,50 @@ public class PayTpCommand {
     String warpCmd = configData.warp().warpCommand();
     dispatcher.register(Commands.literal(warpCmd)
         .then(Commands.literal("create")
-            .then(Commands.argument("name", StringArgumentType.greedyString())
-                .executes(PayTpCommand::payTpCreateWarp)
+            .then(Commands.argument("name", PayTpWarpNameArgument.warpName())
+                .executes(ctx -> payTpCreateWarp(ctx, false))
+                .then(Commands.literal("private")
+                    .executes(ctx -> payTpCreateWarp(ctx, false)))
+                .then(Commands.literal("public")
+                    .executes(ctx -> payTpCreateWarp(ctx, true)))
+                .then(Commands.literal("server")
+                    .requires(PayTpCommand::canManageServerWarps)
+                    .executes(PayTpCommand::payTpCreateServerWarp))
             )
         )
         .then(Commands.literal("delete")
-            .then(Commands.argument("name", StringArgumentType.greedyString())
+            .then(Commands.argument("name", PayTpWarpNameArgument.warpName())
+                .suggests(PayTpCommand::payTpDeleteWarpSuggest)
                 .executes(PayTpCommand::payTpDeleteWarp)
+                .then(Commands.literal("forced")
+                    .requires(PayTpCommand::canManageServerWarps)
+                    .executes(PayTpCommand::payTpDeleteWarpForced))
+            )
+        )
+        .then(Commands.literal("rename")
+            .then(Commands.argument("name", PayTpWarpNameArgument.warpName())
+                .suggests(PayTpCommand::payTpOwnedWarpSuggest)
+                .then(Commands.argument("newName", PayTpWarpNameArgument.warpName())
+                    .executes(PayTpCommand::payTpRenameWarp)
+                )
+            )
+        )
+        .then(Commands.literal("invite")
+            .then(Commands.argument("name", PayTpWarpNameArgument.warpName())
+                .suggests(PayTpCommand::payTpOwnedPrivateWarpSuggest)
+                .then(Commands.argument("target", StringArgumentType.word())
+                    .suggests(PayTpCommand::onlinePlayerSuggest)
+                    .executes(PayTpCommand::payTpInviteWarp)
+                )
+            )
+        )
+        .then(Commands.literal("exclude")
+            .then(Commands.argument("name", PayTpWarpNameArgument.warpName())
+                .suggests(PayTpCommand::payTpOwnedPrivateWarpSuggest)
+                .then(Commands.argument("target", StringArgumentType.word())
+                    .suggests(PayTpCommand::onlinePlayerSuggest)
+                    .executes(PayTpCommand::payTpExcludeWarp)
+                )
             )
         )
         .then(Commands.literal("list")
@@ -183,9 +267,78 @@ public class PayTpCommand {
             .then(Commands.argument("page", IntegerArgumentType.integer(1))
                 .executes(ctx -> payTpListWarp(ctx, IntegerArgumentType.getInteger(ctx, "page")))
             )
+            .then(Commands.literal("all")
+                .executes(ctx -> payTpListWarp(
+                    ctx,
+                    null,
+                    1
+                ))
+                .then(Commands.argument("page", IntegerArgumentType.integer(1))
+                    .executes(ctx -> payTpListWarp(
+                        ctx,
+                        null,
+                        IntegerArgumentType.getInteger(ctx, "page")
+                    ))
+                )
+            )
+            .then(Commands.literal("public")
+                .executes(ctx -> payTpListWarp(
+                    ctx,
+                    PayTpWarpManager.AccessType.PUBLIC,
+                    1
+                ))
+                .then(Commands.argument("page", IntegerArgumentType.integer(1))
+                    .executes(ctx -> payTpListWarp(
+                        ctx,
+                        PayTpWarpManager.AccessType.PUBLIC,
+                        IntegerArgumentType.getInteger(ctx, "page")
+                    ))
+                )
+            )
+            .then(Commands.literal("server")
+                .executes(ctx -> payTpListWarp(
+                    ctx,
+                    PayTpWarpManager.AccessType.SERVER,
+                    1
+                ))
+                .then(Commands.argument("page", IntegerArgumentType.integer(1))
+                    .executes(ctx -> payTpListWarp(
+                        ctx,
+                        PayTpWarpManager.AccessType.SERVER,
+                        IntegerArgumentType.getInteger(ctx, "page")
+                    ))
+                )
+            )
+            .then(Commands.literal("owned")
+                .executes(ctx -> payTpListWarp(
+                    ctx,
+                    PayTpWarpManager.AccessType.OWNED,
+                    1
+                ))
+                .then(Commands.argument("page", IntegerArgumentType.integer(1))
+                    .executes(ctx -> payTpListWarp(
+                        ctx,
+                        PayTpWarpManager.AccessType.OWNED,
+                        IntegerArgumentType.getInteger(ctx, "page")
+                    ))
+                )
+            )
+            .then(Commands.literal("invited")
+                .executes(ctx -> payTpListWarp(
+                    ctx,
+                    PayTpWarpManager.AccessType.INVITED,
+                    1
+                ))
+                .then(Commands.argument("page", IntegerArgumentType.integer(1))
+                    .executes(ctx -> payTpListWarp(
+                        ctx,
+                        PayTpWarpManager.AccessType.INVITED,
+                        IntegerArgumentType.getInteger(ctx, "page")
+                    ))
+                )
+            )
         )
         .then(Commands.argument("name", StringArgumentType.greedyString())
-            .suggests(PayTpCommand::payTpWarpSuggest)
             .executes(PayTpCommand::payTpWarp)
         )
     );
@@ -198,7 +351,8 @@ public class PayTpCommand {
 
     PayTpMessageSender.msgHelp(
         player,
-        configData.general().mainCommand(),
+        configData.teleport().coordinateCommand(),
+        configData.teleport().allowCrossDim(),
         configData.back().backCommand(),
         configData.request().requestCommand().toCommand(),
         configData.request().requestCommand().hereCommand(),
@@ -210,6 +364,9 @@ public class PayTpCommand {
         configData.warp().warpCommand(),
         configData.warp().warpCommand().isEmpty() ? "" : configData.warp().warpCommand() + " create",
         configData.warp().warpCommand().isEmpty() ? "" : configData.warp().warpCommand() + " delete",
+        configData.warp().warpCommand().isEmpty() ? "" : configData.warp().warpCommand() + " rename",
+        configData.warp().warpCommand().isEmpty() ? "" : configData.warp().warpCommand() + " invite",
+        configData.warp().warpCommand().isEmpty() ? "" : configData.warp().warpCommand() + " exclude",
         configData.warp().warpCommand().isEmpty() ? "" : configData.warp().warpCommand() + " list"
     );
 
@@ -218,7 +375,7 @@ public class PayTpCommand {
 
   private static int payTpCoords(CommandContext<CommandSourceStack> ctx) {
     ServerPlayer player = ctx.getSource().getPlayer();
-    Vec3 targetPos = Vec3Argument.getVec3(ctx, "pos");
+    Vec3 targetPos = Vec3Argument.getVec3(ctx, POSITION_ARGUMENT);
 
     if (player == null) return 0;
 
@@ -227,34 +384,30 @@ public class PayTpCommand {
         player,
         payTpData,
         true,
-        Flags.NO_FLAG
-    );
+        PayTpTeleportContext.coordinate(new PayTpTeleportContext.Coordinate())
+    ).commandResult();
   }
 
   private static int payTpDimCoords(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
     ServerPlayer player = ctx.getSource().getPlayer();
     ServerLevel targetDim = DimensionArgument.getDimension(ctx, "dimension");
-    Vec3 targetPos = Vec3Argument.getVec3(ctx, "pos");
+    Vec3 targetPos = Vec3Argument.getVec3(ctx, POSITION_ARGUMENT);
 
     if (player == null) return 0;
 
     PayTpData payTpData = new PayTpData(targetDim.dimension(), targetPos);
 
-    int multiplierFlags = player.level() == targetDim ?
-        Flags.NO_FLAG :
-        Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION);
-
     return teleport(
         player,
         payTpData,
         true,
-        multiplierFlags
-    );
+        PayTpTeleportContext.coordinate(new PayTpTeleportContext.Coordinate())
+    ).commandResult();
   }
 
   private static int payTpPlayer(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
     ServerPlayer sender = ctx.getSource().getPlayer();
-    ServerPlayer target = EntityArgument.getPlayer(ctx, "target");
+    ServerPlayer target = getOnlinePlayer(ctx, "target");
 
     if (sender == null) return 0;
     if (target == null) {
@@ -269,20 +422,22 @@ public class PayTpCommand {
     requestManager.sendRequest(sender, target, () -> {
       PayTpData targetTp = new PayTpData(target.level().dimension(), target.position());
 
-      int multiplierFlags = sender.level() == target.level() ?
-          Flags.NO_FLAG :
-          Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION);
-
-      int result = teleport(
+      PayTpTeleportResult result = teleport(
           sender,
           targetTp,
           true,
-          multiplierFlags
+          PayTpTeleportContext.request(new PayTpTeleportContext.Request(
+              new PayTpPlayer(
+                  target.getUUID().toString(),
+                  target.getName().getString()
+              ),
+              true
+          ))
       );
 
-      if (result == 1) {
+      if (result == PayTpTeleportResult.SUCCESS) {
         PayTpMessageSender.msgTpAccepted(target, sender.getName());
-      } else {
+      } else if (result == PayTpTeleportResult.INSUFFICIENT_FUNDS) {
         PayTpMessageSender.msgRequesterNotEnough(target);
       }
 
@@ -301,7 +456,7 @@ public class PayTpCommand {
         false
     );
 
-    if (configData.setting().effect().soundEffect()) {
+    if (configData.general().effect().soundEffect()) {
       target.level().playSound(
           null,
           target,
@@ -320,7 +475,7 @@ public class PayTpCommand {
     if (sender == null) return 0;
     PayTpData senderTp = new PayTpData(sender.level().dimension(), sender.position());
 
-    ServerPlayer target = EntityArgument.getPlayer(ctx, "target");
+    ServerPlayer target = getOnlinePlayer(ctx, "target");
     if (target == null) {
       PayTpMessageSender.msgNoTargetFound(sender);
       return 0;
@@ -332,15 +487,17 @@ public class PayTpCommand {
 
     requestManager.sendRequest(sender, target, () -> {
 
-      int multiplierFlags = sender.level() == target.level() ?
-          Flags.NO_FLAG :
-          Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION);
-
       teleport(
           target,
           senderTp,
           true,
-          multiplierFlags
+          PayTpTeleportContext.request(new PayTpTeleportContext.Request(
+              new PayTpPlayer(
+                  sender.getUUID().toString(),
+                  sender.getName().getString()
+              ),
+              false
+          ))
       );
 
     }, () -> {
@@ -358,7 +515,7 @@ public class PayTpCommand {
         true
     );
 
-    if (configData.setting().effect().soundEffect()) {
+    if (configData.general().effect().soundEffect()) {
       target.level().playSound(
           null,
           target,
@@ -376,7 +533,11 @@ public class PayTpCommand {
     ServerPlayer receiver = ctx.getSource().getPlayer();
     if (receiver == null) return 0;
 
-    ServerPlayer sender = EntityArgument.getPlayer(ctx, "sender");
+    ServerPlayer sender = getOnlinePlayer(ctx, "sender");
+    if (sender == null) {
+      PayTpMessageSender.msgNoTargetFound(receiver);
+      return 0;
+    }
     if (!requestManager.accept(receiver, sender)) {
       PayTpMessageSender.msgNoAcceptRequest(receiver);
       return 0;
@@ -401,7 +562,11 @@ public class PayTpCommand {
     ServerPlayer receiver = ctx.getSource().getPlayer();
     if (receiver == null) return 0;
 
-    ServerPlayer sender = EntityArgument.getPlayer(ctx, "sender");
+    ServerPlayer sender = getOnlinePlayer(ctx, "sender");
+    if (sender == null) {
+      PayTpMessageSender.msgNoTargetFound(receiver);
+      return 0;
+    }
     if (!requestManager.deny(receiver, sender)) {
       PayTpMessageSender.msgNoAcceptRequest(receiver);
       return 0;
@@ -426,7 +591,11 @@ public class PayTpCommand {
     ServerPlayer sender = ctx.getSource().getPlayer();
     if (sender == null) return 0;
 
-    ServerPlayer target = EntityArgument.getPlayer(ctx, "target");
+    ServerPlayer target = getOnlinePlayer(ctx, "target");
+    if (target == null) {
+      PayTpMessageSender.msgNoTargetFound(sender);
+      return 0;
+    }
     if (!requestManager.cancel(sender, target)) {
       PayTpMessageSender.msgNoCancelRequest(sender);
       return 0;
@@ -457,22 +626,18 @@ public class PayTpCommand {
       return 0;
     }
 
-    int multiplierFlags = player.level().dimension() == targetTp.world() ?
-        Flags.combine(PayTpMultiplierFlags.BACK) :
-        Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION, PayTpMultiplierFlags.BACK);
-
-    int result = teleport(
+    PayTpTeleportResult result = teleport(
         player,
         targetTp,
         false,
-        multiplierFlags
+        PayTpTeleportContext.back(new PayTpTeleportContext.Back())
     );
 
-    if (result == 0) {
+    if (result != PayTpTeleportResult.SUCCESS) {
       backManager.pushSingle(player, targetTp);
     }
 
-    return result;
+    return result.commandResult();
   }
 
   private static int payTpHome(CommandContext<CommandSourceStack> ctx) {
@@ -486,30 +651,29 @@ public class PayTpCommand {
 
     PayTpData home = homeManager.getHome(player);
 
-    int multiplierFlags = player.level().dimension() == home.world() ?
-        Flags.combine(PayTpMultiplierFlags.HOME) :
-        Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION, PayTpMultiplierFlags.HOME);
-
-    int result = teleport(
+    PayTpTeleportResult result = teleport(
         player,
         home,
         true,
-        multiplierFlags
+        PayTpTeleportContext.home(new PayTpTeleportContext.Home())
     );
 
-    if (result == 1) {
+    if (result == PayTpTeleportResult.SUCCESS) {
       PayTpMessageSender.msgTpHome(player);
     }
 
-    return result;
+    return result.commandResult();
   }
 
   private static int payTpSetHome(CommandContext<CommandSourceStack> ctx) {
     ServerPlayer player = ctx.getSource().getPlayer();
     if (player == null) return 0;
 
-    homeManager.setHome(player);
+    homeManager.setHome(player, configData.home().setRespawnPoint());
     PayTpMessageSender.msgHomeSet(player);
+    if (configData.home().setRespawnPoint()) {
+      PayTpMessageSender.msgHomeRespawnSet(player);
+    }
 
     return Command.SINGLE_SUCCESS;
   }
@@ -519,43 +683,115 @@ public class PayTpCommand {
     if (player == null) return 0;
 
     String name = StringArgumentType.getString(ctx, "name");
-    PayTpData target = warpManager.getWarp(player, name);
-    if (target == null) {
+    PayTpWarpManager.WarpView warp = warpManager.getWarpView(player, name);
+    if (warp == null || !warp.accessible()) {
       PayTpMessageSender.msgNoWarp(player, name);
       return 0;
     }
 
-    int multiplierFlags = player.level().dimension() == target.world() ?
-        Flags.combine(PayTpMultiplierFlags.WARP) :
-        Flags.combine(PayTpMultiplierFlags.CROSS_DIMENSION, PayTpMultiplierFlags.WARP);
-
     return PayTpCommand.teleport(
         player,
-        target,
+        warp.destination(),
         true,
-        multiplierFlags
-    );
+        PayTpTeleportContext.warp(new PayTpTeleportContext.Warp(
+            warp.name(),
+            warp.scriptAccessType(),
+            warp.ownerId() == null
+                ? null
+                : new PayTpPlayer(
+                    warp.ownerId().toString(),
+                    warp.ownerName()
+                )
+        ))
+    ).commandResult();
   }
 
-  private static CompletableFuture<Suggestions> payTpWarpSuggest(
+  private static CompletableFuture<Suggestions> payTpOwnedWarpSuggest(
       CommandContext<CommandSourceStack> context,
       SuggestionsBuilder builder
   ) {
-    CommandSourceStack source = context.getSource();
-    ServerPlayer player = source.getPlayer();
+    return suggestOwnedWarps(context, builder, false);
+  }
+
+  private static CompletableFuture<Suggestions> payTpDeleteWarpSuggest(
+      CommandContext<CommandSourceStack> context,
+      SuggestionsBuilder builder
+  ) {
+    ServerPlayer player = context.getSource().getPlayer();
     if (player == null) return builder.buildFuture();
 
-    Map<String, PayTpData> warps = warpManager.getAllWarps(player);
-    if (warps != null) {
-      for (String name : warps.keySet()) {
-        builder.suggest(name);
-      }
+    boolean admin = canManageServerWarps(context.getSource());
+    List<String> names = admin
+        ? warpManager.getAllWarpNames(player)
+        : warpManager.getOwnedWarpNames(player, false);
+    for (String name : names) {
+      builder.suggest(StringArgumentType.escapeIfRequired(name));
     }
-
     return builder.buildFuture();
   }
 
-  private static int payTpCreateWarp(CommandContext<CommandSourceStack> ctx) {
+  private static boolean canManageServerWarps(CommandSourceStack source) {
+    PayTpWarpPermission permission =
+        configData.warp().serverWarpPermission();
+    return switch (permission) {
+      case ALL -> true;
+      case MODERATORS ->
+          Commands.hasPermission(Commands.LEVEL_MODERATORS).test(source);
+      case GAMEMASTERS ->
+          Commands.hasPermission(Commands.LEVEL_GAMEMASTERS).test(source);
+      case ADMINS ->
+          Commands.hasPermission(Commands.LEVEL_ADMINS).test(source);
+      case OWNERS ->
+          Commands.hasPermission(Commands.LEVEL_OWNERS).test(source);
+    };
+  }
+
+  private static CompletableFuture<Suggestions> payTpOwnedPrivateWarpSuggest(
+      CommandContext<CommandSourceStack> context,
+      SuggestionsBuilder builder
+  ) {
+    return suggestOwnedWarps(context, builder, true);
+  }
+
+  private static CompletableFuture<Suggestions> suggestOwnedWarps(
+      CommandContext<CommandSourceStack> context,
+      SuggestionsBuilder builder,
+      boolean privateOnly
+  ) {
+    ServerPlayer player = context.getSource().getPlayer();
+    if (player == null) return builder.buildFuture();
+
+    for (String name : warpManager.getOwnedWarpNames(player, privateOnly)) {
+      builder.suggest(StringArgumentType.escapeIfRequired(name));
+    }
+    return builder.buildFuture();
+  }
+
+  private static CompletableFuture<Suggestions> onlinePlayerSuggest(
+      CommandContext<CommandSourceStack> context,
+      SuggestionsBuilder builder
+  ) {
+    return SharedSuggestionProvider.suggest(
+        context.getSource().getOnlinePlayerNames(),
+        builder
+    );
+  }
+
+  private static ServerPlayer getOnlinePlayer(
+      CommandContext<CommandSourceStack> context,
+      String argumentName
+  ) {
+    String playerName = StringArgumentType.getString(context, argumentName);
+    return context.getSource()
+        .getServer()
+        .getPlayerList()
+        .getPlayerByName(playerName);
+  }
+
+  private static int payTpCreateWarp(
+      CommandContext<CommandSourceStack> ctx,
+      boolean publicWarp
+  ) {
     ServerPlayer player = ctx.getSource().getPlayer();
     MinecraftServer server = ctx.getSource().getServer();
     if (player == null) return 0;
@@ -567,15 +803,51 @@ public class PayTpCommand {
       return 0;
     }
 
-    if (!warpManager.createWarp(player, name)) {
-      PayTpMessageSender.msgWarpCreateFailed(player, name);
+    PayTpWarpManager.OperationResult createResult =
+        warpManager.createWarp(player, name, publicWarp);
+    if (createResult != PayTpWarpManager.OperationResult.SUCCESS) {
+      if (createResult == PayTpWarpManager.OperationResult.BEACON_OCCUPIED) {
+        PayTpMessageSender.msgWarpBeaconOccupied(player, name);
+      } else if (createResult == PayTpWarpManager.OperationResult.ALREADY_EXISTS) {
+        PayTpMessageSender.msgWarpExist(player, name);
+      } else {
+        PayTpMessageSender.msgWarpBeaconInactive(player, name);
+      }
       return 0;
     }
 
     for (ServerPlayer onlinePlayer : server.getPlayerList().getPlayers()) {
-      PayTpMessageSender.msgWarpCreated(onlinePlayer, player, name);
+      PayTpMessageSender.msgWarpCreated(
+          onlinePlayer,
+          player,
+          name,
+          publicWarp
+      );
     }
 
+    return Command.SINGLE_SUCCESS;
+  }
+
+  private static int payTpCreateServerWarp(CommandContext<CommandSourceStack> ctx) {
+    ServerPlayer player = ctx.getSource().getPlayer();
+    MinecraftServer server = ctx.getSource().getServer();
+    if (player == null) return 0;
+
+    String name = StringArgumentType.getString(ctx, "name");
+    PayTpWarpManager.OperationResult result =
+        warpManager.createServerWarp(player, name);
+    if (result != PayTpWarpManager.OperationResult.SUCCESS) {
+      PayTpMessageSender.msgWarpExist(player, name);
+      return 0;
+    }
+
+    for (ServerPlayer onlinePlayer : server.getPlayerList().getPlayers()) {
+      PayTpMessageSender.msgServerWarpCreated(
+          onlinePlayer,
+          player,
+          name
+      );
+    }
     return Command.SINGLE_SUCCESS;
   }
 
@@ -585,10 +857,24 @@ public class PayTpCommand {
     if (player == null) return 0;
 
     String name = StringArgumentType.getString(ctx, "name");
-    if (!warpManager.deleteWarp(player, name)) {
+    if (warpManager.getWarp(player, name) == null) {
       PayTpMessageSender.msgNoWarp(player, name);
       return 0;
     }
+    if (warpManager.isServer(player, name)) {
+      if (canManageServerWarps(ctx.getSource())) {
+        PayTpMessageSender.msgServerWarpDeleteRequiresForced(player, name);
+      } else {
+        PayTpMessageSender.msgServerWarpNoPermission(player, name);
+      }
+      return 0;
+    }
+    if (!warpManager.isOwner(player, name)) {
+      PayTpMessageSender.msgWarpNotOwner(player, name);
+      return 0;
+    }
+
+    warpManager.deleteWarp(player, name);
 
     for (ServerPlayer onlinePlayer : server.getPlayerList().getPlayers()) {
       PayTpMessageSender.msgWarpDeleted(onlinePlayer, player, name);
@@ -597,19 +883,54 @@ public class PayTpCommand {
     return Command.SINGLE_SUCCESS;
   }
 
-  private static int payTpListWarp(CommandContext<CommandSourceStack> ctx, int page) {
+  private static int payTpDeleteWarpForced(CommandContext<CommandSourceStack> ctx) {
+    MinecraftServer server = ctx.getSource().getServer();
     ServerPlayer player = ctx.getSource().getPlayer();
     if (player == null) return 0;
 
-    Map<String, PayTpData> warps = warpManager.getAllWarps(player);
+    String name = StringArgumentType.getString(ctx, "name");
+    boolean serverWarp = warpManager.isServer(player, name);
+    if (!warpManager.deleteWarpForced(player, name)) {
+      PayTpMessageSender.msgNoWarp(player, name);
+      return 0;
+    }
+
+    for (ServerPlayer onlinePlayer : server.getPlayerList().getPlayers()) {
+      if (serverWarp) {
+        PayTpMessageSender.msgServerWarpDeleted(
+            onlinePlayer,
+            player,
+            name
+        );
+      } else {
+        PayTpMessageSender.msgWarpForceDeleted(onlinePlayer, player, name);
+      }
+    }
+    return Command.SINGLE_SUCCESS;
+  }
+
+  private static int payTpListWarp(CommandContext<CommandSourceStack> ctx, int page) {
+    return payTpListWarp(ctx, null, page);
+  }
+
+  private static int payTpListWarp(
+      CommandContext<CommandSourceStack> ctx,
+      PayTpWarpManager.AccessType filter,
+      int page
+  ) {
+    ServerPlayer player = ctx.getSource().getPlayer();
+    if (player == null) return 0;
+
+    var warps = warpManager.getVisibleWarps(player, filter);
     if (warps.isEmpty()) {
-      PayTpMessageSender.msgEmptyWarp(player);
+      PayTpMessageSender.msgEmptyWarp(player, filter);
     } else {
       PayTpMessageSender.msgWarpList(
           player,
           warps,
           configData.warp().warpCommand(),
           configData.warp().warpCommand() + " list",
+          filter,
           page
       );
     }
@@ -617,11 +938,104 @@ public class PayTpCommand {
     return Command.SINGLE_SUCCESS;
   }
 
-  private static int teleport(
+  private static int payTpRenameWarp(
+      CommandContext<CommandSourceStack> ctx
+  ) {
+    ServerPlayer player = ctx.getSource().getPlayer();
+    if (player == null) return 0;
+
+    String name = StringArgumentType.getString(ctx, "name");
+    String newName = StringArgumentType.getString(ctx, "newName");
+    PayTpWarpManager.OperationResult result =
+        warpManager.renameWarp(player, name, newName);
+
+    switch (result) {
+      case SUCCESS -> PayTpMessageSender.msgWarpRenamed(player, name, newName);
+      case ALREADY_EXISTS -> PayTpMessageSender.msgWarpExist(player, newName);
+      case SERVER_WARP -> {
+        if (canManageServerWarps(ctx.getSource())) {
+          PayTpMessageSender.msgServerWarpRenameFailed(player, name);
+        } else {
+          PayTpMessageSender.msgServerWarpNoPermission(player, name);
+        }
+      }
+      case NOT_OWNER -> PayTpMessageSender.msgWarpNotOwner(player, name);
+      default -> PayTpMessageSender.msgNoWarp(player, name);
+    }
+    return result == PayTpWarpManager.OperationResult.SUCCESS
+        ? Command.SINGLE_SUCCESS
+        : 0;
+  }
+
+  private static int payTpInviteWarp(
+      CommandContext<CommandSourceStack> ctx
+  ) throws CommandSyntaxException {
+    ServerPlayer player = ctx.getSource().getPlayer();
+    if (player == null) return 0;
+
+    String name = StringArgumentType.getString(ctx, "name");
+    ServerPlayer target = getOnlinePlayer(ctx, "target");
+    if (target == null) {
+      PayTpMessageSender.msgNoTargetFound(player);
+      return 0;
+    }
+    PayTpWarpManager.OperationResult result =
+        warpManager.invite(player, name, target);
+    sendWarpInviteResult(player, target, name, result, true);
+    return result == PayTpWarpManager.OperationResult.SUCCESS
+        ? Command.SINGLE_SUCCESS
+        : 0;
+  }
+
+  private static int payTpExcludeWarp(
+      CommandContext<CommandSourceStack> ctx
+  ) throws CommandSyntaxException {
+    ServerPlayer player = ctx.getSource().getPlayer();
+    if (player == null) return 0;
+
+    String name = StringArgumentType.getString(ctx, "name");
+    ServerPlayer target = getOnlinePlayer(ctx, "target");
+    if (target == null) {
+      PayTpMessageSender.msgNoTargetFound(player);
+      return 0;
+    }
+    PayTpWarpManager.OperationResult result =
+        warpManager.exclude(player, name, target);
+    sendWarpInviteResult(player, target, name, result, false);
+    return result == PayTpWarpManager.OperationResult.SUCCESS
+        ? Command.SINGLE_SUCCESS
+        : 0;
+  }
+
+  private static void sendWarpInviteResult(
+      ServerPlayer player,
+      ServerPlayer target,
+      String name,
+      PayTpWarpManager.OperationResult result,
+      boolean invite
+  ) {
+    switch (result) {
+      case SUCCESS -> {
+        if (invite) {
+          PayTpMessageSender.msgWarpInvited(player, target, name);
+        } else {
+          PayTpMessageSender.msgWarpExcluded(player, target, name);
+        }
+      }
+      case PUBLIC_WARP -> PayTpMessageSender.msgWarpPublicOnly(player, name);
+      case ALREADY_INVITED -> PayTpMessageSender.msgWarpAlreadyInvited(player, target, name);
+      case NOT_INVITED -> PayTpMessageSender.msgWarpNotInvited(player, target, name);
+      case SELF_EXCLUDE -> PayTpMessageSender.msgWarpExcludeSelf(player, name);
+      case NOT_OWNER -> PayTpMessageSender.msgWarpNotOwner(player, name);
+      default -> PayTpMessageSender.msgNoWarp(player, name);
+    }
+  }
+
+  private static PayTpTeleportResult teleport(
       ServerPlayer player,
       PayTpData targetData,
       boolean recordToBackStack,
-      int multiplierFlags
+      PayTpTeleportContext teleportContext
   ) {
     // ---------------------------------
     // Fetch teleport info
@@ -630,62 +1044,107 @@ public class PayTpCommand {
     ServerLevel targetWorld = server.getLevel(targetData.world());
     if (targetWorld == null) {
       LOGGER.error("Failed to teleport to null world");
-      return 0;
+      return PayTpTeleportResult.FAILED;
     }
 
     ServerLevel fromWorld = player.level();
     PayTpData fromData = new PayTpData(fromWorld.dimension(), player.position());
 
+    PayTpData resolvedTargetData;
+    if (configData.general().safeTeleport()) {
+      PayTpData safeTarget = PayTpSafeChecker.findSafeDestination(
+          player,
+          targetWorld,
+          targetData,
+          configData.general().safeTeleportRange()
+      );
+      if (safeTarget == null) {
+        PayTpMessageSender.msgNoSafeDestination(player);
+        return PayTpTeleportResult.FAILED;
+      }
+      resolvedTargetData = safeTarget;
+    } else {
+      resolvedTargetData = targetData;
+    }
+
+    // ---------------------------------
+    // Check dimension
+    // ---------------------------------
+    if (!configData.teleport().allowCrossDim()
+        && !fromData.world().equals(resolvedTargetData.world())) {
+      PayTpMessageSender.msgCrossDimensionDisabled(player);
+      return PayTpTeleportResult.CROSS_DIMENSION_DISABLED;
+    }
+
     // ---------------------------------
     // Check payment
     // ---------------------------------
-    double distance = PayTpCalculator.calculateDistance(targetData, fromData);
-    int price = PayTpCalculator.calculatePrice(
-        distance,
-        configData.price().parameter().baseRadius(),
-        configData.price().parameter().rate(),
-        configData.calculateMultiplier(multiplierFlags),
-        configData.price().parameter().minPrice(),
-        configData.price().parameter().maxPrice()
-    );
-
-    int balance = PayTpCalculator.checkBalance(configData.price().currencyItem(), player, configData.combineSettingFlags());
-    if (balance < price) {
-      PayTpMessageSender.msgTpFailed(
+    int price;
+    try {
+      price = PayTpCalculator.calculatePrice(
+          fromData,
+          resolvedTargetData,
+          teleportContext,
           player,
-          (new ItemStack(PayTpItemHandler.getItemByStringId(configData.price().currencyItem()))).getHoverName(),
-          price,
-          balance
+          configData.price()
       );
+      if (price < 0) {
+        LOGGER.warn("Price algorithm canceled payment with result {}", price);
+        PayTpMessageSender.msgPaymentError(player);
+        return PayTpTeleportResult.FAILED;
+      }
 
-      return 0;
+      int balance = PayTpCalculator.checkBalance(
+          configData.price().currencyItem(),
+          player,
+          configData.deductionFlags()
+      );
+      if (balance < price) {
+        PayTpMessageSender.msgTpFailed(
+            player,
+            (new ItemStack(PayTpItemHandler.getItemByStringId(
+                configData.price().currencyItem()
+            ))).getHoverName(),
+            price,
+            balance
+        );
+
+        return PayTpTeleportResult.INSUFFICIENT_FUNDS;
+      }
+
+      if (!PayTpCalculator.proceedPayment(
+          configData.price().currencyItem(),
+          player,
+          price,
+          configData.deductionFlags()
+      )) {
+        LOGGER.error("Payment proceed failed");
+        PayTpMessageSender.msgPaymentError(player);
+        return PayTpTeleportResult.FAILED;
+      }
+    } catch (Exception e) {
+      LOGGER.error("Payment process failed", e);
+      PayTpMessageSender.msgPaymentError(player);
+      return PayTpTeleportResult.FAILED;
     }
 
     // ---------------------------------
     // Record to back stack
     // ---------------------------------
     if (recordToBackStack) {
-      backManager.pushPair(player, fromData, targetData);
-    }
-
-    // ---------------------------------
-    // Proceed payment
-    // ---------------------------------
-    if (!PayTpCalculator.proceedPayment(configData.price().currencyItem(), player, price, configData.combineSettingFlags())) {
-      LOGGER.error("Payment proceed failed");
-      return 0;
+      backManager.pushPair(player, fromData, resolvedTargetData);
     }
 
     // ---------------------------------
     // Pre-teleport effect
     // ---------------------------------
     // Particles
-    if (configData.setting().effect().particleEffect()) {
+    if (configData.general().effect().particleEffect()) {
       fromWorld.broadcastEntityEvent(player, (byte)46);
     }
 
     // Sound
-    if (configData.setting().effect().soundEffect()) {
+    if (configData.general().effect().soundEffect()) {
       fromWorld.playSound(
           null,
           new BlockPos(
@@ -705,25 +1164,25 @@ public class PayTpCommand {
     // ---------------------------------
     TeleportTransition teleportTarget = new TeleportTransition(
         targetWorld,
-        targetData.pos(),
+        resolvedTargetData.pos(),
         player.getDeltaMovement(),
         player.getYRot(),
         player.getXRot(),
         entity -> {
           ServerPlayer playerEntity = (ServerPlayer) entity;
-          ServerLevel toWorld = server.getLevel(targetData.world());
+          ServerLevel toWorld = server.getLevel(resolvedTargetData.world());
           if (toWorld == null) {
             LOGGER.error("No world to teleport player {}.", player.getName());
             return;
           }
 
           // Particles
-          if (configData.setting().effect().particleEffect()) {
+          if (configData.general().effect().particleEffect()) {
             toWorld.broadcastEntityEvent(playerEntity, (byte)46);
           }
 
           // Sound
-          if (configData.setting().effect().soundEffect()) {
+          if (configData.general().effect().soundEffect()) {
             toWorld.playSound(
                 null,
                 playerEntity.blockPosition(),
@@ -735,7 +1194,7 @@ public class PayTpCommand {
           }
 
           // Message
-          if (Flags.check(multiplierFlags, PayTpMultiplierFlags.BACK)) {
+          if (teleportContext.back() != null) {
             PayTpMessageSender.msgTpBackSucceeded(
                 playerEntity,
                 (new ItemStack(PayTpItemHandler.getItemByStringId(configData.price().currencyItem()))).getHoverName(),
@@ -752,7 +1211,7 @@ public class PayTpCommand {
     );
 
     player.teleport(teleportTarget);
-    return Command.SINGLE_SUCCESS;
+    return PayTpTeleportResult.SUCCESS;
   }
 
 }

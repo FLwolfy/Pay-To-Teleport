@@ -1,24 +1,48 @@
 package com.flwolfy.paytp.data.config;
 
 import com.flwolfy.paytp.data.lang.PayTpLang;
+import com.flwolfy.paytp.data.PayTpTeleportContext;
+import com.flwolfy.paytp.data.PayTpPlayer;
+import com.flwolfy.paytp.data.script.PayTpScript;
+import com.flwolfy.paytp.data.script.PayTpScriptManager;
+import com.flwolfy.paytp.data.script.PayTpScriptPosition;
+import com.flwolfy.paytp.data.warp.PayTpWarpPermission;
 import com.flwolfy.paytp.flag.Flags;
-import com.flwolfy.paytp.flag.PayTpMultiplierFlags;
-import com.flwolfy.paytp.flag.PayTpSettingFlags;
+import com.flwolfy.paytp.flag.PayTpDeductionFlags;
+import com.flwolfy.paytp.util.PayTpCommandExecutor;
+import com.flwolfy.paytp.util.PayTpItemHandler;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public record PayTpConfigData(
     General general,
+    Teleport teleport,
     Request request,
     Home home,
     Back back,
     Warp warp,
-    Price price,
-    Setting setting
+    Price price
 ) {
 
   public record General(
       PayTpLang language,
-      String mainCommand,
-      double crossDimMultiplier
+      String helpCommand,
+      boolean safeTeleport,
+      int safeTeleportRange,
+      Effect effect
+  ) {
+    public record Effect(
+        boolean particleEffect,
+        boolean soundEffect
+    ) {}
+  }
+
+  public record Teleport(
+      String coordinateCommand,
+      boolean allowCrossDim
   ) {}
 
   public record Request(
@@ -36,56 +60,51 @@ public record PayTpConfigData(
 
   public record Home(
       String homeCommand,
-      double homeMultiplier
+      boolean setRespawnPoint
   ) {}
 
   public record Back(
       String backCommand,
-      int maxBackStack,
-      double backMultiplier
+      int maxBackStack
   ) {}
 
   public record Warp(
       String warpCommand,
+      PayTpWarpPermission serverWarpPermission,
       int maxInactiveTicks,
-      int checkPeriodTicks,
-      double warpMultiplier
+      int checkPeriodTicks
   ) {}
 
   public record Price(
       String currencyItem,
-      Parameter parameter
+      int minPrice,
+      int maxPrice,
+      PayTpScript algorithm,
+      Deduction deduction
   ) {
-    public record Parameter(
-        int minPrice,
-        int maxPrice,
-        double baseRadius,
-        double rate
-    ) {}
-  }
-
-  public record Setting(
-      Effect effect,
-      Flag flag
-  ) {
-    public record Effect(
-        boolean particleEffect,
-        boolean soundEffect
-    ) {}
-
-    public record Flag(
+    public record Deduction(
         boolean allowEnderChest,
         boolean prioritizeEnderChest,
         boolean allowShulkerBox,
         boolean prioritizeShulkerBox
     ) {}
+
   }
 
   public static final PayTpConfigData DEFAULT = new PayTpConfigData(
       new General(
           PayTpLang.ENGLISH,
+          "ptphelp",
+          false,
+          5,
+          new General.Effect(
+              true,
+              true
+          )
+      ),
+      new Teleport(
           "ptp",
-          1.5
+          true
       ),
       new Request(
           new Request.RequestCommand(
@@ -99,34 +118,82 @@ public record PayTpConfigData(
       ),
       new Home(
           "ptphome",
-          0.5
+          false
       ),
       new Back(
           "ptpback",
-          10,
-          0.8
+          10
       ),
       new Warp(
           "ptpwarp",
+          PayTpWarpPermission.GAMEMASTERS,
           100,
-          20,
-          0.5
+          20
       ),
       new Price(
           "minecraft:diamond",
-          new Price.Parameter(
-              1,
-              64,
-              10.0,
-              0.01
-          )
-      ),
-      new Setting(
-          new Setting.Effect(
-              true,
-              true
-          ),
-          new Setting.Flag(
+          1,
+          64,
+          new PayTpScript("""
+              // Available variables:
+              // from, to: positions with .x(), .y(), .z(), and .dimension()
+              // teleportContext: exactly one of coordinate(), home(), back(), request(), or warp()
+              // player: the teleported player, with .uuid() and .name()
+              //
+              // Java's built-in Math methods are available through the "math" namespace.
+              // Full system shell access is available through the "shell" namespace.
+              // Minecraft commands are available through minecraft:execute("command").
+
+              var basePrice = 1;
+              var baseRadius = 10.0;
+              var pricePerBlock = 0.01;
+              var crossDimensionMultiplier = 1.5;
+              var homeMultiplier = 0.5;
+              var backMultiplier = 0.8;
+              var warpMultiplier = 0.5;
+              var netherCoordinateScale = 8.0;
+
+              var crossDimension = from.dimension() != to.dimension();
+              var deltaX = from.x() - to.x();
+              var deltaY = from.y() - to.y();
+              var deltaZ = from.z() - to.z();
+
+              if (crossDimension) {
+                if (from.dimension() == "minecraft:the_end") {
+                  deltaX = from.x();
+                  deltaY = from.y();
+                  deltaZ = from.z();
+                } else if (to.dimension() == "minecraft:the_end") {
+                  deltaX = to.x();
+                  deltaY = to.y();
+                  deltaZ = to.z();
+                } else if (from.dimension() == "minecraft:the_nether") {
+                  deltaX = from.x() * netherCoordinateScale - to.x();
+                  deltaY = from.y() * netherCoordinateScale - to.y();
+                  deltaZ = from.z() * netherCoordinateScale - to.z();
+                } else if (to.dimension() == "minecraft:the_nether") {
+                  deltaX = from.x() - to.x() / netherCoordinateScale;
+                  deltaY = from.y() - to.y() / netherCoordinateScale;
+                  deltaZ = from.z() - to.z() / netherCoordinateScale;
+                }
+              }
+
+              var distance = math:sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+              var multiplier = crossDimension ? crossDimensionMultiplier : 1.0;
+
+              if (teleportContext.home() != null) {
+                multiplier = multiplier * homeMultiplier;
+              } else if (teleportContext.back() != null) {
+                multiplier = multiplier * backMultiplier;
+              } else if (teleportContext.warp() != null) {
+                multiplier = multiplier * warpMultiplier;
+              }
+
+              var distanceBeyondBase = distance > baseRadius ? distance - baseRadius : 0;
+
+              math:round((basePrice + distanceBeyondBase * pricePerBlock) * multiplier).intValue();
+              """.stripTrailing()),
+          new Price.Deduction(
               true,
               true,
               false,
@@ -135,26 +202,114 @@ public record PayTpConfigData(
       )
   );
 
-  public int combineSettingFlags() {
-    Setting.Flag flag = setting.flag();
+  /**
+   * Encodes the configured payment-storage options as a bit mask.
+   *
+   * @return the combined {@link PayTpDeductionFlags} mask
+   */
+  public int deductionFlags() {
+    Price.Deduction deduction = price.deduction();
     return Flags.combine(
-        flag.allowEnderChest() ? PayTpSettingFlags.ALLOW_ENDER_CHEST : null,
-        flag.prioritizeEnderChest() ? PayTpSettingFlags.PRIORITIZE_ENDER_CHEST : null,
-        flag.allowShulkerBox() ? PayTpSettingFlags.ALLOW_SHULKER_BOX : null,
-        flag.prioritizeShulkerBox() ? PayTpSettingFlags.PRIORITIZE_SHULKER_BOX : null
+        deduction.allowEnderChest() ? PayTpDeductionFlags.ALLOW_ENDER_CHEST : null,
+        deduction.prioritizeEnderChest() ? PayTpDeductionFlags.PRIORITIZE_ENDER_CHEST : null,
+        deduction.allowShulkerBox() ? PayTpDeductionFlags.ALLOW_SHULKER_BOX : null,
+        deduction.prioritizeShulkerBox() ? PayTpDeductionFlags.PRIORITIZE_SHULKER_BOX : null
     );
   }
 
-  public double calculateMultiplier(int multiplierFlags) {
-    double multiplier = 1.0;
-    if (Flags.check(multiplierFlags, PayTpMultiplierFlags.CROSS_DIMENSION))
-      multiplier *= general.crossDimMultiplier();
-    if (Flags.check(multiplierFlags, PayTpMultiplierFlags.HOME))
-      multiplier *= home.homeMultiplier();
-    if (Flags.check(multiplierFlags, PayTpMultiplierFlags.BACK))
-      multiplier *= back.backMultiplier();
-    if (Flags.check(multiplierFlags, PayTpMultiplierFlags.WARP))
-      multiplier *= warp.warpMultiplier();
-    return multiplier;
+  /**
+   * Validates the complete configuration and returns every invalid field path.
+   *
+   * @return field paths whose current values are invalid
+   */
+  public List<String> validate() {
+    List<String> invalidFields = new ArrayList<>();
+
+    // Price Range
+    if (price.minPrice() < 0 || price.minPrice() > price.maxPrice()) {
+      invalidFields.add("price.minPrice");
+    }
+    if (price.maxPrice() < 0 || price.maxPrice() < price.minPrice()) {
+      invalidFields.add("price.maxPrice");
+    }
+
+    // Time and Capacity
+    if (general.safeTeleportRange() < 1 || general.safeTeleportRange() > 64) {
+      invalidFields.add("general.safeTeleportRange");
+    }
+    if (request.expireTime() < 0) {
+      invalidFields.add("request.expireTime");
+    }
+    if (back.maxBackStack() <= 0) {
+      invalidFields.add("back.maxBackStack");
+    }
+    if (warp.maxInactiveTicks() < 0) {
+      invalidFields.add("warp.maxInactiveTicks");
+    }
+    if (warp.checkPeriodTicks() <= 0) {
+      invalidFields.add("warp.checkPeriodTicks");
+    }
+    if (warp.serverWarpPermission() == null) {
+      invalidFields.add("warp.serverWarpPermission");
+    }
+
+    // Currency Item
+    try {
+      PayTpItemHandler.getItemByStringId(price.currencyItem());
+    } catch (RuntimeException e) {
+      invalidFields.add("price.currencyItem");
+    }
+
+    // Price Algorithm
+    try {
+      PayTpScriptManager.getInstance().evaluate(
+          price.algorithm(), Integer.class,
+          Map.of("minecraft", PayTpCommandExecutor.validationOnly()),
+          Map.entry("from", new PayTpScriptPosition(0.0, 64.0, 0.0, "minecraft:overworld")),
+          Map.entry("to", new PayTpScriptPosition(100.0, 64.0, 100.0, "minecraft:overworld")),
+          Map.entry("teleportContext", PayTpTeleportContext.coordinate(
+              new PayTpTeleportContext.Coordinate()
+          )),
+          Map.entry("player", new PayTpPlayer(
+              "00000000-0000-0000-0000-000000000000",
+              "Player"
+          ))
+      );
+    } catch (RuntimeException e) {
+      invalidFields.add("price.algorithm");
+    }
+
+    // Command Names
+    Map<String, String> commands = new HashMap<>();
+    Map.ofEntries(
+        Map.entry("general.helpCommand", general.helpCommand()),
+        Map.entry("teleport.coordinateCommand", teleport.coordinateCommand()),
+        Map.entry("request.requestCommand.toCommand", request.requestCommand().toCommand()),
+        Map.entry("request.requestCommand.hereCommand", request.requestCommand().hereCommand()),
+        Map.entry("request.requestCommand.acceptCommand", request.requestCommand().acceptCommand()),
+        Map.entry("request.requestCommand.denyCommand", request.requestCommand().denyCommand()),
+        Map.entry("request.requestCommand.cancelCommand", request.requestCommand().cancelCommand()),
+        Map.entry("home.homeCommand", home.homeCommand()),
+        Map.entry("back.backCommand", back.backCommand()),
+        Map.entry("warp.warpCommand", warp.warpCommand())
+    ).forEach((fieldPath, command) -> {
+      if (command.isEmpty()) return;
+      String duplicate = commands.putIfAbsent(command, fieldPath);
+      if (duplicate != null) {
+        if (!invalidFields.contains(duplicate)) invalidFields.add(duplicate);
+        if (!invalidFields.contains(fieldPath)) invalidFields.add(fieldPath);
+      }
+    });
+
+    // Payment Priorities
+    if (price.deduction().prioritizeEnderChest() && !price.deduction().allowEnderChest()) {
+      invalidFields.add("price.deduction.prioritizeEnderChest");
+    }
+    if (price.deduction().prioritizeShulkerBox() && !price.deduction().allowShulkerBox()) {
+      invalidFields.add("price.deduction.prioritizeShulkerBox");
+    }
+
+    return List.copyOf(invalidFields);
   }
+
 }

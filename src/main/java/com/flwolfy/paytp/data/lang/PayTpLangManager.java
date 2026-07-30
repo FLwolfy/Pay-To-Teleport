@@ -16,6 +16,9 @@ import java.util.Objects;
 
 import org.slf4j.Logger;
 
+/**
+ * Loads bundled language files and creates server-side localized components.
+ */
 public class PayTpLangManager {
 
   public static final String DEFAULT_LANGUAGE = PayTpLang.ENGLISH.getLangKey();
@@ -29,9 +32,6 @@ public class PayTpLangManager {
   private Map<String, Map<String, String>> languageMap = new HashMap<>();
   private String language;
 
-  /**
-   * Singleton method to get the loader instance.
-   */
   public static PayTpLangManager getInstance() {
     if (instance == null) {
       instance = new PayTpLangManager();
@@ -69,7 +69,9 @@ public class PayTpLangManager {
   }
 
   /**
-   * Set the language for the loader to output text.
+   * Sets the language used when creating localized components.
+   *
+   * @param lang the requested language; unsupported values fall back to English
    */
   public void setLanguage(PayTpLang lang) {
     if (languageMap.containsKey(lang.getLangKey())) {
@@ -81,7 +83,10 @@ public class PayTpLangManager {
   }
 
   /**
-   * Get the localized Text based on the given key.
+   * Returns a localized {@link Component} for the given key.
+   *
+   * @param key the translation key
+   * @return a mutable literal component containing the translated value, or the key when missing
    */
   public MutableComponent getText(String key) {
     if (languageMap.isEmpty()) {

@@ -11,6 +11,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class Flags {
 
   private static final Map<Object, Integer> BIT_CACHE = new ConcurrentHashMap<>();
+  /**
+   * Represents an empty bit mask.
+   */
   public static final int NO_FLAG = 0;
 
   private Flags() {}
@@ -39,14 +42,22 @@ public final class Flags {
   // -------------------------------------------------
 
   /**
-   * Get the bit mask value of a specific flag.
+   * Returns the bit assigned to an annotated enum constant.
+   *
+   * @param flag the flag constant
+   * @param <T> the annotated enum type
+   * @return the single-bit mask assigned from the constant's ordinal
    */
   public static <T> int bit(T flag) {
     return getBit(flag);
   }
 
   /**
-   * Combine multiple flags into one int bitmask.
+   * Combines multiple flag constants into one bit mask.
+   *
+   * @param flags the constants to combine; null entries are ignored
+   * @param <T> the annotated enum type
+   * @return the combined mask, or {@link #NO_FLAG} for a null array
    */
   @SafeVarargs
   public static <T> int combine(T... flags) {
@@ -60,7 +71,12 @@ public final class Flags {
   }
 
   /**
-   * Check if given bitmask contains *all* the specified flags.
+   * Checks whether a mask contains all specified flags.
+   *
+   * @param flags the mask to inspect
+   * @param toCheck the required flag constants
+   * @param <T> the annotated enum type
+   * @return {@code true} when every requested flag is present
    */
   @SafeVarargs
   public static <T> boolean check(int flags, T... toCheck) {
@@ -73,7 +89,12 @@ public final class Flags {
   }
 
   /**
-   * Check if bitmask is exactly equivalent to given flags.
+   * Checks whether a mask contains exactly the specified flags.
+   *
+   * @param flags the mask to compare
+   * @param toCheck the expected flag constants
+   * @param <T> the annotated enum type
+   * @return {@code true} when the masks are equal
    */
   @SafeVarargs
   public static <T> boolean equivalent(int flags, T... toCheck) {
@@ -82,7 +103,11 @@ public final class Flags {
   }
 
   /**
-   * Describe a bitmask by joining all flag names (e.g. "HOME | BACK").
+   * Describes a mask by joining the names of all present enum constants.
+   *
+   * @param flags the mask to describe
+   * @param flagClass the annotated enum class that defines the bits
+   * @return joined flag names, or {@code NONE} when no bits are present
    */
   public static String describe(int flags, Class<? extends Enum<?>> flagClass) {
     if (!flagClass.isAnnotationPresent(AutoBitFlags.class))
