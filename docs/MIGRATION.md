@@ -4,10 +4,10 @@
 
 Starting from Minecraft **26.1**, the game changed how world saved data is stored:
 
-| Version | Storage Location |
-| :----- | :--------------- |
-| **Pre-26.1** | `<world>/data/` (directly) |
-| **26.1+** | `<world>/dimensions/minecraft/overworld/data/<namespace>/` |
+| Version      | Storage Location                                           |
+|:-------------|:-----------------------------------------------------------|
+| **Pre-26.1** | `<world>/data/` (directly)                                 |
+| **26.1+**    | `<world>/dimensions/minecraft/overworld/data/<namespace>/` |
 
 The vanilla world upgrader **only relocates vanilla files**, leaving mod files stranded in the old location. This guide explains how to migrate your existing warp/home data to the new format.
 
