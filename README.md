@@ -394,12 +394,35 @@ var crossDimensionMultiplier = 1.5;
 var homeMultiplier = 0.5;
 var backMultiplier = 0.8;
 var warpMultiplier = 0.5;
+var netherCoordinateScale = 8.0;
 
+var crossDimension = from.dimension() != to.dimension();
 var deltaX = from.x() - to.x();
 var deltaY = from.y() - to.y();
 var deltaZ = from.z() - to.z();
+
+if (crossDimension) {
+  if (from.dimension() == "minecraft:the_end") {
+    deltaX = from.x();
+    deltaY = from.y();
+    deltaZ = from.z();
+  } else if (to.dimension() == "minecraft:the_end") {
+    deltaX = to.x();
+    deltaY = to.y();
+    deltaZ = to.z();
+  } else if (from.dimension() == "minecraft:the_nether") {
+    deltaX = from.x() * netherCoordinateScale - to.x();
+    deltaY = from.y() * netherCoordinateScale - to.y();
+    deltaZ = from.z() * netherCoordinateScale - to.z();
+  } else if (to.dimension() == "minecraft:the_nether") {
+    deltaX = from.x() - to.x() / netherCoordinateScale;
+    deltaY = from.y() - to.y() / netherCoordinateScale;
+    deltaZ = from.z() - to.z() / netherCoordinateScale;
+  }
+}
+
 var distance = math:sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
-var multiplier = from.dimension() != to.dimension() ? crossDimensionMultiplier : 1.0;
+var multiplier = crossDimension ? crossDimensionMultiplier : 1.0;
 
 if (context.home() != null) {
   multiplier = multiplier * homeMultiplier;
@@ -413,7 +436,7 @@ callback.onSuccess() += () -> {
   minecraft:execute("effect give " + player.name() + " minecraft:weakness 1 1");
 };
 
-var distanceBeyondBase = math:max(0, distance - baseRadius);
+var distanceBeyondBase = distance > baseRadius ? distance - baseRadius : 0;
 math:round((basePrice + distanceBeyondBase * pricePerBlock) * multiplier).intValue();
 ```
 
