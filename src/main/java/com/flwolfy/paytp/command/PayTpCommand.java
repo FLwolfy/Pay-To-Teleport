@@ -5,7 +5,6 @@ import com.flwolfy.paytp.command.back.PayTpBackManager;
 import com.flwolfy.paytp.command.home.PayTpHomeManager;
 import com.flwolfy.paytp.command.request.PayTpRequestManager;
 import com.flwolfy.paytp.command.warp.PayTpWarpManager;
-import com.flwolfy.paytp.command.warp.PayTpWarpNameArgument;
 import com.flwolfy.paytp.data.config.PayTpConfigData;
 import com.flwolfy.paytp.data.config.PayTpConfigManager;
 import com.flwolfy.paytp.data.warp.PayTpWarpPermission;
@@ -217,7 +216,7 @@ public class PayTpCommand {
     String warpCmd = configData.warp().warpCommand();
     dispatcher.register(Commands.literal(warpCmd)
         .then(Commands.literal("create")
-            .then(Commands.argument("name", PayTpWarpNameArgument.warpName())
+            .then(Commands.argument("name", StringArgumentType.string())
                 .executes(ctx -> payTpCreateWarp(ctx, false))
                 .then(Commands.literal("private")
                     .executes(ctx -> payTpCreateWarp(ctx, false)))
@@ -229,7 +228,7 @@ public class PayTpCommand {
             )
         )
         .then(Commands.literal("delete")
-            .then(Commands.argument("name", PayTpWarpNameArgument.warpName())
+            .then(Commands.argument("name", StringArgumentType.string())
                 .suggests(PayTpCommand::payTpDeleteWarpSuggest)
                 .executes(PayTpCommand::payTpDeleteWarp)
                 .then(Commands.literal("forced")
@@ -238,15 +237,15 @@ public class PayTpCommand {
             )
         )
         .then(Commands.literal("rename")
-            .then(Commands.argument("name", PayTpWarpNameArgument.warpName())
+            .then(Commands.argument("name", StringArgumentType.string())
                 .suggests(PayTpCommand::payTpOwnedWarpSuggest)
-                .then(Commands.argument("newName", PayTpWarpNameArgument.warpName())
+                .then(Commands.argument("newName", StringArgumentType.string())
                     .executes(PayTpCommand::payTpRenameWarp)
                 )
             )
         )
         .then(Commands.literal("invite")
-            .then(Commands.argument("name", PayTpWarpNameArgument.warpName())
+            .then(Commands.argument("name", StringArgumentType.string())
                 .suggests(PayTpCommand::payTpOwnedPrivateWarpSuggest)
                 .then(Commands.argument("target", StringArgumentType.word())
                     .suggests(PayTpCommand::onlinePlayerSuggest)
@@ -255,7 +254,7 @@ public class PayTpCommand {
             )
         )
         .then(Commands.literal("exclude")
-            .then(Commands.argument("name", PayTpWarpNameArgument.warpName())
+            .then(Commands.argument("name", StringArgumentType.string())
                 .suggests(PayTpCommand::payTpOwnedPrivateWarpSuggest)
                 .then(Commands.argument("target", StringArgumentType.word())
                     .suggests(PayTpCommand::onlinePlayerSuggest)
