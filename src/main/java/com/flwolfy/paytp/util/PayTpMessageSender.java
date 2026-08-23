@@ -600,11 +600,13 @@ public final class PayTpMessageSender {
             ),
             "/" + warpCommandName + " " + entry.name()
         ));
+      } else {
+        msg.append(displayName);
+      }
+      if (entry.accessType() != PayTpWarpManager.AccessType.LOCKED) {
         msg.append(Component.literal(" "));
         msg.append(Component.literal(formatWarpInformation(entry))
             .withStyle(PayTpTextBuilder.DEFAULT_SHADE_COLOR));
-      } else {
-        msg.append(displayName);
       }
     }
 
