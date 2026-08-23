@@ -129,7 +129,7 @@ public record PayTpConfigData(
       new Warp(
           "ptpwarp",
           PayTpWarpPermission.GAMEMASTERS,
-          true,
+          false,
           100,
           20
       ),
