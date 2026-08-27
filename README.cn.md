@@ -104,6 +104,7 @@ See the English document [here](./README.md).
   "warp": {
     "warpCommand": "ptpwarp",
     "serverWarpPermission": 2,
+    "autoDeleteInactiveWarps": true,
     "maxInactiveTicks": 100,
     "checkPeriodTicks": 20
   },
@@ -195,10 +196,11 @@ See the English document [here](./README.md).
 
 | 字段名                 | 类型     | 说明                                                                                     |
 |------------------------|----------|------------------------------------------------------------------------------------------|
-| `warpCommand`          | `string` | 前往传送点的命令（默认 `/ptpwarp`）                                                      |
-| `serverWarpPermission` | `int`    | 创建服务器传送点及强制删除传送点所需的 Minecraft 权限等级，范围为 `0`～`4`，默认为 `2`。 |
-| `maxInactiveTicks`     | `int`    | 信标失效后删除传送点前的等待 tick 数，默认 `100`，不得小于 `0`。                         |
-| `checkPeriodTicks`     | `int`    | 传送点与信标的检查间隔 tick 数，默认 `20`，必须大于 `0`。                                |
+| `warpCommand`             | `string`  | 前往传送点的命令（默认 `/ptpwarp`）                                                      |
+| `serverWarpPermission`    | `int`     | 创建服务器传送点及强制删除传送点所需的 Minecraft 权限等级，范围为 `0`～`4`，默认为 `2`。 |
+| `autoDeleteInactiveWarps` | `boolean` | 信标失效超时后是否删除传送点，默认为 `true`；关闭后传送点会暂时不可用，直到信标恢复。     |
+| `maxInactiveTicks`        | `int`     | 信标失效的超时 tick 数，默认 `100`，不得小于 `0`。                                       |
+| `checkPeriodTicks`        | `int`     | 传送点与信标的检查间隔 tick 数，默认 `20`，必须大于 `0`。                                |
 
 ---
 

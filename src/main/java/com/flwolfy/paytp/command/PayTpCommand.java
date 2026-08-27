@@ -103,6 +103,9 @@ public class PayTpCommand {
     langManager.setLanguage(configData.general().language());
     backManager.setMaxBackStack(configData.back().maxBackStack());
     warpManager.resetTimers();
+    warpManager.setAutoDeleteInactiveWarps(
+        configData.warp().autoDeleteInactiveWarps()
+    );
     warpManager.setMaxInactiveTicks(configData.warp().maxInactiveTicks());
     warpManager.setCheckPeriodTicks(configData.warp().checkPeriodTicks());
   }
@@ -684,8 +687,12 @@ public class PayTpCommand {
 
     String name = StringArgumentType.getString(ctx, "name");
     PayTpWarpManager.WarpView warp = warpManager.getWarpView(player, name);
-    if (warp == null || !warp.accessible()) {
+    if (warp == null || warp.accessType() == PayTpWarpManager.AccessType.LOCKED) {
       PayTpMessageSender.msgNoWarp(player, name);
+      return 0;
+    }
+    if (warp.inactive()) {
+      PayTpMessageSender.msgWarpInactive(player, name);
       return 0;
     }
 

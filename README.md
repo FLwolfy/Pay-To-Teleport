@@ -104,6 +104,7 @@ The `/ptp` `<x> <y> <z>` text is a non-selectable format hint rather than a curr
   "warp": {
     "warpCommand": "ptpwarp",
     "serverWarpPermission": 2,
+    "autoDeleteInactiveWarps": true,
     "maxInactiveTicks": 100,
     "checkPeriodTicks": 20
   },
@@ -195,10 +196,11 @@ The `/ptp` `<x> <y> <z>` text is a non-selectable format hint rather than a curr
 
 | Field                  | Type      | Description                                                                                                                            |
 |------------------------|-----------|----------------------------------------------------------------------------------------------------------------------------------------|
-| `warpCommand`          | `string`  | Command name to teleport to a waypoint (default `/ptpwarp`).                                                                           |
-| `serverWarpPermission` | `int`     | Minecraft permission level required to create server waypoints and force-delete waypoints; ranges from `0` to `4` and defaults to `2`. |
-| `maxInactiveTicks`     | `int`     | Ticks before deleting a waypoint after beacon deactivation; defaults to `100` and must be non-negative.                                |
-| `checkPeriodTicks`     | `int`     | Waypoint-to-beacon check interval in ticks; defaults to `20` and must be greater than zero.                                            |
+| `warpCommand`             | `string`  | Command name to teleport to a waypoint (default `/ptpwarp`).                                                                           |
+| `serverWarpPermission`    | `int`     | Minecraft permission level required to create server waypoints and force-delete waypoints; ranges from `0` to `4` and defaults to `2`. |
+| `autoDeleteInactiveWarps` | `boolean` | Delete a waypoint after its beacon exceeds the inactivity timeout; defaults to `true`. When disabled, it remains unavailable until the beacon reactivates. |
+| `maxInactiveTicks`        | `int`     | Beacon inactivity timeout in ticks; defaults to `100` and must be non-negative.                                                        |
+| `checkPeriodTicks`        | `int`     | Waypoint-to-beacon check interval in ticks; defaults to `20` and must be greater than zero.                                            |
 
 ---
 

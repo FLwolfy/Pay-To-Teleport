@@ -72,6 +72,7 @@ public record PayTpConfigData(
   public record Warp(
       String warpCommand,
       PayTpWarpPermission serverWarpPermission,
+      boolean autoDeleteInactiveWarps,
       int maxInactiveTicks,
       int checkPeriodTicks
   ) {}
@@ -128,6 +129,7 @@ public record PayTpConfigData(
       new Warp(
           "ptpwarp",
           PayTpWarpPermission.GAMEMASTERS,
+          false,
           100,
           20
       ),

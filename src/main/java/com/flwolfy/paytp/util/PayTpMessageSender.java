@@ -273,6 +273,15 @@ public final class PayTpMessageSender {
     ));
   }
 
+  public static void msgWarpInactive(ServerPlayer player, String warpName) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.warp.inactive"),
+        PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+        PayTpTextBuilder.DEFAULT_WARN_COLOR,
+        warpName
+    ));
+  }
+
   public static void msgTpHome(ServerPlayer player) {
     player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.tp-home")));
   }
@@ -576,9 +585,9 @@ public final class PayTpMessageSender {
       };
       Component displayName = Component.literal(icon + " " + entry.name())
           .withStyle(
-              entry.accessType() == PayTpWarpManager.AccessType.LOCKED
-                  ? PayTpTextBuilder.DEFAULT_WARN_COLOR
-                  : PayTpTextBuilder.DEFAULT_HIGHLIGHT_COLOR
+              entry.accessible()
+                  ? PayTpTextBuilder.DEFAULT_HIGHLIGHT_COLOR
+                  : PayTpTextBuilder.DEFAULT_WARN_COLOR
           );
 
       msg.append(newline);
@@ -591,11 +600,13 @@ public final class PayTpMessageSender {
             ),
             "/" + warpCommandName + " " + entry.name()
         ));
+      } else {
+        msg.append(displayName);
+      }
+      if (entry.accessType() != PayTpWarpManager.AccessType.LOCKED) {
         msg.append(Component.literal(" "));
         msg.append(Component.literal(formatWarpInformation(entry))
             .withStyle(PayTpTextBuilder.DEFAULT_SHADE_COLOR));
-      } else {
-        msg.append(displayName);
       }
     }
 

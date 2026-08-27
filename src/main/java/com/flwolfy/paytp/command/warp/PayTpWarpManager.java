@@ -29,11 +29,13 @@ import org.slf4j.Logger;
 public class PayTpWarpManager {
 
   private static final Logger LOGGER = PayTpMod.LOGGER;
+  private static final boolean DEFAULT_AUTO_DELETE_INACTIVE_WARPS = true;
   private static final int DEFAULT_MAX_INACTIVE_TICKS = 100;
   private static final int DEFAULT_CHECK_PERIOD_TICKS = 20;
 
   private final Map<String, Integer> warpTimers = new HashMap<>();
 
+  private boolean autoDeleteInactiveWarps;
   private int maxInactiveTicks;
   private int checkPeriodTicks;
   private int tickCounter;
@@ -44,6 +46,7 @@ public class PayTpWarpManager {
   public static PayTpWarpManager getInstance() {
     if (instance == null) {
       instance = new PayTpWarpManager();
+      instance.autoDeleteInactiveWarps = DEFAULT_AUTO_DELETE_INACTIVE_WARPS;
       instance.maxInactiveTicks = DEFAULT_MAX_INACTIVE_TICKS;
       instance.checkPeriodTicks = DEFAULT_CHECK_PERIOD_TICKS;
     }
@@ -81,10 +84,11 @@ public class PayTpWarpManager {
       PayTpData destination,
       UUID ownerId,
       String ownerName,
-      AccessType accessType
+      AccessType accessType,
+      boolean inactive
   ) {
     public boolean accessible() {
-      return accessType != AccessType.LOCKED;
+      return accessType != AccessType.LOCKED && !inactive;
     }
 
     public String scriptAccessType() {
@@ -93,6 +97,15 @@ public class PayTpWarpManager {
   }
 
   // =============================================
+
+  /**
+   * Sets whether a warp is deleted after its beacon exceeds the inactivity limit.
+   *
+   * @param autoDeleteInactiveWarps whether timed-out warps should be deleted
+   */
+  public void setAutoDeleteInactiveWarps(boolean autoDeleteInactiveWarps) {
+    this.autoDeleteInactiveWarps = autoDeleteInactiveWarps;
+  }
 
   /**
    * Sets how often beacon-backed warps are checked.
@@ -130,7 +143,7 @@ public class PayTpWarpManager {
   // =================== //
 
   /**
-   * Advances beacon monitoring and removes warps whose beacon is missing or inactive too long.
+   * Advances beacon monitoring and updates warps whose beacon is missing or inactive too long.
    *
    * @param server the active Minecraft server
    * @param onRemove callback invoked with each removed warp name
@@ -178,17 +191,32 @@ public class PayTpWarpManager {
         getState(storageWorld).removeWarp(name);
         warpTimers.remove(name);
         onRemove.accept(name);
+        continue;
       }
 
       if (hasBeam) {
-        warpTimers.put(name, 0);
+        Integer inactiveTicks = warpTimers.remove(name);
+        if (inactiveTicks != null && inactiveTicks >= maxInactiveTicks) {
+          LOGGER.info("Warp {} restored: beacon active.", name);
+        }
       } else {
-        int ticks = warpTimers.getOrDefault(name, 0) + checkPeriodTicks;
+        int previousTicks = warpTimers.getOrDefault(name, 0);
+        int ticks = (int) Math.min(
+            maxInactiveTicks,
+            (long) previousTicks + checkPeriodTicks
+        );
         if (ticks >= maxInactiveTicks) {
-          LOGGER.info("Warp {} removed: beacon inactive > {}s.", name, maxInactiveTicks / 20);
-          getState(storageWorld).removeWarp(name);
-          warpTimers.remove(name);
-          onRemove.accept(name);
+          if (autoDeleteInactiveWarps) {
+            LOGGER.info("Warp {} removed: beacon inactive > {}s.", name, maxInactiveTicks / 20);
+            getState(storageWorld).removeWarp(name);
+            warpTimers.remove(name);
+            onRemove.accept(name);
+          } else {
+            warpTimers.put(name, ticks);
+            if (previousTicks < maxInactiveTicks) {
+              LOGGER.info("Warp {} disabled: beacon inactive > {}s.", name, maxInactiveTicks / 20);
+            }
+          }
         } else {
           warpTimers.put(name, ticks);
         }
@@ -250,6 +278,7 @@ public class PayTpWarpManager {
         player.getUUID(),
         publicWarp
     );
+    if (created) warpTimers.remove(name);
     return created ? OperationResult.SUCCESS : OperationResult.ALREADY_EXISTS;
   }
 
@@ -297,7 +326,9 @@ public class PayTpWarpManager {
     MinecraftServer server = player.level().getServer();
     ServerLevel overworld = server.overworld();
     PayTpWarpState state = getState(overworld);
-    return state.isOwner(name, player.getUUID()) && state.removeWarp(name);
+    boolean removed = state.isOwner(name, player.getUUID()) && state.removeWarp(name);
+    if (removed) warpTimers.remove(name);
+    return removed;
   }
 
   /**
@@ -438,6 +469,7 @@ public class PayTpWarpManager {
 
     warps.sort(
         Comparator.comparing(WarpView::accessType)
+            .thenComparing(WarpView::inactive)
             .thenComparing(WarpView::name, String.CASE_INSENSITIVE_ORDER)
     );
     return List.copyOf(warps);
@@ -476,7 +508,19 @@ public class PayTpWarpManager {
             .get(ownerId)
             .map(profile -> profile.name())
             .orElse(ownerId.toString());
-    return new WarpView(name, destination, ownerId, ownerName, accessType);
+    return new WarpView(
+        name,
+        destination,
+        ownerId,
+        ownerName,
+        accessType,
+        isInactive(name)
+    );
+  }
+
+  private boolean isInactive(String name) {
+    Integer inactiveTicks = warpTimers.get(name);
+    return inactiveTicks != null && inactiveTicks >= maxInactiveTicks;
   }
 
   public boolean isOwner(ServerPlayer player, String name) {
