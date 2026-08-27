@@ -5,7 +5,7 @@ import com.flwolfy.paytp.data.PayTpData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.vehicle.DismountHelper;
 import net.minecraft.world.phys.AABB;
@@ -48,7 +48,7 @@ public final class PayTpSafeChecker {
       for (int x = -range; x <= range; x++) {
         for (int z = -range; z <= range; z++) {
           Vec3 candidate = DismountHelper.findSafeDismountLocation(
-              EntityType.PLAYER,
+              EntityTypes.PLAYER,
               world,
               origin.offset(x, y, z),
               true
@@ -76,7 +76,7 @@ public final class PayTpSafeChecker {
       Vec3 requested
   ) {
     Vec3 safeBlockPosition = DismountHelper.findSafeDismountLocation(
-        EntityType.PLAYER,
+        EntityTypes.PLAYER,
         world,
         blockPos,
         true
