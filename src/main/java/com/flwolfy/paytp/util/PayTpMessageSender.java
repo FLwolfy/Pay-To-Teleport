@@ -578,7 +578,7 @@ public final class PayTpMessageSender {
       PayTpWarpManager.WarpView entry = entries.get(i);
       String icon = switch (entry.accessType()) {
         case OWNED -> "⭐";
-        case INVITED -> "✉️";
+        case INVITED -> "✉";
         case SERVER -> "🏯";
         case PUBLIC -> "🌐";
         case LOCKED -> "🔒";
