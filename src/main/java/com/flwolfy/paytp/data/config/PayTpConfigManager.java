@@ -1,8 +1,7 @@
 package com.flwolfy.paytp.data.config;
 
 import com.flwolfy.paytp.PayTpMod;
-import com.flwolfy.paytp.data.lang.PayTpLang;
-import com.flwolfy.paytp.data.lang.PayTpLangAdapter;
+import com.flwolfy.paytp.data.lang.PayTpLangManager;
 import com.flwolfy.paytp.data.script.PayTpScript;
 import com.flwolfy.paytp.data.script.PayTpScriptAdapter;
 import com.flwolfy.paytp.data.warp.PayTpWarpPermission;
@@ -13,12 +12,15 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import net.fabricmc.loader.api.FabricLoader;
 
 import org.slf4j.Logger;
 
@@ -31,7 +33,8 @@ import org.slf4j.Logger;
 public class PayTpConfigManager {
 
   private static final Logger LOGGER = PayTpMod.LOGGER;
-  private static final Path CONFIG_PATH = Path.of("config", "paytp.json");
+  private static final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir()
+      .resolve("paytp.json");
   private static final Gson GSON;
 
   static {
@@ -40,7 +43,6 @@ public class PayTpConfigManager {
     // ================================
     // Register customized adapter here
     // ================================
-    gsonBuilder.registerTypeAdapter(PayTpLang.class, new PayTpLangAdapter());
     gsonBuilder.registerTypeAdapter(PayTpScript.class, new PayTpScriptAdapter());
     gsonBuilder.registerTypeAdapter(
         PayTpWarpPermission.class,
@@ -93,7 +95,7 @@ public class PayTpConfigManager {
       return defaults;
     }
 
-    try (FileReader reader = new FileReader(CONFIG_PATH.toFile())) {
+    try (Reader reader = Files.newBufferedReader(CONFIG_PATH, StandardCharsets.UTF_8)) {
       JsonElement element = GSON.fromJson(reader, JsonElement.class);
       JsonObject jsonObject = element != null && element.isJsonObject()
           ? element.getAsJsonObject()
@@ -108,7 +110,9 @@ public class PayTpConfigManager {
       JsonObject defaultJson = GSON.toJsonTree(defaults).getAsJsonObject();
       boolean hasMissing = mergeDefaults(jsonObject, defaultJson);
 
-      PayTpConfigData data = GSON.fromJson(jsonObject, PayTpConfigData.class);
+      PayTpConfigData data = canonicalizeLanguage(
+          GSON.fromJson(jsonObject, PayTpConfigData.class)
+      );
       var invalidFields = data.validate();
       if (!invalidFields.isEmpty()) {
         LOGGER.error(
@@ -153,20 +157,82 @@ public class PayTpConfigManager {
     return hasMissing;
   }
 
-  private static void saveStatic(PayTpConfigData data) {
+  private static PayTpConfigData canonicalizeLanguage(PayTpConfigData data) {
+    String language = PayTpConfigData.canonicalLanguage(
+        data.general().language(),
+        PayTpConfigData.DEFAULT.general().language(),
+        PayTpLangManager.getInstance().availableLocales()
+    );
+    if (language.equals(data.general().language())) {
+      return data;
+    }
+    return new PayTpConfigData(
+        new PayTpConfigData.General(
+            language,
+            data.general().helpCommand(),
+            data.general().safeTeleport(),
+            data.general().safeTeleportRange(),
+            data.general().effect()
+        ),
+        data.teleport(),
+        data.request(),
+        data.home(),
+        data.back(),
+        data.warp(),
+        data.price()
+    );
+  }
+
+  private static boolean saveStatic(PayTpConfigData data) {
     try {
       Files.createDirectories(CONFIG_PATH.getParent());
-    } catch (IOException e) {
-      LOGGER.error("Failed to create config directory", e);
-      return;
+      Path temporary = CONFIG_PATH.resolveSibling(CONFIG_PATH.getFileName() + ".tmp");
+      try (Writer writer = Files.newBufferedWriter(temporary, StandardCharsets.UTF_8)) {
+        GSON.toJson(data, writer);
+      }
+      try {
+        Files.move(
+            temporary,
+            CONFIG_PATH,
+            StandardCopyOption.REPLACE_EXISTING,
+            StandardCopyOption.ATOMIC_MOVE
+        );
+      } catch (java.nio.file.AtomicMoveNotSupportedException ignored) {
+        Files.move(temporary, CONFIG_PATH, StandardCopyOption.REPLACE_EXISTING);
+      }
+      LOGGER.info("Saved PayTp config to {}", CONFIG_PATH);
+      return true;
+    } catch (Exception e) {
+      LOGGER.error("Failed to save PayTp config", e);
+      return false;
+    }
+  }
+
+  public PayTpConfigData loadForEditing() {
+    lock.writeLock().lock();
+    try {
+      return loadData();
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
+  public boolean savePending(PayTpConfigData newData) {
+    if (newData == null) {
+      return false;
+    }
+    newData = canonicalizeLanguage(newData);
+    var invalidFields = newData.validate();
+    if (!invalidFields.isEmpty()) {
+      LOGGER.error("Refusing to save invalid pending PayTp config fields: {}", invalidFields);
+      return false;
     }
 
-    try (FileWriter writer = new FileWriter(CONFIG_PATH.toFile())) {
-      GSON.toJson(data, writer);
-      writer.flush();
-      LOGGER.info("Saved PayTp config to {}", CONFIG_PATH);
-    } catch (IOException e) {
-      LOGGER.error("Failed to save PayTp config", e);
+    lock.writeLock().lock();
+    try {
+      return saveStatic(newData);
+    } finally {
+      lock.writeLock().unlock();
     }
   }
 
@@ -185,6 +251,7 @@ public class PayTpConfigManager {
       LOGGER.warn("Attempted to update with null data, ignoring");
       return false;
     }
+    newData = canonicalizeLanguage(newData);
 
     lock.writeLock().lock();
     try {
@@ -196,7 +263,9 @@ public class PayTpConfigManager {
         );
         return false;
       }
-      saveStatic(newData);
+      if (!saveStatic(newData)) {
+        return false;
+      }
       this.data = newData;
       LOGGER.info("Config updated successfully");
       return true;
@@ -209,18 +278,18 @@ public class PayTpConfigManager {
   }
 
   /**
-   * Reloads the configuration from disk and replaces the active snapshot.
+   * Loads the configuration from disk when a server starts and replaces the active snapshot.
    *
-   * @return {@code true} if the reload completed; otherwise {@code false}
+   * @return {@code true} if the startup load completed; otherwise {@code false}
    */
-  public boolean reload() {
+  public boolean loadAtServerStart() {
     lock.writeLock().lock();
     try {
       this.data = loadData();
-      LOGGER.info("Config reloaded successfully");
+      LOGGER.info("Config loaded for server startup successfully");
       return true;
     } catch (Exception e) {
-      LOGGER.error("Failed to reload config", e);
+      LOGGER.error("Failed to load config for server startup", e);
       return false;
     } finally {
       lock.writeLock().unlock();
