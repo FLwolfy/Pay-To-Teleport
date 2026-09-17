@@ -63,6 +63,7 @@ public class PayTpWarpManager {
     NOT_OWNER,
     ALREADY_EXISTS,
     PUBLIC_WARP,
+    TARGET_IS_OWNER,
     ALREADY_INVITED,
     NOT_INVITED,
     BEACON_INACTIVE,
@@ -148,17 +149,18 @@ public class PayTpWarpManager {
    * @param server the active Minecraft server
    * @param onRemove callback invoked with each removed warp name
    */
-  public void checkWarpState(
+  public boolean checkWarpState(
       MinecraftServer server,
       Consumer<String> onRemove
   ) {
     tickCounter++;
     if (tickCounter % checkPeriodTicks != 0) {
-      return;
+      return false;
     } else {
       tickCounter = 0;
     }
 
+    boolean changed = false;
     ServerLevel storageWorld = server.overworld();
     Map<String, PayTpData> warps = new HashMap<>(getState(storageWorld).getAllWarps());
 
@@ -191,6 +193,7 @@ public class PayTpWarpManager {
         getState(storageWorld).removeWarp(name);
         warpTimers.remove(name);
         onRemove.accept(name);
+        changed = true;
         continue;
       }
 
@@ -198,6 +201,7 @@ public class PayTpWarpManager {
         Integer inactiveTicks = warpTimers.remove(name);
         if (inactiveTicks != null && inactiveTicks >= maxInactiveTicks) {
           LOGGER.info("Warp {} restored: beacon active.", name);
+          changed = true;
         }
       } else {
         int previousTicks = warpTimers.getOrDefault(name, 0);
@@ -211,10 +215,12 @@ public class PayTpWarpManager {
             getState(storageWorld).removeWarp(name);
             warpTimers.remove(name);
             onRemove.accept(name);
+            changed = true;
           } else {
             warpTimers.put(name, ticks);
             if (previousTicks < maxInactiveTicks) {
               LOGGER.info("Warp {} disabled: beacon inactive > {}s.", name, maxInactiveTicks / 20);
+              changed = true;
             }
           }
         } else {
@@ -222,6 +228,7 @@ public class PayTpWarpManager {
         }
       }
     }
+    return changed;
   }
 
   /**
@@ -379,8 +386,10 @@ public class PayTpWarpManager {
           : OperationResult.NOT_FOUND;
     }
     if (state.isPublic(name)) return OperationResult.PUBLIC_WARP;
-    if (state.isOwner(name, invitedPlayer.getUUID())
-        || state.isInvited(name, invitedPlayer.getUUID())) {
+    if (state.isOwner(name, invitedPlayer.getUUID())) {
+      return OperationResult.TARGET_IS_OWNER;
+    }
+    if (state.isInvited(name, invitedPlayer.getUUID())) {
       return OperationResult.ALREADY_INVITED;
     }
     state.invite(name, invitedPlayer.getUUID());

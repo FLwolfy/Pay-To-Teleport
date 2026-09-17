@@ -5,6 +5,7 @@ import com.flwolfy.paytp.command.PayTpCommand;
 import com.flwolfy.paytp.command.home.PayTpHomeManager;
 import com.flwolfy.paytp.command.warp.PayTpWarpManager;
 import com.flwolfy.paytp.data.PayTpData;
+import com.flwolfy.paytp.display.PayTpWarpSGUI;
 import com.flwolfy.paytp.util.PayTpMessageSender;
 
 import net.fabricmc.api.ModInitializer;
@@ -44,7 +45,7 @@ public class PayTpMod implements ModInitializer {
 
 	private void registerEvents() {
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
-			PayTpCommand.reload();
+			PayTpCommand.loadAtServerStart();
 			PayTpCommand.register(server.getCommands().getDispatcher());
 		});
 
@@ -64,14 +65,18 @@ public class PayTpMod implements ModInitializer {
 
 		ServerTickEvents.END_LEVEL_TICK.register(world -> {
 			if (!world.dimension().equals(Level.OVERWORLD)) return;
-			PayTpWarpManager.getInstance().checkWarpState(world.getServer(), name -> {
-				for (ServerPlayer onlinePlayer : world.getServer().getPlayerList().getPlayers()) {
-					PayTpMessageSender.msgWarpDeletedServer(
-							onlinePlayer,
-							name
-					);
-				}
-			});
+			boolean changed = PayTpWarpManager.getInstance().checkWarpState(
+					world.getServer(),
+					name -> {
+						for (ServerPlayer onlinePlayer : world.getServer().getPlayerList().getPlayers()) {
+							PayTpMessageSender.msgWarpDeletedServer(
+									onlinePlayer,
+									name
+							);
+						}
+					}
+			);
+			if (changed) PayTpWarpSGUI.refreshAll(world.getServer());
 		});
 	}
 }

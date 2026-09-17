@@ -4,6 +4,8 @@ import com.flwolfy.paytp.data.PayTpData;
 import com.flwolfy.paytp.data.lang.PayTpLangManager;
 import com.flwolfy.paytp.command.warp.PayTpWarpManager;
 
+import com.mojang.brigadier.arguments.StringArgumentType;
+
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
@@ -11,7 +13,7 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 public final class PayTpMessageSender {
 
@@ -249,6 +251,15 @@ public final class PayTpMessageSender {
     player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-target")));
   }
 
+  public static void msgPlayerNotOnline(ServerPlayer player, String playerName) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.player-not-online"),
+        PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+        PayTpTextBuilder.DEFAULT_WARN_COLOR,
+        playerName
+    ));
+  }
+
   public static void msgNoAcceptRequest(ServerPlayer player) {
     player.sendSystemMessage(PayTpTextBuilder.format(LANG_LOADER.getText("paytp.no-accept")));
   }
@@ -270,6 +281,21 @@ public final class PayTpMessageSender {
         PayTpTextBuilder.DEFAULT_TEXT_COLOR,
         PayTpTextBuilder.DEFAULT_WARN_COLOR
         , warpName
+    ));
+  }
+
+  public static void msgWarpLocked(ServerPlayer player, String warpName) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.warp.locked"),
+        PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+        PayTpTextBuilder.DEFAULT_WARN_COLOR,
+        warpName
+    ));
+  }
+
+  public static void msgWarpInputInvalid(ServerPlayer player) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.warp.input.invalid")
     ));
   }
 
@@ -497,6 +523,20 @@ public final class PayTpMessageSender {
     ));
   }
 
+  public static void msgWarpTargetIsOwner(
+      ServerPlayer player,
+      ServerPlayer target,
+      String name
+  ) {
+    player.sendSystemMessage(PayTpTextBuilder.format(
+        LANG_LOADER.getText("paytp.warp.target-is-owner"),
+        PayTpTextBuilder.DEFAULT_TEXT_COLOR,
+        PayTpTextBuilder.DEFAULT_WARN_COLOR,
+        target.getName(),
+        name
+    ));
+  }
+
   public static void msgWarpAlreadyInvited(
       ServerPlayer player,
       ServerPlayer target,
@@ -598,7 +638,8 @@ public final class PayTpMessageSender {
                 LANG_LOADER.getText("paytp.hover.warp"),
                 entry.name()
             ),
-            "/" + warpCommandName + " " + entry.name()
+            "/" + warpCommandName + " teleport "
+                + StringArgumentType.escapeIfRequired(entry.name())
         ));
       } else {
         msg.append(displayName);
@@ -808,43 +849,39 @@ public final class PayTpMessageSender {
     // -------------------
     List<Component> formattedTexts = new ArrayList<>();
 
-    BiFunction<String, String, Void> suggestIfNotEmpty = (cmd, placeholder) -> {
+    Consumer<String> suggestIfNotEmpty = cmd -> {
       if (!cmd.isEmpty()) {
         formattedTexts.add(PayTpTextBuilder.suggestCommandText(
             Component.literal("/" + cmd),
             PayTpTextBuilder.format(LANG_LOADER.getText("paytp.hover.command"), "/" + cmd),
-            placeholder
+            "/" + cmd
         ));
       }
-      return null;
     };
 
     // Teleport
-    String coordinatePlaceholder = "/" + tpCommandName
-        + (allowCrossDim ? " (dim)" : "")
-        + " <x> <y> <z>";
-    suggestIfNotEmpty.apply(tpCommandName, coordinatePlaceholder);
-    suggestIfNotEmpty.apply(backCommandName, "/" + backCommandName);
+    suggestIfNotEmpty.accept(tpCommandName);
+    suggestIfNotEmpty.accept(backCommandName);
 
     // Request
-    suggestIfNotEmpty.apply(tpPlayerCommandName, "/" + tpPlayerCommandName + " <player>");
-    suggestIfNotEmpty.apply(tpPlayerHereCommandName, "/" + tpPlayerHereCommandName + " <player>");
-    suggestIfNotEmpty.apply(acceptCommandName, "/" + acceptCommandName + " (player)");
-    suggestIfNotEmpty.apply(denyCommandName, "/" + denyCommandName + " (player)");
-    suggestIfNotEmpty.apply(cancelCommandName, "/" + cancelCommandName + " (player)");
+    suggestIfNotEmpty.accept(tpPlayerCommandName);
+    suggestIfNotEmpty.accept(tpPlayerHereCommandName);
+    suggestIfNotEmpty.accept(acceptCommandName);
+    suggestIfNotEmpty.accept(denyCommandName);
+    suggestIfNotEmpty.accept(cancelCommandName);
 
     // Home
-    suggestIfNotEmpty.apply(homeCommandName, "/" + homeCommandName);
-    suggestIfNotEmpty.apply(setHomeCommandName, "/" + setHomeCommandName);
+    suggestIfNotEmpty.accept(homeCommandName);
+    suggestIfNotEmpty.accept(setHomeCommandName);
 
     // Warp
-    suggestIfNotEmpty.apply(warpCommandName, "/" + warpCommandName + " <name>");
-    suggestIfNotEmpty.apply(warpCreateCommandName, "/" + warpCreateCommandName + " <name> (public/private/server)");
-    suggestIfNotEmpty.apply(warpDeleteCommandName, "/" + warpDeleteCommandName + " <name>");
-    suggestIfNotEmpty.apply(warpRenameCommandName, "/" + warpRenameCommandName + " <name> <new_name>");
-    suggestIfNotEmpty.apply(warpInviteCommandName, "/" + warpInviteCommandName + " <name> <player>");
-    suggestIfNotEmpty.apply(warpExcludeCommandName, "/" + warpExcludeCommandName + " <name> <player>");
-    suggestIfNotEmpty.apply(warpListCommandName, "/" + warpListCommandName + " (all/public/owned/invited/server) (page)");
+    suggestIfNotEmpty.accept(warpCommandName);
+    suggestIfNotEmpty.accept(warpCreateCommandName);
+    suggestIfNotEmpty.accept(warpDeleteCommandName);
+    suggestIfNotEmpty.accept(warpRenameCommandName);
+    suggestIfNotEmpty.accept(warpInviteCommandName);
+    suggestIfNotEmpty.accept(warpExcludeCommandName);
+    suggestIfNotEmpty.accept(warpListCommandName);
 
     // -------------------
     // Msg Send

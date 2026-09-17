@@ -1,48 +1,30 @@
 package com.flwolfy.paytp.data.lang;
 
+import java.util.Set;
+
 /**
- * Languages bundled with PayTp and their resource identifiers.
+ * Provides compatibility access to dynamically discovered PayTp languages.
  */
-public enum PayTpLang {
-  ENGLISH("en_us", "English"),
-  SIMPLIFIED_CHINESE("zh_cn", "简体中文"),
-  TRADITIONAL_CHINESE("zh_tw", "繁體中文");
+public final class PayTpLang {
 
-  PayTpLang(String langKey, String langName) {
-    key = langKey;
-    name = langName;
-  }
-
-  private final String key;
-  private final String name;
+  private PayTpLang() {}
 
   /**
-   * Resolves a language by its resource key.
+   * Returns every language locale discovered from bundled JSON resources.
    *
-   * @param key the language key, such as {@code en_us}
-   * @return the matching language, or {@link #ENGLISH} when unsupported
+   * @return immutable available locale keys
    */
-  public static PayTpLang fromKey(String key) {
-    if (key == null) return ENGLISH;
-    for (PayTpLang lang : values()) {
-      if (lang.key.equalsIgnoreCase(key)) {
-        return lang;
-      }
-    }
-    return ENGLISH;
+  public static Set<String> availableLocales() {
+    return PayTpLangManager.getInstance().availableLocales();
   }
 
   /**
-   * Returns the resource key used for the language file.
+   * Returns the display name declared by a language JSON file.
    *
-   * @return the language resource key
+   * @param locale the language locale
+   * @return the discovered language name, or the normalized locale
    */
-  public String getLangKey() {
-    return key;
-  }
-
-  @Override
-  public String toString() {
-    return name;
+  public static String name(String locale) {
+    return PayTpLangManager.getInstance().languageName(locale);
   }
 }

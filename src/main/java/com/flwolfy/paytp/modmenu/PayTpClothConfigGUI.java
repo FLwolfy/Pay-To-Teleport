@@ -4,11 +4,9 @@ import com.flwolfy.paytp.PayTpMod;
 import com.flwolfy.paytp.data.config.PayTpConfigData;
 import com.flwolfy.paytp.data.config.PayTpConfigMapper;
 import com.flwolfy.paytp.data.warp.PayTpWarpPermission;
-import com.flwolfy.paytp.data.lang.PayTpLang;
 import com.flwolfy.paytp.data.script.PayTpScript;
 
 import com.flwolfy.paytp.modmenu.entrybuilder.PayTpEntryBuilderBase;
-import com.flwolfy.paytp.modmenu.entrybuilder.PayTpLangEntryBuider;
 import com.flwolfy.paytp.modmenu.entrybuilder.PayTpScriptEntryBuilder;
 import com.flwolfy.paytp.modmenu.entrybuilder.PayTpWarpPermissionEntryBuilder;
 import java.util.HashMap;
@@ -42,7 +40,6 @@ public class PayTpClothConfigGUI {
     // =======================================
     // Register customized entry builder here
     // =======================================
-    registerEntryBuilder(PayTpLang.class, new PayTpLangEntryBuider());
     registerEntryBuilder(PayTpScript.class, new PayTpScriptEntryBuilder());
     registerEntryBuilder(
         PayTpWarpPermission.class,

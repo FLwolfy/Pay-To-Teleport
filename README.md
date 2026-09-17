@@ -16,11 +16,12 @@
 - Cross-dimension teleport to a specified location
 - Player teleport request system
 - Home and Back
-- Beacon waypoint (Warp) feature
+- Beacon waypoint (Warp) feature with a categorized, paginated SGUI browser
 - Fully customizable JEXL teleportation price and distance algorithm
+- Automatically discovered bundled JSON languages with English fallback
 - Ender Chest / Shulker Box payment support
 - **Cloth Config** API support (client-side)
-- Can be used as a **server-side only** mod
+- Can be deployed as a **server-side only** mod; unmodified vanilla clients can join without installing PayTp
 
 Most features can be **disabled** by setting their corresponding command names to **an empty string**. 
 For example, changing `teleport.coordinateCommand` in the config file from `ptp` to **empty** will disable the coordinate teleport function.
@@ -35,6 +36,8 @@ The in-game help guide will automatically adapt.
 Every `<player>` argument accepts and suggests online player names only; entity selectors such as `@a`, `@p`, and `@s` are not supported.
 The `/ptp` `<x> <y> <z>` text is a non-selectable format hint rather than a current-coordinate suggestion; `~` and `^` relative coordinates remain supported.
 
+Waypoint names may contain Unicode and special characters without quotes as long as they contain no whitespace. A name containing spaces must be enclosed in double quotes in every waypoint command. Quoted names without spaces remain valid as well. Examples: `主城`, `主城#1`, and `"Main City"`. Create requires the type before the name, such as `/ptpwarp create server 主城`; delete keeps the optional suffix form `/ptpwarp delete "主城" forced`. There are no legacy duplicate command branches. With the cursor immediately after `teleport`, `delete`, `rename`, `invite`, or `exclude`, the server lists complete applicable waypoint choices such as `"樱花谷"`; this is a choice list, not prefix matching after typing part of a name. Online players are then completed after `invite/exclude`. Clicking a command in `/ptphelp` inserts only its executable command prefix and never copies placeholder text such as `<name>` or `<player>`.
+
 | Command                                                  | Description                                                                  |
 |----------------------------------------------------------|------------------------------------------------------------------------------|
 | `/ptphelp`                                               | Get command guide for PayTp                                                  |
@@ -47,8 +50,9 @@ The `/ptp` `<x> <y> <z>` text is a non-selectable format hint rather than a curr
 | `/ptpback`                                               | Return to the previous location                                              |
 | `/ptphome`                                               | Teleport to your home (if configured)                                        |
 | `/ptphome set`                                           | Set your home to your current position                                       |
-| `/ptpwarp <name>`                                        | Teleport to the specified waypoint                                           |
-| `/ptpwarp create <name> (public/private/server)`         | Create a waypoint; defaults to `private`; `server` is permission-controlled. |
+| `/ptpwarp`                                               | Open the categorized and paginated server-side waypoint SGUI.                |
+| `/ptpwarp teleport <name>`                               | Teleport to the specified waypoint                                           |
+| `/ptpwarp create (private/public/server) <name>`         | Create a waypoint with an explicit type; `server` is permission-controlled.  |
 | `/ptpwarp delete <name> (forced)`                        | Delete your waypoint; `forced` is permission-controlled.                     |
 | `/ptpwarp rename <name> <new_name>`                      | Rename a waypoint you created.                                               |
 | `/ptpwarp invite <name> <player>`                        | Invite a player to one of your private waypoints.                            |
@@ -131,10 +135,14 @@ The `/ptp` `<x> <y> <z>` text is a non-selectable format hint rather than a curr
 
 | Field               | Type      | Description                                                                                               |
 |---------------------|-----------|-----------------------------------------------------------------------------------------------------------|
-| `language`          | `string`  | Language file (e.g., `zh_cn`, `en_us`, `zh_tw`), affects messages and help text.                          |
+| `language`          | `string`  | Automatically discovered bundled language locale (for example `en_us`); affects messages, SGUI, and help text. |
 | `helpCommand`       | `string`  | Command used to display the PayTp guide (default `/ptphelp`).                                             |
 | `safeTeleport`      | `boolean` | Move an unsafe destination to the nearest safe position; defaults to `false`.                             |
 | `safeTeleportRange` | `int`     | Maximum horizontal and vertical safe-position search range; defaults to `5` and must be from `1` to `64`. |
+
+#### Adding a Language
+
+Add `<locale>.json` under `src/main/resources/assets/pay-to-teleport/lang/`. The locale filename must match `[a-z0-9][a-z0-9_-]*`, and every file must contain a non-blank `paytp.language.name` used by the Mod Menu selector. PayTp discovers all matching JSON files from the mod container automatically; adding a language does not require editing a Java enum, Gson adapter, or UI registry. `en_us.json` is required as the fallback. Missing keys in another language fall back to English and produce a one-time server warning.
 
 #### Teleport Effects (`general.effect`)
 
@@ -201,6 +209,8 @@ The `/ptp` `<x> <y> <z>` text is a non-selectable format hint rather than a curr
 | `autoDeleteInactiveWarps` | `boolean` | Delete a waypoint after its beacon exceeds the inactivity timeout; defaults to `true`. When disabled, it remains unavailable until the beacon reactivates. |
 | `maxInactiveTicks`        | `int`     | Beacon inactivity timeout in ticks; defaults to `100` and must be non-negative.                                                        |
 | `checkPeriodTicks`        | `int`     | Waypoint-to-beacon check interval in ticks; defaults to `20` and must be greater than zero.                                            |
+
+Running `/ptpwarp` without arguments opens a six-filter SGUI for all, server, owned, public, invited, and locked waypoints. The filters are arranged vertically in the first column as a water bucket, netherite ingot, gold ingot, iron ingot, copper ingot, and empty bucket; the second column is a cyan stained-glass divider. In the remaining 7×6 region, the top row contains Previous, the summary book, and Next, the middle 7×4 area displays 28 waypoints per page, and the bottom row places Refresh on the left and Close on the right. Every usable waypoint is an emerald block, while inactive and locked waypoints are redstone blocks. Attempting a locked waypoint reports that access has not been granted instead of claiming the waypoint does not exist. Locked entries do not reveal their owner or coordinates. Every click resolves the waypoint again through the same access, activity, safety, cross-dimension, price, and payment path used by `/ptpwarp teleport <name>`, so a waypoint deleted or invalidated while the menu is open cannot be used from stale menu data. The SGUI uses vanilla container packets and requires no client mod.
 
 ---
 
@@ -456,19 +466,21 @@ The default algorithm additionally handles Nether coordinate scaling and The End
 
 ## Cloth Config Support
 
-If the **Cloth Config API** is installed, all settings can be adjusted directly through the in-game Mod Menu GUI. The price algorithm can be edited in a dedicated multi-line editor or imported from a `.jexl` file. Confirming an edit or importing a file immediately validates its compilation and integer output; invalid algorithms cannot be saved. (World restart may be required.)
+If the **Cloth Config API** is installed on a client, all settings can be adjusted through Mod Menu. The screen edits only that client's local `config/paytp.json`; it cannot modify a remote dedicated server. Saving validates and atomically writes UTF-8 JSON but does not hot-reload a running world or server. Leave and reopen a single-player/LAN world, or restart the dedicated server whose file was edited, to apply changes. The price algorithm can be edited in a dedicated multi-line editor or imported from a `.jexl` file; invalid algorithms cannot be saved.
 
 ---
 
 ## Compatibility & Deployment
 
-| Type                     | Supported                           |
-|--------------------------|-------------------------------------|
-| Fabric Loader            | ✅                                  |
-| Server Only              | ✅                                  |
-| Client UI (Cloth Config) | ✅                                  |
-| Multi-language Support   | en_us / zh_cn / zh_tw               |
-| Minecraft Version        | 26.1+<br/>1.21.4 ~ 1.21.11 (legacy) |
+| Type                     | Supported                                    |
+|--------------------------|----------------------------------------------|
+| Fabric Loader            | Yes                                          |
+| Server Only              | Yes; unmodified vanilla clients can connect |
+| Client UI (Cloth Config) | Optional; local configuration only           |
+| Multi-language Support   | Automatically discovered bundled JSON locales |
+| Minecraft Version        | 26.1+<br/>1.21.4 ~ 1.21.11 (legacy)          |
+
+PB4 SGUI is bundled inside the PayTp server JAR and communicates through vanilla container packets. PayTp registers only vanilla Brigadier argument types, so neither waypoint names nor the SGUI introduce a client installation requirement.
 
 ---
 
