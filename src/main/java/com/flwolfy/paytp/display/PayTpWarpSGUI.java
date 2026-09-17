@@ -81,17 +81,17 @@ public final class PayTpWarpSGUI extends SimpleGui {
   }
 
   private void render() {
-    GuiElementBuilder filler = element(Items.STAINED_GLASS_PANE.gray())
+    GuiElementBuilder filler = element(Items.GRAY_STAINED_GLASS_PANE)
         .setName(Component.empty());
     for (int slot = 0; slot < getVirtualSize(); slot++) {
       setSlot(slot, filler.build());
     }
-    GuiElementBuilder contentBackground = element(Items.STAINED_GLASS_PANE.black())
+    GuiElementBuilder contentBackground = element(Items.BLACK_STAINED_GLASS_PANE)
         .setName(Component.empty());
     for (int slot : WARP_SLOTS) {
       setSlot(slot, contentBackground.build());
     }
-    GuiElementBuilder divider = element(Items.STAINED_GLASS_PANE.cyan())
+    GuiElementBuilder divider = element(Items.CYAN_STAINED_GLASS_PANE)
         .setName(Component.empty());
     for (int row = 0; row < 6; row++) {
       setSlot(row * 9 + 1, divider.build());

@@ -40,7 +40,7 @@ public final class PayTpClothConfigScreenController {
       return;
     }
     SystemToast.add(
-        minecraft.gui.toastManager(),
+        minecraft.getToastManager(),
         WORLD_WARNING,
         Component.translatable("paytp.config.world_warning"),
         Component.translatable(minecraft.getSingleplayerServer() == null
@@ -64,7 +64,7 @@ public final class PayTpClothConfigScreenController {
               ? "paytp.config.save_success.remote_detail"
               : "paytp.config.save_success.world_detail";
       SystemToast.add(
-          minecraft.gui.toastManager(),
+          minecraft.getToastManager(),
           SAVE_RESULT,
           Component.translatable("paytp.config.save_success"),
           Component.translatable(detail)
@@ -72,7 +72,7 @@ public final class PayTpClothConfigScreenController {
     } catch (Exception exception) {
       PayTpMod.LOGGER.error("Failed to save PayTp client configuration", exception);
       SystemToast.add(
-          Minecraft.getInstance().gui.toastManager(),
+          Minecraft.getInstance().getToastManager(),
           SAVE_RESULT,
           Component.translatable("paytp.config.save_failed"),
           Component.literal(exception.getMessage() == null

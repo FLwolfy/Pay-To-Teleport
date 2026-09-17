@@ -159,7 +159,7 @@ public final class PayTpScriptEntry extends PayTpTooltipEntry<PayTpScript> {
     } catch (Exception exception) {
       PayTpMod.LOGGER.error("Failed to import PayTp JEXL script", exception);
       SystemToast.add(
-          Minecraft.getInstance().gui.toastManager(),
+          Minecraft.getInstance().getToastManager(),
           IMPORT_RESULT,
           Component.translatable("paytp.config.price.algorithm.import.failed"),
           Component.literal(exception.getMessage() == null
