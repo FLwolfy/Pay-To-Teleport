@@ -1,85 +1,86 @@
 package com.flwolfy.paytp.data.lang;
 
 import com.flwolfy.paytp.PayTpMod;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-
-import java.io.InputStreamReader;
-import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-
-import org.slf4j.Logger;
 
 /**
  * Loads bundled language files and creates server-side localized components.
  */
-public class PayTpLangManager {
+public final class PayTpLangManager {
 
-  public static final String DEFAULT_LANGUAGE = PayTpLang.ENGLISH.getLangKey();
+  public static final String DEFAULT_LANGUAGE = PayTpLanguageLoader.DEFAULT_LOCALE;
 
-  private static final Logger LOGGER = PayTpMod.LOGGER;
-  private static final Gson GSON = new Gson();
+  private final Map<String, PayTpLanguage> languages;
+  private final Set<String> warnedMissingKeys = ConcurrentHashMap.newKeySet();
+  private volatile String language = DEFAULT_LANGUAGE;
 
-  private static PayTpLangManager instance;
-  private PayTpLangManager() {}
+  private PayTpLangManager() {
+    this(new PayTpLanguageLoader().load());
+  }
 
-  private Map<String, Map<String, String>> languageMap = new HashMap<>();
-  private String language;
+  PayTpLangManager(Map<String, PayTpLanguage> languages) {
+    this.languages = Collections.unmodifiableMap(new LinkedHashMap<>(languages));
+  }
 
   public static PayTpLangManager getInstance() {
-    if (instance == null) {
-      instance = new PayTpLangManager();
-      instance.languageMap = loadAllLanguages();
-      instance.language = DEFAULT_LANGUAGE;
-    }
-    return instance;
+    return Holder.INSTANCE;
   }
 
   // =========================================== //
   // ============= Languages Methods =========== //
   // =========================================== //
 
-  private static Map<String, Map<String, String>> loadAllLanguages() {
-    Map<String, Map<String, String>> langMap = new HashMap<>();
-
-    for (PayTpLang langEnum : PayTpLang.values()) {
-      String path = "/assets/" + PayTpMod.MOD_ID + "/lang/" + langEnum.getLangKey() + ".json";
-      try (InputStreamReader reader = new InputStreamReader(
-          Objects.requireNonNull(PayTpLangManager.class.getResourceAsStream(path)))) {
-
-        Type type = new TypeToken<Map<String, String>>() {}.getType();
-        Map<String, String> map = GSON.fromJson(reader, type);
-
-        if (map != null) {
-          langMap.put(langEnum.getLangKey(), map);
-        }
-
-      } catch (Exception e) {
-        LOGGER.error("Could not load language {}", langEnum.getLangKey(), e);
-      }
-    }
-
-    return langMap;
-  }
-
   /**
    * Sets the language used when creating localized components.
    *
    * @param lang the requested language; unsupported values fall back to English
    */
-  public void setLanguage(PayTpLang lang) {
-    if (languageMap.containsKey(lang.getLangKey())) {
-      language = lang.getLangKey();
-    } else {
-      language = DEFAULT_LANGUAGE;
-      LOGGER.warn("Language {} is not supported, set to default language {}.", lang.getLangKey(), DEFAULT_LANGUAGE);
+  public void setLanguage(String lang) {
+    String normalized = normalize(lang);
+    language = languages.containsKey(normalized) ? normalized : DEFAULT_LANGUAGE;
+  }
+
+  public Component text(String key, Object... arguments) {
+    String pattern = resolve(language, key);
+    try {
+      return Component.literal(pattern.formatted(arguments));
+    } catch (RuntimeException ignored) {
+      return Component.literal(pattern);
     }
+  }
+
+  public Component textFor(String locale, String key, Object... arguments) {
+    String normalized = normalize(locale);
+    String selected = languages.containsKey(normalized) ? normalized : language;
+    String pattern = resolve(selected, key);
+    try {
+      return Component.literal(pattern.formatted(arguments));
+    } catch (RuntimeException ignored) {
+      return Component.literal(pattern);
+    }
+  }
+
+  public Set<String> availableLocales() {
+    return Collections.unmodifiableSet(new LinkedHashSet<>(new TreeSet<>(languages.keySet())));
+  }
+
+  public Set<String> coreLocales() {
+    return languages.keySet();
+  }
+
+  public String languageName(String locale) {
+    String normalized = normalize(locale);
+    PayTpLanguage bundled = languages.get(normalized);
+    return bundled == null ? normalized : bundled.name();
   }
 
   /**
@@ -89,17 +90,47 @@ public class PayTpLangManager {
    * @return a mutable literal component containing the translated value, or the key when missing
    */
   public MutableComponent getText(String key) {
-    if (languageMap.isEmpty()) {
-      return Component.literal(key);
-    }
-
-    Map<String, String> map = languageMap.get(language);
-    if (map == null) {
-      return Component.literal(key);
-    }
-
-    String value = map.getOrDefault(key, key);
-    return Component.literal(value);
+    return Component.literal(resolve(language, key));
   }
 
+  private String resolve(String locale, String key) {
+    String pattern = translation(locale, key);
+    if (pattern != null) {
+      return pattern;
+    }
+    warnMissingTranslation(locale, key);
+    pattern = translation(DEFAULT_LANGUAGE, key);
+    if (pattern != null) {
+      return pattern;
+    }
+    if (warnedMissingKeys.add("all\0" + key)) {
+      PayTpMod.LOGGER.warn("Missing language key: {}", key);
+    }
+    return key;
+  }
+
+  private String translation(String locale, String key) {
+    PayTpLanguage bundled = languages.get(locale);
+    return bundled == null ? null : bundled.translations().get(key);
+  }
+
+  private void warnMissingTranslation(String locale, String key) {
+    if (!DEFAULT_LANGUAGE.equals(locale)
+        && languages.containsKey(locale)
+        && warnedMissingKeys.add("core\0" + locale + '\0' + key)) {
+      PayTpMod.LOGGER.warn(
+          "Missing {} PayTp language key {}; using en_us fallback",
+          locale,
+          key
+      );
+    }
+  }
+
+  private static String normalize(String locale) {
+    return locale == null ? "" : locale.trim().toLowerCase(Locale.ROOT);
+  }
+
+  private static final class Holder {
+    private static final PayTpLangManager INSTANCE = new PayTpLangManager();
+  }
 }

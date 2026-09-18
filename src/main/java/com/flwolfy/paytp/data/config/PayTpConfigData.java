@@ -1,6 +1,6 @@
 package com.flwolfy.paytp.data.config;
 
-import com.flwolfy.paytp.data.lang.PayTpLang;
+import com.flwolfy.paytp.PayTpMod;
 import com.flwolfy.paytp.data.PayTpContext;
 import com.flwolfy.paytp.data.PayTpCallback;
 import com.flwolfy.paytp.data.PayTpPlayer;
@@ -16,7 +16,9 @@ import com.flwolfy.paytp.util.PayTpItemHandler;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public record PayTpConfigData(
     General general,
@@ -29,7 +31,7 @@ public record PayTpConfigData(
 ) {
 
   public record General(
-      PayTpLang language,
+      String language,
       String helpCommand,
       boolean safeTeleport,
       int safeTeleportRange,
@@ -95,7 +97,7 @@ public record PayTpConfigData(
 
   public static final PayTpConfigData DEFAULT = new PayTpConfigData(
       new General(
-          PayTpLang.ENGLISH,
+          "en_us",
           "ptphelp",
           false,
           5,
@@ -236,6 +238,11 @@ public record PayTpConfigData(
   public List<String> validate() {
     List<String> invalidFields = new ArrayList<>();
 
+    if (general.language() == null
+        || !general.language().matches("[a-z0-9][a-z0-9_-]*")) {
+      invalidFields.add("general.language");
+    }
+
     // Price Range
     if (price.minPrice() < 0 || price.minPrice() > price.maxPrice()) {
       invalidFields.add("price.minPrice");
@@ -323,6 +330,19 @@ public record PayTpConfigData(
     }
 
     return List.copyOf(invalidFields);
+  }
+
+  static String canonicalLanguage(String locale, String fallback, Set<String> available) {
+    String normalized = locale == null ? "" : locale.trim().toLowerCase(Locale.ROOT);
+    if (!normalized.matches("[a-z0-9][a-z0-9_-]*") || !available.contains(normalized)) {
+      PayTpMod.LOGGER.warn(
+          "Unsupported PayTp language {}; using {}",
+          normalized,
+          fallback
+      );
+      return fallback;
+    }
+    return normalized;
   }
 
 }

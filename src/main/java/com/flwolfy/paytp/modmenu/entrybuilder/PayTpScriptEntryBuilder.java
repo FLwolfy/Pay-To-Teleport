@@ -1,6 +1,7 @@
 package com.flwolfy.paytp.modmenu.entrybuilder;
 
 import com.flwolfy.paytp.data.script.PayTpScript;
+import com.flwolfy.paytp.util.PayTpFileDialog;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,10 +20,6 @@ import net.minecraft.client.gui.components.MultiLineEditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
 /**
  * Builds the Cloth Config entry used to edit, import, and validate PayTp scripts.
@@ -184,30 +181,24 @@ public class PayTpScriptEntryBuilder extends PayTpEntryBuilderBase<PayTpScript> 
     }
 
     private void importScript() {
-      String path;
-      try (MemoryStack stack = MemoryStack.stackPush()) {
-        PointerBuffer filters = stack.mallocPointer(1);
-        filters.put(stack.UTF8("*.jexl"));
-        filters.flip();
-        path = TinyFileDialogs.tinyfd_openFileDialog(
-            "Import PayTp JEXL Algorithm",
-            "",
-            filters,
-            "JEXL scripts (*.jexl)",
-            false
-        );
-      }
+      PayTpFileDialog.openFile(
+          "Import PayTp JEXL Algorithm",
+          "JEXL scripts",
+          "jexl",
+          Minecraft.getInstance().getWindow().handle(),
+          this::loadScriptFrom
+      );
+    }
+
+    private void loadScriptFrom(String path) {
       if (path == null) return;
 
       try {
         setValue(Files.readString(Path.of(path)));
       } catch (Exception e) {
-        TinyFileDialogs.tinyfd_messageBox(
+        PayTpFileDialog.showError(
             "PayTp",
-            "Failed to import JEXL file:\n" + e.getMessage(),
-            "ok",
-            "error",
-            1
+            "Failed to import JEXL file:\n" + e.getMessage()
         );
       }
     }

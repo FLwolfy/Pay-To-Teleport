@@ -115,7 +115,7 @@ public final class PayTpItemHandler {
       if (oldContainer == null) continue;
 
       ItemContainerContents newContainer = ItemContainerContents.fromItems(
-          oldContainer.allItemsCopyStream()
+          oldContainer.itemCopies()
               .peek(inner -> {
                 if (inner.is(targetItem) && remaining[0] > 0) {
                   int take = Math.min(inner.getCount(), remaining[0]);
