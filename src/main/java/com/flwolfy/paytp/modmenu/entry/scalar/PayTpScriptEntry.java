@@ -5,6 +5,7 @@ import com.flwolfy.paytp.data.script.PayTpScript;
 import com.flwolfy.paytp.modmenu.builder.PayTpEntryContext;
 import com.flwolfy.paytp.modmenu.entry.common.PayTpControlLayout;
 import com.flwolfy.paytp.modmenu.entry.common.PayTpTooltipEntry;
+import com.flwolfy.paytp.util.PayTpFileDialog;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -20,9 +21,6 @@ import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
 public final class PayTpScriptEntry extends PayTpTooltipEntry<PayTpScript> {
 
@@ -137,19 +135,16 @@ public final class PayTpScriptEntry extends PayTpTooltipEntry<PayTpScript> {
   }
 
   private void importScript() {
-    String path;
-    try (MemoryStack stack = MemoryStack.stackPush()) {
-      PointerBuffer filters = stack.mallocPointer(1);
-      filters.put(stack.UTF8("*.jexl"));
-      filters.flip();
-      path = TinyFileDialogs.tinyfd_openFileDialog(
-          "Import PayTp JEXL Algorithm",
-          "",
-          filters,
-          "JEXL scripts (*.jexl)",
-          false
-      );
-    }
+    PayTpFileDialog.openFile(
+        "Import PayTp JEXL Algorithm",
+        "JEXL scripts",
+        "jexl",
+        Minecraft.getInstance().getWindow().handle(),
+        this::loadScriptFrom
+    );
+  }
+
+  private void loadScriptFrom(String path) {
     if (path == null) {
       return;
     }

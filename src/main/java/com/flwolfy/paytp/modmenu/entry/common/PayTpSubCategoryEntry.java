@@ -117,9 +117,14 @@ public class PayTpSubCategoryEntry
         graphics, index, y, x, entryWidth, entryHeight, mouseX, mouseY, hovered, delta
     );
     if (titleColor != null) {
+      // Cloth's getDisplayedFieldName() re-styles the label on its own: it forces GRAY while the
+      // entry is neither edited nor invalid, and DARK_GRAY while it is disabled. Those override the
+      // colour the title was created with, leaving the header bold but uncoloured. Draw our own
+      // untouched field name instead, so a custom title keeps its colour wherever the screen is
+      // opened from.
       graphics.text(
           Minecraft.getInstance().font,
-          getDisplayedFieldName().getVisualOrderText(),
+          getFieldName().getVisualOrderText(),
           x,
           y + 6,
           titleColor
